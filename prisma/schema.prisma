@@ -187,3 +187,26 @@ model Apilog {
 
   @@schema("faq")
 }
+
+model Usb {
+  id              BigInt      @id @default(autoincrement())
+  question        String      @db.Text
+  cdnImagePrefix  String?     @map("cdn_image_prefix") @db.VarChar(50)
+  questionImage   String?     @map("question_image") @db.VarChar(255)
+  correctAnswer   String      @map("correct_answer") @db.Text
+  incorrectAnswers Json    @map("incorrect_answers")
+  explanation     String      @db.Text
+  difficulty      String      @db.VarChar(30)
+  category        String      @db.VarChar(100)
+  asFirst         Int         @map("as_first") @default(0) @db.SmallInt
+  tags            String      @map("tags") @default("") @db.Text
+  createUserId    String      @map("create_user_id") @db.Uuid
+  updateUserId    String      @map("update_user_id") @db.Uuid
+  createdAt       DateTime?   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime?   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([category], map: "idx_usb_category")
+  @@index([difficulty], map: "idx_usb_difficulty")
+  @@map("usb")
+  @@schema("faq")
+}
