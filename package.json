@@ -12,10 +12,10 @@
     "react"
   ],
   "dependencies": {
-    "@clerk/localizations": "^3.37.2",
-    "@clerk/nextjs": "^6.39.0",
+    "@clerk/localizations": "^4.2.2",
+    "@clerk/nextjs": "^7.0.5",
     "@clerk/themes": "^2.4.57",
-    "@clerk/types": "^4.101.20",
+    "@clerk/shared": "^4.3.1",
     "@fingerprintjs/fingerprintjs": "^5.1.0",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -24,10 +24,10 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@tailwindcss/typography": "^0.5.19",
     "@types/mdx": "^2.0.13",
-    "@windrun-huaiin/backend-core": "^13.0.0",
-    "@windrun-huaiin/base-ui": "^13.1.0",
-    "@windrun-huaiin/lib": "^13.0.0",
-    "@windrun-huaiin/third-ui": "^13.1.3",
+    "@windrun-huaiin/backend-core": "14.3.0",
+    "@windrun-huaiin/base-ui": "14.0.3",
+    "@windrun-huaiin/lib": "14.0.1",
+    "@windrun-huaiin/third-ui": "14.2.0",
     "autoprefixer": "^10.4.27",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -72,7 +72,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/parser": "^8.56.1",
-    "@windrun-huaiin/dev-scripts": "^13.0.0",
+    "@windrun-huaiin/dev-scripts": "^14.1.3",
     "baseline-browser-mapping": "^2.10.0",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.1.6",
@@ -95,6 +95,8 @@
     "start": "next start",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "diaomao-help": "dev-scripts -h",
+    "diaomao-update": "pnpm add -D @windrun-huaiin/dev-scripts@latest && pnpm exec dev-scripts diaomao-update -v",
     "deep-clean": "dev-scripts deep-clean",
     "d8": "pnpm run deep-clean",
     "easy-changeset": "dev-scripts easy-changeset",
@@ -108,9 +110,19 @@
     "core-sync-route": "dev-scripts backend-core routes:sync",
     "core-sync-schema": "dev-scripts backend-core prisma:sync",
     "core-sync-sql": "dev-scripts backend-core migrations:sync --schema faq  --dest database",
-    "whoareyou": "dev-scripts generate-nextjs-architecture -v",
-    "windrun": "pnpm remove @windrun-huaiin/base-ui @windrun-huaiin/lib @windrun-huaiin/third-ui @windrun-huaiin/backend-core @windrun-huaiin/dev-scripts  && pnpm add @windrun-huaiin/base-ui@latest @windrun-huaiin/lib@latest @windrun-huaiin/third-ui@latest @windrun-huaiin/backend-core@latest && pnpm add -D @windrun-huaiin/dev-scripts@latest",
-    "windrun3": "pnpm remove @windrun-huaiin/third-ui && pnpm add @windrun-huaiin/third-ui@latest",
-    "windrunC": "pnpm remove @windrun-huaiin/backend-core && pnpm add @windrun-huaiin/backend-core@latest"
+    "whoareyou": "dev-scripts generate-nextjs-architecture -v"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@clerk/shared",
+      "@parcel/watcher",
+      "@prisma/client",
+      "@prisma/engines",
+      "@swc/core",
+      "esbuild",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
   }
 }
