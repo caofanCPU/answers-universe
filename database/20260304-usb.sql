@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS faq.usb (
     explanation TEXT NOT NULL,
     difficulty VARCHAR(30) NOT NULL,
     category VARCHAR(100) NOT NULL,
+    sub_category VARCHAR(500),
     as_first SMALLINT NOT NULL DEFAULT 0,
     tags TEXT NOT NULL DEFAULT '',
     create_user_id UUID NOT NULL,
