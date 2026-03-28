@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZodError } from 'zod';
-import { requireAppUser } from '@/server/questions/auth';
+import { ApiAuthUtils } from '@windrun-huaiin/backend-core/auth/server';
+import { AUTH_ERRORS } from '@windrun-huaiin/backend-core/auth/shared';
 import { getQuestionById, updateQuestion } from '@/server/questions/service';
 import { questionIdParamSchema, questionUpsertSchema } from '../schema';
 
@@ -55,9 +56,10 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function GET(_req: NextRequest, context: RouteContext) {
+export async function GET(req: NextRequest, context: RouteContext) {
   try {
-    await requireAppUser();
+    const authUtils = new ApiAuthUtils(req);
+    await authUtils.requireAuth();
 
     const { id } = questionIdParamSchema.parse(await context.params);
     const result = await getQuestionById(id);
@@ -68,7 +70,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 
     return NextResponse.json(result);
   } catch (error) {
-    if (error instanceof Error && (error.message === 'UNAUTHORIZED' || error.message === 'USER_NOT_FOUND')) {
+    if (error instanceof Error && (error.message === AUTH_ERRORS.unauthorized || error.message === AUTH_ERRORS.userNotFound)) {
       return unauthorized();
     }
     if (error instanceof ZodError) {
@@ -80,12 +82,13 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 
 export async function PUT(req: NextRequest, context: RouteContext) {
   try {
-    const appUser = await requireAppUser();
+    const authUtils = new ApiAuthUtils(req);
+    const { user } = await authUtils.requireAuthWithUser();
     const { id } = questionIdParamSchema.parse(await context.params);
     const body = await req.json();
     const input = questionUpsertSchema.parse(body);
 
-    const result = await updateQuestion(id, input, appUser.userId);
+    const result = await updateQuestion(id, input, user.userId);
 
     if (!result) {
       return notFound();
@@ -93,7 +96,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json(result);
   } catch (error) {
-    if (error instanceof Error && (error.message === 'UNAUTHORIZED' || error.message === 'USER_NOT_FOUND')) {
+    if (error instanceof Error && (error.message === AUTH_ERRORS.unauthorized || error.message === AUTH_ERRORS.userNotFound)) {
       return unauthorized();
     }
     if (error instanceof ZodError) {
