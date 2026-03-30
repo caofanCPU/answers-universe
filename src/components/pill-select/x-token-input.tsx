@@ -63,7 +63,7 @@ export function XTokenInput({
   }
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn('w-full min-w-0 space-y-2', className)}>
       <div
         ref={rootRef}
         onClick={() => inputRef.current?.focus()}
@@ -73,18 +73,19 @@ export function XTokenInput({
             return;
           }
 
+          commitToken(draftValue);
           setFocused(false);
         }}
         className={cn(
-          'min-h-11 rounded-3xl border border-black/10 bg-white px-4 py-2.5 transition dark:border-white/10 dark:bg-slate-950',
+          'min-h-11 w-full min-w-0 rounded-3xl border border-black/10 px-4 py-2.5 transition dark:border-white/10',
           focused && themeBorderColor
         )}
       >
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-2">
           {tokens.length > 0 ? (
             <ul className="contents" role="list">
               {tokens.map((token) => (
-                <li key={token} className="list-none">
+                <li key={token} className="max-w-full list-none">
                   <span
                     className={cn(
                       'inline-flex max-w-full items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold transition',
@@ -120,8 +121,12 @@ export function XTokenInput({
           ) : null}
           <div
             className={cn(
-              'flex-1',
-              tokens.length === 0 ? 'min-w-[160px]' : draftValue || focused ? 'min-w-[96px]' : 'min-w-0'
+              'min-w-0 overflow-hidden',
+              tokens.length === 0
+                ? 'flex-1 min-w-[160px]'
+                : draftValue || focused
+                  ? 'flex-1 min-w-[120px]'
+                  : 'w-0 flex-none'
             )}
           >
             <input

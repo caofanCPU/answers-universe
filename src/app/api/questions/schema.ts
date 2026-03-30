@@ -3,6 +3,11 @@ import { QUESTION_CATEGORIES, QUESTION_DIFFICULTIES, QUESTION_SUB_CATEGORIES } f
 
 const optionalString = z.string().trim().optional().nullable();
 const optionalStringArray = z.array(z.string().trim().min(1)).optional().default([]);
+const optionalEnumLikeString = <T extends readonly [string, ...string[]]>(values: T) =>
+  z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
+    z.enum(values).optional().nullable()
+  );
 
 export const questionUpsertSchema = z.object({
   question: z.string().trim().min(1, 'question is required'),
@@ -13,7 +18,7 @@ export const questionUpsertSchema = z.object({
   explanation: z.string().trim().min(1, 'explanation is required'),
   difficulty: z.enum(QUESTION_DIFFICULTIES),
   category: z.enum(QUESTION_CATEGORIES),
-  subCategory: z.enum(QUESTION_SUB_CATEGORIES),
+  subCategory: optionalEnumLikeString(QUESTION_SUB_CATEGORIES),
   isFirst: z.boolean().optional().default(false),
   tags: optionalStringArray,
   keywords: optionalStringArray,

@@ -4,7 +4,7 @@ import { cn } from '@windrun-huaiin/lib/utils';
 import { XPillSelect, type XPillOption } from './x-pill-select';
 
 type XFormPillsProps = {
-  label: string;
+  label: React.ReactNode;
   value: string;
   options: XPillOption[];
   onChange: (value: string) => void;

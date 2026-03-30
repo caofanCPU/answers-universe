@@ -9,7 +9,7 @@ export type QuestionViewModel = {
   explanation: string;
   difficulty: string;
   category: string;
-  subCategory: string;
+  subCategory: string | null;
   tags: string[];
   isFirst: boolean;
   createdAt?: string | null;

@@ -13,11 +13,14 @@ import { QuestionPreview } from './question-preview';
 import type { QuestionDetailDto, QuestionUpsertInput } from '@/server/questions/types';
 import type { QuestionFormValues, QuestionViewModel } from './question-ui-types';
 
+const CDN_BASE_URL = process.env.NEXT_PUBLIC_STYLE_CDN_URL?.trim() ?? '';
+const CDN_IMAGE_PREFIX = process.env.NEXT_PUBLIC_STYLE_CDN_IMG_PREFIX?.trim() ?? '';
+
 type QuestionEditorClientProps = {
   locale: string;
   mode: 'create' | 'edit';
   id?: string;
-  copy: {
+  usb: {
     noticeCreate: string;
     noticeEdit: string;
     loading: string;
@@ -51,10 +54,48 @@ type QuestionEditorClientProps = {
   };
 };
 
+function normalizeQuestionImagePath(value: string): string {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return '';
+  }
+
+  return trimmed.toLowerCase().endsWith('.webp') ? trimmed : `${trimmed}.webp`;
+}
+
+function resolveCdnImagePrefix(value?: string | null): string {
+  return CDN_IMAGE_PREFIX || value?.trim() || '';
+}
+
+function trimSlashes(value: string): string {
+  return value.replace(/^\/+|\/+$/g, '');
+}
+
+function buildQuestionImageUrl(cdnImagePrefix: string | null, questionImage: string | null): string | null {
+  if (!questionImage) {
+    return null;
+  }
+
+  const path = trimSlashes(questionImage);
+  if (!path) {
+    return null;
+  }
+
+  const base = CDN_BASE_URL.replace(/\/+$/, '');
+  const prefix = trimSlashes(cdnImagePrefix ?? '');
+
+  if (!base) {
+    return prefix ? `/${prefix}/${path}` : `/${path}`;
+  }
+
+  return prefix ? `${base}/${prefix}/${path}` : `${base}/${path}`;
+}
+
 function emptyFormValues(): QuestionFormValues {
   return {
     question: '',
-    cdnImagePrefix: '',
+    cdnImagePrefix: CDN_IMAGE_PREFIX,
     questionImage: '',
     correctAnswer: '',
     incorrectAnswersText: '',
@@ -74,8 +115,8 @@ function detailToAnswerOptions(detail: QuestionDetailDto): QuestionAnswerOptionD
 function detailToFormValues(detail: QuestionDetailDto): QuestionFormValues {
   return {
     question: detail.question,
-    cdnImagePrefix: detail.cdnImagePrefix ?? '',
-    questionImage: detail.questionImage ?? '',
+    cdnImagePrefix: resolveCdnImagePrefix(detail.cdnImagePrefix),
+    questionImage: normalizeQuestionImagePath(detail.questionImage ?? ''),
     correctAnswer: detail.correctAnswer,
     incorrectAnswersText: detail.incorrectAnswers.join('\n'),
     explanation: detail.explanation,
@@ -95,8 +136,8 @@ function formValuesToPayload(
 
   return {
     question: values.question.trim(),
-    cdnImagePrefix: values.cdnImagePrefix.trim() || null,
-    questionImage: values.questionImage.trim() || null,
+    cdnImagePrefix: resolveCdnImagePrefix(values.cdnImagePrefix) || null,
+    questionImage: normalizeQuestionImagePath(values.questionImage) || null,
     correctAnswer: answers.correctAnswer.trim(),
     incorrectAnswers: answers.incorrectAnswers,
     explanation: values.explanation.trim(),
@@ -113,10 +154,7 @@ function formValuesToPreview(
   answerOptions: QuestionAnswerOptionDraft[]
 ): QuestionViewModel {
   const payload = formValuesToPayload(values, answerOptions);
-  const questionImageUrl =
-    payload.questionImage && payload.cdnImagePrefix
-      ? `${payload.cdnImagePrefix.replace(/\/$/, '')}/${payload.questionImage.replace(/^\//, '')}`
-      : payload.questionImage ?? null;
+  const questionImageUrl = buildQuestionImageUrl(payload.cdnImagePrefix ?? null, payload.questionImage ?? null);
 
   return {
     id: 'draft',
@@ -137,10 +175,11 @@ function formValuesToPreview(
   };
 }
 
-export function QuestionEditorClient({ locale, mode, id, copy }: QuestionEditorClientProps) {
+export function QuestionEditorClient({ locale, mode, id, usb }: QuestionEditorClientProps) {
   const router = useRouter();
   const [values, setValues] = useState<QuestionFormValues>(emptyFormValues());
   const [answerOptions, setAnswerOptions] = useState<QuestionAnswerOptionDraft[]>([]);
+  const [previewAsPlayer, setPreviewAsPlayer] = useState(false);
   const [loading, setLoading] = useState(mode === 'edit');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -218,15 +257,11 @@ export function QuestionEditorClient({ locale, mode, id, copy }: QuestionEditorC
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] lg:items-start">
       <div className="space-y-4">
-        <div className="rounded-3xl border border-dashed border-purple-300/60 bg-linear-to-r from-purple-50 to-pink-50 px-4 py-3 text-sm text-slate-700 dark:border-purple-400/30 dark:from-purple-500/10 dark:to-pink-500/10 dark:text-slate-200">
-          {mode === 'create' ? copy.noticeCreate : copy.noticeEdit}
-        </div>
-
         {loading ? (
-          <div className="rounded-3xl border border-black/10 bg-white px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:bg-slate-950 dark:text-slate-400">
-            {copy.loading}
+          <div className="rounded-3xl border border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
+            {usb.loading}
           </div>
         ) : (
           <>
@@ -234,12 +269,18 @@ export function QuestionEditorClient({ locale, mode, id, copy }: QuestionEditorC
               values={values}
               answerOptions={answerOptions}
               onAnswerOptionsChange={setAnswerOptions}
-              onChange={setValues}
-              copy={copy.form}
+              onChange={(nextValues) =>
+                setValues({
+                  ...nextValues,
+                  cdnImagePrefix: resolveCdnImagePrefix(nextValues.cdnImagePrefix),
+                })
+              }
+              questionNotice={mode === 'create' ? usb.noticeCreate : usb.noticeEdit}
+              usb={usb.form}
             />
             {error ? (
               <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
-                {copy.submitFailed}
+                {usb.submitFailed}
                 {error}
               </div>
             ) : null}
@@ -250,13 +291,21 @@ export function QuestionEditorClient({ locale, mode, id, copy }: QuestionEditorC
                 disabled={saving}
                 className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-purple-400 to-pink-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {saving ? copy.saving : mode === 'create' ? copy.createButton : copy.updateButton}
+                {saving ? usb.saving : mode === 'create' ? usb.createButton : usb.updateButton}
               </button>
             </div>
           </>
         )}
       </div>
-      <QuestionPreview locale={locale} question={previewQuestion} />
+      <div className="lg:self-start">
+        <QuestionPreview
+          locale={locale}
+          question={previewQuestion}
+          answerOptions={answerOptions}
+          previewAsPlayer={previewAsPlayer}
+          onTogglePreviewMode={() => setPreviewAsPlayer((value) => !value)}
+        />
+      </div>
     </div>
   );
 }

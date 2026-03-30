@@ -110,7 +110,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
       />
 
       {state.loading ? (
-        <div className="rounded-3xl border border-black/10 bg-white px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:bg-slate-950 dark:text-slate-400">
+        <div className="rounded-3xl border border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
           {copy.loading}
         </div>
       ) : null}

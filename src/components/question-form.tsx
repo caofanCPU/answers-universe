@@ -8,13 +8,15 @@ import {
   QUESTION_SUB_CATEGORIES,
 } from '@/server/questions/constants';
 import { XFormPills, XTokenInput } from '@/components/pill-select';
+import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 
 type QuestionFormProps = {
   values: QuestionFormValues;
   answerOptions: QuestionAnswerOptionDraft[];
   onAnswerOptionsChange: (options: QuestionAnswerOptionDraft[]) => void;
   onChange: (next: QuestionFormValues) => void;
-  copy: {
+  questionNotice?: string;
+  usb: {
     question: string;
     answersLabel: string;
     answersPlaceholder: string;
@@ -51,7 +53,28 @@ function updateField(
   });
 }
 
-export function QuestionForm({ values, answerOptions, onAnswerOptionsChange, onChange, copy }: QuestionFormProps) {
+function normalizeQuestionImagePath(value: string): string {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return '';
+  }
+
+  return trimmed.toLowerCase().endsWith('.webp') ? trimmed : `${trimmed}.webp`;
+}
+
+function RequiredMark() {
+  return <span className="text-red-500">*</span>;
+}
+
+export function QuestionForm({
+  values,
+  answerOptions,
+  onAnswerOptionsChange,
+  onChange,
+  questionNotice,
+  usb: usb,
+}: QuestionFormProps) {
   const categoryOptions = QUESTION_CATEGORIES.map((option) => ({ label: option, value: option }));
   const subCategoryOptions = QUESTION_SUB_CATEGORIES.map((option) => ({ label: option, value: option }));
   const difficultyOptions = QUESTION_DIFFICULTIES.map((option) => ({ label: option, value: option }));
@@ -67,98 +90,135 @@ export function QuestionForm({ values, answerOptions, onAnswerOptionsChange, onC
     };
 
   return (
-    <form className="space-y-5 rounded-3xl border border-black/10 bg-white p-6 dark:border-white/10 dark:bg-slate-950">
+    <form className="space-y-5 rounded-3xl border border-black/10 p-6 dark:border-white/10">
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2 text-sm md:col-span-2">
-          <div className="font-medium text-slate-700 dark:text-slate-200">{copy.question}</div>
+          <div className="flex items-center gap-2">
+            <div className="font-medium text-slate-700 dark:text-slate-200">
+              {usb.question} <RequiredMark />
+            </div>
+            {questionNotice ? (
+              <div className="group relative inline-flex">
+                <button
+                  type="button"
+                  className="inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-400 transition hover:bg-black/5 hover:text-slate-700 focus-visible:bg-black/5 focus-visible:text-slate-700 focus-visible:outline-none dark:hover:bg-white/5 dark:hover:text-white dark:focus-visible:bg-white/5 dark:focus-visible:text-white"
+                  aria-label={questionNotice}
+                >
+                  <icons.CircleQuestionMark className="h-4 w-4" />
+                </button>
+                <div className="pointer-events-none absolute left-full top-1/2 z-10 ml-2 hidden w-72 -translate-y-1/2 rounded-2xl border border-black/10 px-3 py-2 text-xs leading-5 text-slate-600 shadow-xl group-hover:block group-focus-within:block dark:border-white/10 dark:text-slate-300">
+                  {questionNotice}
+                </div>
+              </div>
+            ) : null}
+          </div>
           <textarea
             value={values.question}
             onChange={onInputChange('question')}
             rows={4}
-            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
+            className="w-full rounded-2xl border border-black/10 px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:text-white"
           />
         </label>
-        <XFormPills
-          label={copy.categoryLabel}
-          value={values.category}
-          options={categoryOptions}
-          onChange={(value) => updateField(values, onChange, 'category', value)}
-          emptyLabel={copy.categoryEmpty}
-        />
-        <XFormPills
-          label={copy.subCategoryLabel}
-          value={values.subCategory}
-          options={subCategoryOptions}
-          onChange={(value) => updateField(values, onChange, 'subCategory', value)}
-          emptyLabel={copy.subCategoryEmpty}
-        />
-        <XFormPills
-          label={copy.difficultyLabel}
-          value={values.difficulty}
-          options={difficultyOptions}
-          onChange={(value) => updateField(values, onChange, 'difficulty', value)}
-          emptyLabel={copy.difficultyEmpty}
-        />
-        <div className="space-y-2 text-sm md:col-span-2">
-          <div className="font-medium text-slate-700 dark:text-slate-200">{copy.tagsLabel}</div>
-          <XTokenInput
-            value={values.tags}
-            onChange={(nextValue) => updateField(values, onChange, 'tags', nextValue)}
-            placeholder={copy.tagsPlaceholder}
-            emptyLabel={copy.tagsEmpty}
-          />
-        </div>
         <label className="space-y-2 text-sm md:col-span-2">
-          <div className="font-medium text-slate-700 dark:text-slate-200">{copy.answersLabel}</div>
+          <div className="font-medium text-slate-700 dark:text-slate-200">
+            {usb.answersLabel} <RequiredMark />
+          </div>
           <QuestionAnswerOptions
             options={answerOptions}
             onChange={onAnswerOptionsChange}
             copy={{
-              placeholder: copy.answersPlaceholder,
-              empty: copy.answersEmpty,
-              expand: copy.answersExpand,
-              collapse: copy.answersCollapse,
-              correctPrefix: copy.answersCorrectPrefix,
-              noCorrect: copy.answersNoCorrect,
+              placeholder: usb.answersPlaceholder,
+              empty: usb.answersEmpty,
+              expand: usb.answersExpand,
+              collapse: usb.answersCollapse,
+              correctPrefix: usb.answersCorrectPrefix,
+              noCorrect: usb.answersNoCorrect,
             }}
             showCorrectState
           />
         </label>
         <label className="space-y-2 text-sm md:col-span-2">
-          <div className="font-medium text-slate-700 dark:text-slate-200">{copy.explanation}</div>
+          <div className="font-medium text-slate-700 dark:text-slate-200">
+            {usb.explanation} <RequiredMark />
+          </div>
           <textarea
             value={values.explanation}
             onChange={onInputChange('explanation')}
             rows={5}
-            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
+            className="w-full rounded-2xl border border-black/10 px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:text-white"
           />
         </label>
         <label className="space-y-2 text-sm">
-          <div className="font-medium text-slate-700 dark:text-slate-200">{copy.cdnImagePrefix}</div>
+          <div className="font-medium text-slate-700 dark:text-slate-200">{usb.cdnImagePrefix}</div>
           <input
             value={values.cdnImagePrefix}
-            onChange={onInputChange('cdnImagePrefix')}
-            className="min-h-11 w-full rounded-2xl border border-black/10 bg-white px-4 py-2.5 outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
+            readOnly
+            className="min-h-11 w-full rounded-2xl border border-black/10 px-4 py-2.5 text-slate-500 outline-none dark:border-white/10 dark:text-slate-400"
           />
         </label>
         <label className="space-y-2 text-sm">
-          <div className="font-medium text-slate-700 dark:text-slate-200">{copy.questionImage}</div>
+          <div className="font-medium text-slate-700 dark:text-slate-200">{usb.questionImage}</div>
           <input
             value={values.questionImage}
             onChange={onInputChange('questionImage')}
-            className="min-h-11 w-full rounded-2xl border border-black/10 bg-white px-4 py-2.5 outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
+            onBlur={() =>
+              updateField(values, onChange, 'questionImage', normalizeQuestionImagePath(values.questionImage))
+            }
+            className="min-h-11 w-full rounded-2xl border border-black/10 px-4 py-2.5 outline-none transition focus:border-purple-400 dark:border-white/10 dark:text-white"
           />
         </label>
-      </div>
-      <label className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:bg-white/5 dark:text-slate-200">
-        <input
-          type="checkbox"
-          checked={values.isFirst}
-          onChange={onInputChange('isFirst')}
-          className="h-4 w-4 rounded border-black/10"
+        <XFormPills
+          label={
+            <>
+              {usb.categoryLabel} <RequiredMark />
+            </>
+          }
+          value={values.category}
+          options={categoryOptions}
+          onChange={(value) => updateField(values, onChange, 'category', value)}
+          emptyLabel={usb.categoryEmpty}
         />
-        <span>{copy.isFirst}</span>
-      </label>
+        <XFormPills
+          label={
+            <>
+              {usb.subCategoryLabel}
+            </>
+          }
+          value={values.subCategory}
+          options={subCategoryOptions}
+          onChange={(value) => updateField(values, onChange, 'subCategory', value)}
+          emptyLabel={usb.subCategoryEmpty}
+        />
+        <XFormPills
+          label={
+            <>
+              {usb.difficultyLabel} <RequiredMark />
+            </>
+          }
+          value={values.difficulty}
+          options={difficultyOptions}
+          onChange={(value) => updateField(values, onChange, 'difficulty', value)}
+          emptyLabel={usb.difficultyEmpty}
+        />
+        <div className="space-y-2 text-sm md:col-span-2">
+          <div className="font-medium text-slate-700 dark:text-slate-200">{usb.tagsLabel}</div>
+          <XTokenInput
+            value={values.tags}
+            onChange={(nextValue) => updateField(values, onChange, 'tags', nextValue)}
+            placeholder={usb.tagsPlaceholder}
+            emptyLabel={usb.tagsEmpty}
+          />
+        </div>
+        <label className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
+          <input
+            type="checkbox"
+            checked={values.isFirst}
+            onChange={onInputChange('isFirst')}
+            className="h-4 w-4 rounded border-black/10"
+          />
+          <span>{usb.isFirst}</span>
+        </label>
+      </div>
     </form>
   );
 }

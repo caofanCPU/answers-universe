@@ -3,7 +3,7 @@ export type QuestionListItemDto = {
   uuid: string;
   question: string;
   category: string;
-  subCategory: string;
+  subCategory: string | null;
   difficulty: string;
   tags: string[];
   keywords: string[];
@@ -23,7 +23,7 @@ export type QuestionDetailDto = {
   explanation: string;
   difficulty: string;
   category: string;
-  subCategory: string;
+  subCategory: string | null;
   isFirst: boolean;
   tags: string[];
   keywords: string[];
@@ -58,7 +58,7 @@ export type QuestionUpsertInput = {
   explanation: string;
   difficulty: string;
   category: string;
-  subCategory: string;
+  subCategory?: string | null;
   isFirst?: boolean;
   tags?: string[];
   keywords?: string[];
@@ -70,7 +70,7 @@ export type QuestionImportPreviewDto = {
   errors: string[];
   question: string;
   category: string;
-  subCategory: string;
+  subCategory: string | null;
   difficulty: string;
   tags: string[];
   keywords: string[];

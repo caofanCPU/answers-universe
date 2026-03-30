@@ -12,7 +12,7 @@ export function QuestionList({ locale, items }: QuestionListProps) {
 
   if (items.length === 0) {
     return (
-      <div className="rounded-3xl border border-dashed border-black/10 bg-white px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:bg-slate-950 dark:text-slate-400">
+      <div className="rounded-3xl border border-dashed border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
         {isZh ? '当前筛选条件下暂无题目。' : 'No questions match the current filters.'}
       </div>
     );
@@ -23,7 +23,7 @@ export function QuestionList({ locale, items }: QuestionListProps) {
       {items.map((item) => (
         <article
           key={item.id}
-          className="rounded-3xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-slate-950"
+          className="rounded-3xl border border-black/10 p-5 dark:border-white/10"
         >
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="space-y-3">

@@ -229,7 +229,7 @@ export function QuestionImportClient({ locale }: { locale: string }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
       <div className="space-y-4">
-        <div className="rounded-3xl border border-black/10 bg-white p-6 dark:border-white/10 dark:bg-slate-950">
+        <div className="rounded-3xl border border-black/10 p-6 dark:border-white/10">
           <div className="mb-4 space-y-2">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
               {isZh ? 'JSON 输入区' : 'JSON Input'}
@@ -300,7 +300,7 @@ export function QuestionImportClient({ locale }: { locale: string }) {
       </div>
 
       <div className="space-y-4">
-        <div className="rounded-3xl border border-black/10 bg-white p-6 dark:border-white/10 dark:bg-slate-950">
+        <div className="rounded-3xl border border-black/10 p-6 dark:border-white/10">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             {isZh ? '解析结果摘要' : 'Parse Summary'}
           </h2>
@@ -380,7 +380,7 @@ export function QuestionImportClient({ locale }: { locale: string }) {
           {(serverValidation?.items ?? result.previews).map((item) => (
             <article
               key={`${item.index}-${item.question}`}
-              className="rounded-3xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-slate-950"
+              className="rounded-3xl border border-black/10 p-5 dark:border-white/10"
             >
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="space-y-3">

@@ -26,7 +26,7 @@ export default async function NewQuestionPage({
       <QuestionEditorClient
         locale={locale}
         mode="create"
-        copy={{
+        usb={{
           noticeCreate: t('notice'),
           noticeEdit: t('notice'),
           loading: t('status.loading'),

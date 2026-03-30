@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { QuestionDetail } from './question-detail';
-import { QuestionMetaCard } from './question-meta-card';
 import type { QuestionDetailDto } from '@/server/questions/types';
 
 type QuestionDetailClientProps = {
@@ -69,7 +68,7 @@ export function QuestionDetailClient({ locale, id }: QuestionDetailClientProps) 
 
   if (state.loading) {
     return (
-      <div className="rounded-3xl border border-black/10 bg-white px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:bg-slate-950 dark:text-slate-400">
+      <div className="rounded-3xl border border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
         {isZh ? '正在加载题目详情...' : 'Loading question detail...'}
       </div>
     );
@@ -95,9 +94,8 @@ export function QuestionDetailClient({ locale, id }: QuestionDetailClientProps) 
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <div className="grid gap-6">
       <QuestionDetail locale={locale} question={state.item} />
-      <QuestionMetaCard locale={locale} question={state.item} />
     </div>
   );
 }

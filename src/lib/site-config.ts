@@ -1,4 +1,6 @@
 import { createSiteIcon } from "@windrun-huaiin/base-ui/components/server";
-import { Usb } from 'lucide-react';
+import { Eye, EyeOff, Usb } from 'lucide-react';
 
 export const SiteIcon = createSiteIcon(Usb);
+export const SiteEyeIcon = createSiteIcon(Eye);
+export const SiteEyeOffIcon = createSiteIcon(EyeOff);

@@ -1,13 +1,10 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
-import { globalLucideIcons as icons, createSiteIcon} from '@windrun-huaiin/base-ui/components/server';
+import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 import { themeBorderColor, themeIconColor } from '@windrun-huaiin/base-ui/lib';
 import { cn } from '@windrun-huaiin/lib/utils';
-
-const EyeIcon = createSiteIcon(Eye);
-const EyeOffIcon = createSiteIcon(EyeOff);
+import { SiteEyeIcon, SiteEyeOffIcon } from '@/lib/site-config';
 
 export type QuestionAnswerOptionDraft = {
   id: string;
@@ -202,7 +199,7 @@ export function QuestionAnswerOptions({
 
   return (
     <div className={cn(className)}>
-      <div className="overflow-hidden rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-slate-950">
+      <div className="overflow-hidden rounded-2xl border border-black/10 dark:border-white/10">
         {!readOnly ? (
           <div className="flex min-h-11 items-center gap-3 px-4 py-2.5">
             <input
@@ -226,7 +223,7 @@ export function QuestionAnswerOptions({
               className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-black/5 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
               aria-label={collapsed ? copy.expand : copy.collapse}
             >
-              {collapsed ? <EyeIcon className="h-4 w-4" /> : <EyeOffIcon className="h-4 w-4" />}
+              {collapsed ? <SiteEyeIcon className="h-4 w-4" /> : <SiteEyeOffIcon className="h-4 w-4" />}
             </button>
           </div>
         ) : null}
@@ -234,6 +231,7 @@ export function QuestionAnswerOptions({
         <div
           className={cn(
             'flex items-center justify-end gap-3 border-t border-black/10 px-4 py-2 text-xs text-slate-500 dark:border-white/10 dark:text-slate-400',
+            correctOptionIndex >= 0 && showCorrectState && themeIconColor,
             readOnly && 'border-t-0'
           )}
         >
@@ -250,6 +248,13 @@ export function QuestionAnswerOptions({
                   <div
                     key={option.id}
                     draggable={!readOnly}
+                    onClick={() => {
+                      if (readOnly) {
+                        return;
+                      }
+
+                      markCorrect(option.id);
+                    }}
                     onDragStart={() => setDraggingId(option.id)}
                     onDragEnd={() => setDraggingId(null)}
                     onDragOver={(event) => {
@@ -270,7 +275,8 @@ export function QuestionAnswerOptions({
                       setDraggingId(null);
                     }}
                     className={cn(
-                      'flex min-h-9 items-center gap-2 rounded-2xl border border-black/10 bg-slate-50 px-3 py-2 text-sm text-slate-700 transition dark:border-white/10 dark:bg-white/5 dark:text-slate-200',
+                      'flex min-h-9 items-center gap-2 rounded-2xl border border-black/10 px-3 py-2 text-sm text-slate-700 transition dark:border-white/10 dark:text-slate-200',
+                      !readOnly && 'cursor-pointer',
                       option.isCorrect && showCorrectState && [themeBorderColor, themeIconColor],
                       !readOnly && draggingId === option.id && 'opacity-60'
                     )}
@@ -280,7 +286,10 @@ export function QuestionAnswerOptions({
                         {!readOnly ? (
                           <button
                             type="button"
-                            onClick={() => markCorrect(option.id)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              markCorrect(option.id);
+                            }}
                             className={cn(
                               'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-black/10 transition dark:border-white/10',
                               option.isCorrect && [themeBorderColor, themeIconColor]
@@ -303,10 +312,22 @@ export function QuestionAnswerOptions({
                             )}
                           </span>
                         ) : null}
-                        <span className="font-medium text-slate-500 dark:text-slate-400">
+                        <span
+                          className={cn(
+                            'font-medium text-slate-500 dark:text-slate-400',
+                            option.isCorrect && showCorrectState && themeIconColor
+                          )}
+                        >
                           {getAnswerLabel(index)}.
                         </span>
-                        <span className="truncate">{option.text}</span>
+                        <span
+                          className={cn(
+                            'truncate',
+                            option.isCorrect && showCorrectState && themeIconColor
+                          )}
+                        >
+                          {option.text}
+                        </span>
                       </div>
                     </div>
                     {!readOnly ? (
@@ -316,7 +337,10 @@ export function QuestionAnswerOptions({
                         </span>
                         <button
                           type="button"
-                          onClick={() => removeOption(option.id)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            removeOption(option.id);
+                          }}
                           className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-black/5 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
                           aria-label={`Remove option ${getAnswerLabel(index)}`}
                         >

@@ -178,7 +178,7 @@ export function XPillSelect(props: XPillSelectProps) {
           toggleOpen();
         }}
         className={cn(
-          'flex min-h-11 w-full items-center justify-between gap-3 rounded-full border border-black/10 bg-white px-4 py-2.5 text-left transition dark:border-white/10 dark:bg-slate-950',
+          'flex min-h-11 w-full items-center justify-between gap-3 rounded-full border border-black/10 px-4 py-2.5 text-left transition dark:border-white/10',
           !disabled && 'cursor-pointer',
           !disabled && (hovered || open) && themeBorderColor,
           disabled && 'cursor-not-allowed opacity-60'
@@ -225,7 +225,7 @@ export function XPillSelect(props: XPillSelectProps) {
           role="listbox"
           aria-multiselectable={props.mode === 'multiple' ? true : undefined}
           className={cn(
-            'absolute left-0 right-0 top-[calc(100%+0.375rem)] z-50 space-y-3 rounded-3xl border border-black/10 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-slate-950',
+            'absolute left-0 right-0 top-[calc(100%+0.375rem)] z-50 space-y-3 rounded-3xl border border-black/10 bg-neutral-100 p-4 shadow-xl dark:border-white/10 dark:bg-neutral-900',
             open && themeBorderColor
           )}
         >
@@ -243,7 +243,7 @@ export function XPillSelect(props: XPillSelectProps) {
               }}
               disabled={disabled}
               placeholder={inputPlaceholder}
-              className="w-full rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
+              className="w-full rounded-full border border-black/10 px-4 py-2.5 text-sm text-slate-700 outline-none transition focus:border-purple-400 dark:border-white/10 dark:text-white"
             />
           ) : null}
 

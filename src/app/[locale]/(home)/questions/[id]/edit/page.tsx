@@ -27,7 +27,7 @@ export default async function EditQuestionPage({
         locale={locale}
         mode="edit"
         id={id}
-        copy={{
+        usb={{
           noticeCreate: t('notice'),
           noticeEdit: t('notice'),
           loading: t('status.loading'),

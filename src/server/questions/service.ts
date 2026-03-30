@@ -222,7 +222,7 @@ function buildQuestionWhereInput(params: QuestionListParams): Prisma.UsbWhereInp
 function buildQuestionCreateInput(input: QuestionUpsertInput, userId: string): Prisma.UsbUncheckedCreateInput {
   const difficulty = normalizeDifficulty(input.difficulty);
   const category = normalizeCategory(input.category);
-  const subCategory = normalizeSubCategory(input.subCategory);
+  const subCategory = input.subCategory ? normalizeSubCategory(input.subCategory) : null;
 
   if (!difficulty) {
     throw new Error(`Invalid difficulty: ${input.difficulty}`);
@@ -230,10 +230,6 @@ function buildQuestionCreateInput(input: QuestionUpsertInput, userId: string): P
 
   if (!category) {
     throw new Error(`Invalid category: ${input.category}`);
-  }
-
-  if (!subCategory) {
-    throw new Error(`Invalid subCategory: ${input.subCategory}`);
   }
 
   return {
@@ -246,7 +242,7 @@ function buildQuestionCreateInput(input: QuestionUpsertInput, userId: string): P
     explanation: input.explanation.trim(),
     difficulty,
     category,
-    subCategory,
+    subCategory: subCategory ?? null,
     asFirst: input.isFirst ? 1 : 0,
     tags: stringifyTags(input.tags),
     keywords: normalizeStringArray(input.keywords),
@@ -258,7 +254,7 @@ function buildQuestionCreateInput(input: QuestionUpsertInput, userId: string): P
 function buildQuestionUpdateInput(input: QuestionUpsertInput, userId: string): Prisma.UsbUncheckedUpdateInput {
   const difficulty = normalizeDifficulty(input.difficulty);
   const category = normalizeCategory(input.category);
-  const subCategory = normalizeSubCategory(input.subCategory);
+  const subCategory = input.subCategory ? normalizeSubCategory(input.subCategory) : null;
 
   if (!difficulty) {
     throw new Error(`Invalid difficulty: ${input.difficulty}`);
@@ -266,10 +262,6 @@ function buildQuestionUpdateInput(input: QuestionUpsertInput, userId: string): P
 
   if (!category) {
     throw new Error(`Invalid category: ${input.category}`);
-  }
-
-  if (!subCategory) {
-    throw new Error(`Invalid subCategory: ${input.subCategory}`);
   }
 
   return {
@@ -281,7 +273,7 @@ function buildQuestionUpdateInput(input: QuestionUpsertInput, userId: string): P
     explanation: input.explanation.trim(),
     difficulty,
     category,
-    subCategory,
+    subCategory: subCategory ?? null,
     asFirst: input.isFirst ? 1 : 0,
     tags: stringifyTags(input.tags),
     keywords: normalizeStringArray(input.keywords),
@@ -400,14 +392,13 @@ export function validateQuestionImportItem(item: Record<string, unknown>, index:
 
   if (!question) errors.push('question is required');
   if (!category) errors.push(`category must be one of: ${QUESTION_CATEGORIES.join(', ')}`);
-  if (!subCategory) errors.push(`subCategory must be one of: ${QUESTION_SUB_CATEGORIES.join(', ')}`);
   if (!difficulty) errors.push(`difficulty must be one of: ${QUESTION_DIFFICULTIES.join(', ')}`);
   if (!correctAnswer) errors.push('correctAnswer is required');
   if (!explanation) errors.push('explanation is required');
   if (incorrectAnswers.length === 0) errors.push('incorrectAnswers must contain at least one answer');
 
   const payload: QuestionUpsertInput | null =
-    errors.length === 0 && category && difficulty && subCategory
+    errors.length === 0 && category && difficulty
       ? {
           question,
           cdnImagePrefix: normalizeNullableString(typeof item.cdnImagePrefix === 'string' ? item.cdnImagePrefix : null),
@@ -430,7 +421,7 @@ export function validateQuestionImportItem(item: Record<string, unknown>, index:
     errors,
     question,
     category: category ?? '',
-    subCategory: subCategory ?? '',
+    subCategory,
     difficulty: difficulty ?? '',
     tags,
     keywords,

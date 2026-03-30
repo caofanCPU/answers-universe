@@ -5,7 +5,7 @@ export function QuestionListSkeleton() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 rounded-3xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-slate-950 md:grid-cols-4">
+      <div className="grid gap-4 rounded-3xl border border-black/10 p-5 dark:border-white/10 md:grid-cols-4">
         <div className="rounded-2xl bg-slate-100 p-4 dark:bg-white/5">
           <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Keyword</div>
           <div className="mt-2 h-10 rounded-xl border border-dashed border-slate-300 dark:border-white/10" />
@@ -28,7 +28,7 @@ export function QuestionListSkeleton() {
         {cards.map((card) => (
           <div
             key={card}
-            className="rounded-3xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-slate-950"
+            className="rounded-3xl border border-black/10 p-5 dark:border-white/10"
           >
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div className="space-y-3">
@@ -66,7 +66,7 @@ export function QuestionListSkeleton() {
 export function QuestionDetailSkeleton() {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="space-y-6 rounded-3xl border border-black/10 bg-white p-6 dark:border-white/10 dark:bg-slate-950">
+      <div className="space-y-6 rounded-3xl border border-black/10 p-6 dark:border-white/10">
         <div className="space-y-3">
           <div className="h-8 w-2/5 rounded-full bg-slate-100 dark:bg-white/5" />
           <div className="h-5 w-full rounded-full bg-slate-100 dark:bg-white/5" />
@@ -82,7 +82,7 @@ export function QuestionDetailSkeleton() {
           <div className="h-12 rounded-2xl bg-slate-100 dark:bg-white/5" />
         </div>
       </div>
-      <div className="space-y-4 rounded-3xl border border-black/10 bg-white p-6 dark:border-white/10 dark:bg-slate-950">
+      <div className="space-y-4 rounded-3xl border border-black/10 p-6 dark:border-white/10">
         <div className="h-6 w-1/2 rounded-full bg-slate-100 dark:bg-white/5" />
         <div className="h-16 rounded-2xl bg-slate-100 dark:bg-white/5" />
         <div className="h-16 rounded-2xl bg-slate-100 dark:bg-white/5" />
@@ -95,7 +95,7 @@ export function QuestionDetailSkeleton() {
 export function QuestionEditorSkeleton({ mode }: { mode: 'create' | 'edit' }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
-      <div className="space-y-5 rounded-3xl border border-black/10 bg-white p-6 dark:border-white/10 dark:bg-slate-950">
+      <div className="space-y-5 rounded-3xl border border-black/10 p-6 dark:border-white/10">
         <div className="rounded-2xl bg-slate-50 p-4 dark:bg-white/5">
           <div className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
             {mode === 'create' ? 'Create' : 'Edit'}
@@ -121,7 +121,7 @@ export function QuestionEditorSkeleton({ mode }: { mode: 'create' | 'edit' }) {
           <div className="mt-3 h-24 rounded-2xl border border-dashed border-slate-300 dark:border-white/10" />
         </div>
       </div>
-      <div className="space-y-4 rounded-3xl border border-black/10 bg-white p-6 dark:border-white/10 dark:bg-slate-950">
+      <div className="space-y-4 rounded-3xl border border-black/10 p-6 dark:border-white/10">
         <div className="flex items-center justify-between">
           <div className="text-lg font-semibold text-slate-900 dark:text-white">Preview</div>
           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 dark:bg-white/5 dark:text-slate-300">
