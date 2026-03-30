@@ -26,6 +26,6 @@ export type QuestionFormValues = {
   difficulty: string;
   category: string;
   subCategory: string;
-  tagsText: string;
+  tags: string[];
   isFirst: boolean;
 };

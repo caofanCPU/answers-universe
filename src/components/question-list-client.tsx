@@ -7,6 +7,18 @@ import type { QuestionListItemDto } from '@/server/questions/types';
 
 type QuestionListClientProps = {
   locale: string;
+  copy: {
+    filters: {
+      categoryLabel: string;
+      categoryAll: string;
+      subCategoryLabel: string;
+      subCategoryAll: string;
+      difficultyLabel: string;
+      difficultyAll: string;
+    };
+    loading: string;
+    loadFailed: string;
+  };
 };
 
 type ListState = {
@@ -29,7 +41,7 @@ function buildQuery(params: {
   return searchParams.toString();
 }
 
-export function QuestionListClient({ locale }: QuestionListClientProps) {
+export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
   const [category, setCategory] = useState('');
   const [subCategory, setSubCategory] = useState('');
   const [difficulty, setDifficulty] = useState('');
@@ -85,15 +97,13 @@ export function QuestionListClient({ locale }: QuestionListClientProps) {
     return () => controller.abort();
   }, [queryString]);
 
-  const isZh = locale === 'zh';
-
   return (
     <div className="space-y-6">
       <QuestionListFilters
-        locale={locale}
         category={category}
         subCategory={subCategory}
         difficulty={difficulty}
+        copy={copy.filters}
         onCategoryChange={setCategory}
         onSubCategoryChange={setSubCategory}
         onDifficultyChange={setDifficulty}
@@ -101,13 +111,13 @@ export function QuestionListClient({ locale }: QuestionListClientProps) {
 
       {state.loading ? (
         <div className="rounded-3xl border border-black/10 bg-white px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:bg-slate-950 dark:text-slate-400">
-          {isZh ? '正在加载题目列表...' : 'Loading questions...'}
+          {copy.loading}
         </div>
       ) : null}
 
       {state.error ? (
         <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-5 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
-          {isZh ? '列表加载失败：' : 'Failed to load questions: '}
+          {copy.loadFailed}
           {state.error}
         </div>
       ) : null}

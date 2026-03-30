@@ -414,6 +414,24 @@
         "description": "The questions index is now connected to the list API. Category, sub category and difficulty filters are active. Pagination refinements can follow later.",
         "actions": {
           "create": "Create Question"
+        },
+        "filters": {
+          "category": {
+            "label": "Category",
+            "all": "All categories"
+          },
+          "subCategory": {
+            "label": "Sub Category",
+            "all": "All sub categories"
+          },
+          "difficulty": {
+            "label": "Difficulty",
+            "all": "All difficulties"
+          }
+        },
+        "status": {
+          "loading": "Loading questions...",
+          "loadFailed": "Failed to load questions: "
         }
       },
       "questionsImport": {
@@ -435,15 +453,58 @@
         "title": "Create Question",
         "description": "The create page is now connected to the create API. You can edit the form, preview the result live, and redirect to the new detail page after saving.",
         "actions": {
-          "backToList": "Back to List"
+          "backToList": "Back to List",
+          "submit": "Create Question"
+        },
+        "notice": "Create mode is wired to the create API. Successful save will redirect to the detail page.",
+        "status": {
+          "loading": "Loading question data...",
+          "submitFailed": "Submit failed: ",
+          "saving": "Saving..."
         }
       },
       "questionEdit": {
         "title": "Edit Question #{id}",
         "description": "The edit page is now connected to detail loading and the update API. It loads the question first, then lets you edit and return to the detail page.",
         "actions": {
-          "backToDetail": "Back to Detail"
+          "backToDetail": "Back to Detail",
+          "submit": "Update Question"
+        },
+        "notice": "Edit mode is wired to detail loading and update API. Successful save will redirect to the detail page.",
+        "status": {
+          "loading": "Loading question data...",
+          "submitFailed": "Submit failed: ",
+          "saving": "Saving..."
         }
+      },
+      "questionForm": {
+        "question": "Question",
+        "category": {
+          "label": "Category",
+          "empty": "Select category"
+        },
+        "subCategory": {
+          "label": "Sub Category",
+          "empty": "Select sub category"
+        },
+        "difficulty": {
+          "label": "Difficulty",
+          "empty": "Select difficulty"
+        },
+        "tags": {
+          "label": "Tags",
+          "placeholder": "Type a tag and press Enter",
+          "empty": "Enter multiple tags and press Enter to create pills"
+        },
+        "correctAnswer": "Correct Answer",
+        "incorrectAnswers": {
+          "label": "Incorrect Answers",
+          "placeholder": "One incorrect answer per line"
+        },
+        "explanation": "Explanation",
+        "cdnImagePrefix": "CDN Prefix",
+        "questionImage": "Image Path",
+        "isFirst": "Mark as first-release question"
       }
     }
 }

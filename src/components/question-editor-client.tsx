@@ -12,6 +12,34 @@ type QuestionEditorClientProps = {
   locale: string;
   mode: 'create' | 'edit';
   id?: string;
+  copy: {
+    noticeCreate: string;
+    noticeEdit: string;
+    loading: string;
+    submitFailed: string;
+    saving: string;
+    createButton: string;
+    updateButton: string;
+    form: {
+      question: string;
+      categoryLabel: string;
+      categoryEmpty: string;
+      subCategoryLabel: string;
+      subCategoryEmpty: string;
+      difficultyLabel: string;
+      difficultyEmpty: string;
+      tagsLabel: string;
+      tagsPlaceholder: string;
+      tagsEmpty: string;
+      correctAnswer: string;
+      incorrectAnswersLabel: string;
+      incorrectAnswersPlaceholder: string;
+      explanation: string;
+      cdnImagePrefix: string;
+      questionImage: string;
+      isFirst: string;
+    };
+  };
 };
 
 function emptyFormValues(): QuestionFormValues {
@@ -25,7 +53,7 @@ function emptyFormValues(): QuestionFormValues {
     difficulty: '',
     category: '',
     subCategory: '',
-    tagsText: '',
+    tags: [],
     isFirst: false,
   };
 }
@@ -41,7 +69,7 @@ function detailToFormValues(detail: QuestionDetailDto): QuestionFormValues {
     difficulty: detail.difficulty,
     category: detail.category,
     subCategory: detail.subCategory,
-    tagsText: detail.tags.join(', '),
+    tags: detail.tags,
     isFirst: detail.isFirst,
   };
 }
@@ -60,10 +88,7 @@ function formValuesToPayload(values: QuestionFormValues): QuestionUpsertInput {
     difficulty: values.difficulty.trim(),
     category: values.category.trim(),
     subCategory: values.subCategory.trim(),
-    tags: values.tagsText
-      .split(/[,，|]+/)
-      .map((item) => item.trim())
-      .filter(Boolean),
+    tags: values.tags,
     isFirst: values.isFirst,
   };
 }
@@ -94,7 +119,7 @@ function formValuesToPreview(values: QuestionFormValues): QuestionViewModel {
   };
 }
 
-export function QuestionEditorClient({ locale, mode, id }: QuestionEditorClientProps) {
+export function QuestionEditorClient({ locale, mode, id, copy }: QuestionEditorClientProps) {
   const router = useRouter();
   const [values, setValues] = useState<QuestionFormValues>(emptyFormValues());
   const [loading, setLoading] = useState(mode === 'edit');
@@ -141,8 +166,6 @@ export function QuestionEditorClient({ locale, mode, id }: QuestionEditorClientP
   }, [id, mode]);
 
   const previewQuestion = useMemo(() => formValuesToPreview(values), [values]);
-  const isZh = locale === 'zh';
-
   async function onSubmit() {
     setSaving(true);
     setError(null);
@@ -178,25 +201,19 @@ export function QuestionEditorClient({ locale, mode, id }: QuestionEditorClientP
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
       <div className="space-y-4">
         <div className="rounded-3xl border border-dashed border-purple-300/60 bg-linear-to-r from-purple-50 to-pink-50 px-4 py-3 text-sm text-slate-700 dark:border-purple-400/30 dark:from-purple-500/10 dark:to-pink-500/10 dark:text-slate-200">
-          {mode === 'create'
-            ? isZh
-              ? '当前页面已接入创建接口，保存后会跳转到题目详情页。'
-              : 'Create mode is wired to the create API. Successful save will redirect to the detail page.'
-            : isZh
-              ? '当前页面已接入详情加载和更新接口，保存后会跳转到题目详情页。'
-              : 'Edit mode is wired to detail loading and update API. Successful save will redirect to the detail page.'}
+          {mode === 'create' ? copy.noticeCreate : copy.noticeEdit}
         </div>
 
         {loading ? (
           <div className="rounded-3xl border border-black/10 bg-white px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:bg-slate-950 dark:text-slate-400">
-            {isZh ? '正在加载题目数据...' : 'Loading question data...'}
+            {copy.loading}
           </div>
         ) : (
           <>
-            <QuestionForm locale={locale} values={values} onChange={setValues} />
+            <QuestionForm values={values} onChange={setValues} copy={copy.form} />
             {error ? (
               <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
-                {isZh ? '提交失败：' : 'Submit failed: '}
+                {copy.submitFailed}
                 {error}
               </div>
             ) : null}
@@ -207,17 +224,7 @@ export function QuestionEditorClient({ locale, mode, id }: QuestionEditorClientP
                 disabled={saving}
                 className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-purple-400 to-pink-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {saving
-                  ? isZh
-                    ? '提交中...'
-                    : 'Saving...'
-                  : mode === 'create'
-                    ? isZh
-                      ? '保存题目'
-                      : 'Create Question'
-                    : isZh
-                      ? '更新题目'
-                      : 'Update Question'}
+                {saving ? copy.saving : mode === 'create' ? copy.createButton : copy.updateButton}
               </button>
             </div>
           </>

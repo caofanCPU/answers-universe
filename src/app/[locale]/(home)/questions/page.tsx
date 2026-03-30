@@ -23,7 +23,21 @@ export default async function QuestionsPage({
         },
       ]}
     >
-      <QuestionListClient locale={locale} />
+      <QuestionListClient
+        locale={locale}
+        copy={{
+          filters: {
+            categoryLabel: t('filters.category.label'),
+            categoryAll: t('filters.category.all'),
+            subCategoryLabel: t('filters.subCategory.label'),
+            subCategoryAll: t('filters.subCategory.all'),
+            difficultyLabel: t('filters.difficulty.label'),
+            difficultyAll: t('filters.difficulty.all'),
+          },
+          loading: t('status.loading'),
+          loadFailed: t('status.loadFailed'),
+        }}
+      />
     </QuestionPageShell>
   );
 }

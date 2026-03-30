@@ -10,6 +10,7 @@ export default async function NewQuestionPage({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'faqPage.questionCreate' });
+  const formT = await getTranslations({ locale, namespace: 'faqPage.questionForm' });
 
   return (
     <QuestionPageShell
@@ -22,7 +23,38 @@ export default async function NewQuestionPage({
         },
       ]}
     >
-      <QuestionEditorClient locale={locale} mode="create" />
+      <QuestionEditorClient
+        locale={locale}
+        mode="create"
+        copy={{
+          noticeCreate: t('notice'),
+          noticeEdit: t('notice'),
+          loading: t('status.loading'),
+          submitFailed: t('status.submitFailed'),
+          saving: t('status.saving'),
+          createButton: t('actions.submit'),
+          updateButton: t('actions.submit'),
+          form: {
+            question: formT('question'),
+            categoryLabel: formT('category.label'),
+            categoryEmpty: formT('category.empty'),
+            subCategoryLabel: formT('subCategory.label'),
+            subCategoryEmpty: formT('subCategory.empty'),
+            difficultyLabel: formT('difficulty.label'),
+            difficultyEmpty: formT('difficulty.empty'),
+            tagsLabel: formT('tags.label'),
+            tagsPlaceholder: formT('tags.placeholder'),
+            tagsEmpty: formT('tags.empty'),
+            correctAnswer: formT('correctAnswer'),
+            incorrectAnswersLabel: formT('incorrectAnswers.label'),
+            incorrectAnswersPlaceholder: formT('incorrectAnswers.placeholder'),
+            explanation: formT('explanation'),
+            cdnImagePrefix: formT('cdnImagePrefix'),
+            questionImage: formT('questionImage'),
+            isFirst: formT('isFirst'),
+          },
+        }}
+      />
     </QuestionPageShell>
   );
 }

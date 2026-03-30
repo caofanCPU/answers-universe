@@ -21,6 +21,7 @@ export async function Hero({ locale }: { locale: string }) {
         <GradientButton
           title={t('button')}
           href={viewQuestionsListHref}
+          openInNewTab={false}
           align="center"
           className="md:w-full"
         />

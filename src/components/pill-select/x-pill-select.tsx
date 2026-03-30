@@ -1,0 +1,251 @@
+'use client';
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { themeBgColor, themeBorderColor, themeIconColor, themeRingColor } from '@windrun-huaiin/base-ui/lib';
+import { cn } from '@windrun-huaiin/lib/utils';
+
+export type XPillOption = {
+  label: string;
+  value: string;
+};
+
+type XPillSelectBaseProps = {
+  options?: XPillOption[];
+  disabled?: boolean;
+  className?: string;
+  pillClassName?: string;
+  emptyLabel?: string;
+  maxPillWidthClassName?: string;
+  inputEnabled?: boolean;
+  inputPlaceholder?: string;
+  onInputTransform?: (value: string) => string;
+};
+
+type XPillSelectSingleProps = XPillSelectBaseProps & {
+  mode: 'single';
+  value: string;
+  onChange: (value: string) => void;
+  allowClear?: boolean;
+};
+
+type XPillSelectMultipleProps = XPillSelectBaseProps & {
+  mode: 'multiple';
+  value: string[];
+  onChange: (value: string[]) => void;
+  allowClear?: boolean;
+};
+
+export type XPillSelectProps = XPillSelectSingleProps | XPillSelectMultipleProps;
+
+function sanitizeInputValue(value: string): string {
+  return value.replaceAll(',', '').trim();
+}
+
+function dedupeValues(values: string[]): string[] {
+  return Array.from(new Set(values.map((item) => item.trim()).filter(Boolean)));
+}
+
+export function XPillSelect(props: XPillSelectProps) {
+  const {
+    options = [],
+    disabled = false,
+    className,
+    pillClassName,
+    emptyLabel,
+    maxPillWidthClassName = 'max-w-[180px] sm:max-w-[220px]',
+    inputEnabled = false,
+    inputPlaceholder,
+    onInputTransform,
+  } = props;
+
+  const [draftValue, setDraftValue] = useState('');
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  const normalizedOptions = useMemo(
+    () => options.map((option) => ({ ...option, value: option.value.trim() })).filter((option) => option.value),
+    [options]
+  );
+
+  const selectedValues = props.mode === 'single' ? (props.value ? [props.value] : []) : dedupeValues(props.value);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    if (open) {
+      document.addEventListener('mousedown', handlePointerDown);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+    };
+  }, [open]);
+
+  function isSelected(optionValue: string) {
+    return selectedValues.includes(optionValue);
+  }
+
+  function commitInputValue(rawValue: string) {
+    if (!inputEnabled || disabled) {
+      return;
+    }
+
+    const nextValue = sanitizeInputValue(onInputTransform ? onInputTransform(rawValue) : rawValue);
+
+    if (!nextValue) {
+      setDraftValue('');
+      return;
+    }
+
+    if (props.mode === 'single') {
+      props.onChange(nextValue);
+    } else {
+      props.onChange(dedupeValues([...selectedValues, nextValue]));
+    }
+
+    setDraftValue('');
+  }
+
+  function toggleValue(nextValue: string) {
+    if (disabled) {
+      return;
+    }
+
+    if (props.mode === 'single') {
+      if (props.allowClear && props.value === nextValue) {
+        props.onChange('');
+        setOpen(false);
+        return;
+      }
+
+      props.onChange(nextValue);
+      setOpen(false);
+      return;
+    }
+
+    if (selectedValues.includes(nextValue)) {
+      props.onChange(selectedValues.filter((item) => item !== nextValue));
+      return;
+    }
+
+    props.onChange([...selectedValues, nextValue]);
+  }
+
+  function removeValue(nextValue: string) {
+    if (disabled) {
+      return;
+    }
+
+    if (props.mode === 'single') {
+      props.onChange('');
+      return;
+    }
+
+    props.onChange(selectedValues.filter((item) => item !== nextValue));
+  }
+
+  return (
+    <div ref={rootRef} className={cn('relative', className)}>
+      <button
+        type="button"
+        onClick={() => !disabled && setOpen((current) => !current)}
+        disabled={disabled}
+        className={cn(
+          'flex min-h-11 w-full items-center justify-between gap-3 rounded-full border border-black/10 bg-white px-4 py-2.5 text-left transition hover:border-black/20 dark:border-white/10 dark:bg-slate-950 dark:hover:border-white/20',
+          open && [themeBorderColor, themeRingColor, 'ring-4'],
+          disabled && 'cursor-not-allowed opacity-60'
+        )}
+      >
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          {selectedValues.length > 0 ? (
+            selectedValues.map((selectedValue) => {
+              const optionLabel = normalizedOptions.find((option) => option.value === selectedValue)?.label ?? selectedValue;
+
+              return (
+                <button
+                  key={selectedValue}
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    removeValue(selectedValue);
+                  }}
+                  disabled={disabled}
+                  className={cn(
+                    'inline-flex max-w-full items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition',
+                    themeBgColor,
+                    themeIconColor,
+                    'hover:brightness-95 dark:hover:brightness-110',
+                    disabled && 'cursor-not-allowed opacity-60'
+                  )}
+                  title={optionLabel}
+                >
+                  <span className={cn('truncate', maxPillWidthClassName)}>{optionLabel}</span>
+                </button>
+              );
+            })
+          ) : (
+            <span className="text-sm text-slate-500 dark:text-slate-400">{emptyLabel}</span>
+          )}
+        </div>
+        <ChevronDown
+          className={cn('h-4 w-4 shrink-0 text-slate-500 transition-transform dark:text-slate-400', open && 'rotate-180')}
+        />
+      </button>
+
+      {open ? (
+        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 space-y-3 rounded-3xl border border-black/10 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-slate-950">
+          {inputEnabled ? (
+            <input
+              value={draftValue}
+              onChange={(event) => setDraftValue(event.target.value.replaceAll(',', ''))}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter') {
+                  return;
+                }
+
+                event.preventDefault();
+                commitInputValue(draftValue);
+              }}
+              disabled={disabled}
+              placeholder={inputPlaceholder}
+              className="w-full rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
+            />
+          ) : null}
+
+          {normalizedOptions.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {normalizedOptions.map((option) => {
+                const active = isSelected(option.value);
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => toggleValue(option.value)}
+                    disabled={disabled}
+                    className={cn(
+                      'inline-flex items-center justify-center rounded-full border px-4 py-2 text-xs font-semibold transition-colors',
+                      'bg-neutral-200 text-neutral-700 hover:bg-neutral-300 dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700',
+                      active &&
+                        [themeBgColor, themeBorderColor, themeIconColor],
+                      disabled && 'cursor-not-allowed opacity-60',
+                      pillClassName
+                    )}
+                    title={option.label}
+                  >
+                    <span className={cn('truncate', maxPillWidthClassName)}>{option.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
