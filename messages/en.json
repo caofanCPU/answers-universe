@@ -496,10 +496,14 @@
           "placeholder": "Type a tag and press Enter",
           "empty": "Enter multiple tags and press Enter to create pills"
         },
-        "correctAnswer": "Correct Answer",
-        "incorrectAnswers": {
-          "label": "Incorrect Answers",
-          "placeholder": "One incorrect answer per line"
+        "answers": {
+          "label": "Answers",
+          "placeholder": "Type an answer and press Enter",
+          "empty": "No answers yet. Add one above.",
+          "expand": "Expand answers",
+          "collapse": "Collapse answers",
+          "correctPrefix": "Correct:",
+          "noCorrect": "No correct answer selected"
         },
         "explanation": "Explanation",
         "cdnImagePrefix": "CDN Prefix",

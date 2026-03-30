@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 import { themeBgColor, themeBorderColor, themeIconColor, themeRingColor } from '@windrun-huaiin/base-ui/lib';
 import { cn } from '@windrun-huaiin/lib/utils';
 
@@ -76,7 +76,7 @@ export function XTokenInput({
           setFocused(false);
         }}
         className={cn(
-          'min-h-11 rounded-3xl border border-black/10 bg-white px-3 py-2.5 transition dark:border-white/10 dark:bg-slate-950',
+          'min-h-11 rounded-3xl border border-black/10 bg-white px-4 py-2.5 transition dark:border-white/10 dark:bg-slate-950',
           focused && themeBorderColor
         )}
       >
@@ -111,7 +111,7 @@ export function XTokenInput({
                         disabled && 'cursor-not-allowed'
                       )}
                     >
-                      <X className="h-2.5 w-2.5" />
+                      <icons.X className="h-2.5 w-2.5" />
                     </button>
                   </span>
                 </li>
@@ -145,7 +145,7 @@ export function XTokenInput({
               disabled={disabled}
               placeholder={tokens.length === 0 ? placeholder : undefined}
               className={cn(
-                'bg-transparent px-1 py-1 text-sm text-slate-700 outline-none dark:text-white',
+                'bg-transparent py-0.5 text-sm text-slate-700 outline-none dark:text-white',
                 tokens.length === 0 || draftValue || focused ? 'w-full' : 'w-0'
               )}
             />

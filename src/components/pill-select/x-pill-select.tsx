@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 import { themeBgColor, themeBorderColor, themeIconColor } from '@windrun-huaiin/base-ui/lib';
 import { cn } from '@windrun-huaiin/lib/utils';
 
@@ -215,7 +215,7 @@ export function XPillSelect(props: XPillSelectProps) {
             <span className="text-sm text-slate-500 dark:text-slate-400">{emptyLabel}</span>
           )}
         </div>
-        <ChevronDown
+        <icons.ChevronDown
           className={cn('h-4 w-4 shrink-0 text-slate-500 transition-transform dark:text-slate-400', open && 'rotate-180')}
         />
       </div>

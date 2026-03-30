@@ -480,10 +480,14 @@
           "placeholder": "输入标签后按回车",
           "empty": "可输入多个标签，按回车生成胶囊"
         },
-        "correctAnswer": "正确答案",
-        "incorrectAnswers": {
-          "label": "错误答案",
-          "placeholder": "每行一个错误答案"
+        "answers": {
+          "label": "答案",
+          "placeholder": "输入答案后按回车添加",
+          "empty": "还没有答案，请先在上方添加。",
+          "expand": "展开答案",
+          "collapse": "折叠答案",
+          "correctPrefix": "正确答案：",
+          "noCorrect": "尚未选择正确答案"
         },
         "explanation": "解析",
         "cdnImagePrefix": "图片前缀",

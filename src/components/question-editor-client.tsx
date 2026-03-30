@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
+import {
+  buildAnswerOptionDrafts,
+  splitAnswerOptionDrafts,
+  type QuestionAnswerOptionDraft,
+} from './question-answer-options';
 import { QuestionForm } from './question-form';
 import { QuestionPreview } from './question-preview';
 import type { QuestionDetailDto, QuestionUpsertInput } from '@/server/questions/types';
@@ -22,6 +27,13 @@ type QuestionEditorClientProps = {
     updateButton: string;
     form: {
       question: string;
+      answersLabel: string;
+      answersPlaceholder: string;
+      answersEmpty: string;
+      answersExpand: string;
+      answersCollapse: string;
+      answersCorrectPrefix: string;
+      answersNoCorrect: string;
       categoryLabel: string;
       categoryEmpty: string;
       subCategoryLabel: string;
@@ -31,9 +43,6 @@ type QuestionEditorClientProps = {
       tagsLabel: string;
       tagsPlaceholder: string;
       tagsEmpty: string;
-      correctAnswer: string;
-      incorrectAnswersLabel: string;
-      incorrectAnswersPlaceholder: string;
       explanation: string;
       cdnImagePrefix: string;
       questionImage: string;
@@ -58,6 +67,10 @@ function emptyFormValues(): QuestionFormValues {
   };
 }
 
+function detailToAnswerOptions(detail: QuestionDetailDto): QuestionAnswerOptionDraft[] {
+  return buildAnswerOptionDrafts(detail.correctAnswer, detail.incorrectAnswers);
+}
+
 function detailToFormValues(detail: QuestionDetailDto): QuestionFormValues {
   return {
     question: detail.question,
@@ -74,16 +87,18 @@ function detailToFormValues(detail: QuestionDetailDto): QuestionFormValues {
   };
 }
 
-function formValuesToPayload(values: QuestionFormValues): QuestionUpsertInput {
+function formValuesToPayload(
+  values: QuestionFormValues,
+  answerOptions: QuestionAnswerOptionDraft[]
+): QuestionUpsertInput {
+  const answers = splitAnswerOptionDrafts(answerOptions);
+
   return {
     question: values.question.trim(),
     cdnImagePrefix: values.cdnImagePrefix.trim() || null,
     questionImage: values.questionImage.trim() || null,
-    correctAnswer: values.correctAnswer.trim(),
-    incorrectAnswers: values.incorrectAnswersText
-      .split('\n')
-      .map((item) => item.trim())
-      .filter(Boolean),
+    correctAnswer: answers.correctAnswer.trim(),
+    incorrectAnswers: answers.incorrectAnswers,
     explanation: values.explanation.trim(),
     difficulty: values.difficulty.trim(),
     category: values.category.trim(),
@@ -93,8 +108,11 @@ function formValuesToPayload(values: QuestionFormValues): QuestionUpsertInput {
   };
 }
 
-function formValuesToPreview(values: QuestionFormValues): QuestionViewModel {
-  const payload = formValuesToPayload(values);
+function formValuesToPreview(
+  values: QuestionFormValues,
+  answerOptions: QuestionAnswerOptionDraft[]
+): QuestionViewModel {
+  const payload = formValuesToPayload(values, answerOptions);
   const questionImageUrl =
     payload.questionImage && payload.cdnImagePrefix
       ? `${payload.cdnImagePrefix.replace(/\/$/, '')}/${payload.questionImage.replace(/^\//, '')}`
@@ -122,6 +140,7 @@ function formValuesToPreview(values: QuestionFormValues): QuestionViewModel {
 export function QuestionEditorClient({ locale, mode, id, copy }: QuestionEditorClientProps) {
   const router = useRouter();
   const [values, setValues] = useState<QuestionFormValues>(emptyFormValues());
+  const [answerOptions, setAnswerOptions] = useState<QuestionAnswerOptionDraft[]>([]);
   const [loading, setLoading] = useState(mode === 'edit');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -150,6 +169,7 @@ export function QuestionEditorClient({ locale, mode, id, copy }: QuestionEditorC
 
         const data = (await response.json()) as QuestionDetailDto;
         setValues(detailToFormValues(data));
+        setAnswerOptions(detailToAnswerOptions(data));
         setLoading(false);
       } catch (error) {
         if (controller.signal.aborted) {
@@ -165,13 +185,13 @@ export function QuestionEditorClient({ locale, mode, id, copy }: QuestionEditorC
     return () => controller.abort();
   }, [id, mode]);
 
-  const previewQuestion = useMemo(() => formValuesToPreview(values), [values]);
+  const previewQuestion = useMemo(() => formValuesToPreview(values, answerOptions), [answerOptions, values]);
   async function onSubmit() {
     setSaving(true);
     setError(null);
 
     try {
-      const payload = formValuesToPayload(values);
+      const payload = formValuesToPayload(values, answerOptions);
       const url = mode === 'create' ? '/api/questions' : `/api/questions/${id}`;
       const method = mode === 'create' ? 'POST' : 'PUT';
 
@@ -210,7 +230,13 @@ export function QuestionEditorClient({ locale, mode, id, copy }: QuestionEditorC
           </div>
         ) : (
           <>
-            <QuestionForm values={values} onChange={setValues} copy={copy.form} />
+            <QuestionForm
+              values={values}
+              answerOptions={answerOptions}
+              onAnswerOptionsChange={setAnswerOptions}
+              onChange={setValues}
+              copy={copy.form}
+            />
             {error ? (
               <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
                 {copy.submitFailed}

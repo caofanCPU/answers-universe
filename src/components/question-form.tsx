@@ -1,6 +1,7 @@
 'use client';
 
 import type { QuestionFormValues } from './question-ui-types';
+import { QuestionAnswerOptions, type QuestionAnswerOptionDraft } from './question-answer-options';
 import {
   QUESTION_CATEGORIES,
   QUESTION_DIFFICULTIES,
@@ -10,9 +11,18 @@ import { XFormPills, XTokenInput } from '@/components/pill-select';
 
 type QuestionFormProps = {
   values: QuestionFormValues;
+  answerOptions: QuestionAnswerOptionDraft[];
+  onAnswerOptionsChange: (options: QuestionAnswerOptionDraft[]) => void;
   onChange: (next: QuestionFormValues) => void;
   copy: {
     question: string;
+    answersLabel: string;
+    answersPlaceholder: string;
+    answersEmpty: string;
+    answersExpand: string;
+    answersCollapse: string;
+    answersCorrectPrefix: string;
+    answersNoCorrect: string;
     categoryLabel: string;
     categoryEmpty: string;
     subCategoryLabel: string;
@@ -22,9 +32,6 @@ type QuestionFormProps = {
     tagsLabel: string;
     tagsPlaceholder: string;
     tagsEmpty: string;
-    correctAnswer: string;
-    incorrectAnswersLabel: string;
-    incorrectAnswersPlaceholder: string;
     explanation: string;
     cdnImagePrefix: string;
     questionImage: string;
@@ -44,7 +51,7 @@ function updateField(
   });
 }
 
-export function QuestionForm({ values, onChange, copy }: QuestionFormProps) {
+export function QuestionForm({ values, answerOptions, onAnswerOptionsChange, onChange, copy }: QuestionFormProps) {
   const categoryOptions = QUESTION_CATEGORIES.map((option) => ({ label: option, value: option }));
   const subCategoryOptions = QUESTION_SUB_CATEGORIES.map((option) => ({ label: option, value: option }));
   const difficultyOptions = QUESTION_DIFFICULTIES.map((option) => ({ label: option, value: option }));
@@ -63,7 +70,7 @@ export function QuestionForm({ values, onChange, copy }: QuestionFormProps) {
     <form className="space-y-5 rounded-3xl border border-black/10 bg-white p-6 dark:border-white/10 dark:bg-slate-950">
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2 text-sm md:col-span-2">
-          <span className="font-medium text-slate-700 dark:text-slate-200">{copy.question}</span>
+          <div className="font-medium text-slate-700 dark:text-slate-200">{copy.question}</div>
           <textarea
             value={values.question}
             onChange={onInputChange('question')}
@@ -93,7 +100,7 @@ export function QuestionForm({ values, onChange, copy }: QuestionFormProps) {
           emptyLabel={copy.difficultyEmpty}
         />
         <div className="space-y-2 text-sm md:col-span-2">
-          <span className="font-medium text-slate-700 dark:text-slate-200">{copy.tagsLabel}</span>
+          <div className="font-medium text-slate-700 dark:text-slate-200">{copy.tagsLabel}</div>
           <XTokenInput
             value={values.tags}
             onChange={(nextValue) => updateField(values, onChange, 'tags', nextValue)}
@@ -102,25 +109,23 @@ export function QuestionForm({ values, onChange, copy }: QuestionFormProps) {
           />
         </div>
         <label className="space-y-2 text-sm md:col-span-2">
-          <span className="font-medium text-slate-700 dark:text-slate-200">{copy.correctAnswer}</span>
-          <input
-            value={values.correctAnswer}
-            onChange={onInputChange('correctAnswer')}
-            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
+          <div className="font-medium text-slate-700 dark:text-slate-200">{copy.answersLabel}</div>
+          <QuestionAnswerOptions
+            options={answerOptions}
+            onChange={onAnswerOptionsChange}
+            copy={{
+              placeholder: copy.answersPlaceholder,
+              empty: copy.answersEmpty,
+              expand: copy.answersExpand,
+              collapse: copy.answersCollapse,
+              correctPrefix: copy.answersCorrectPrefix,
+              noCorrect: copy.answersNoCorrect,
+            }}
+            showCorrectState
           />
         </label>
         <label className="space-y-2 text-sm md:col-span-2">
-          <span className="font-medium text-slate-700 dark:text-slate-200">{copy.incorrectAnswersLabel}</span>
-          <textarea
-            value={values.incorrectAnswersText}
-            onChange={onInputChange('incorrectAnswersText')}
-            rows={4}
-            placeholder={copy.incorrectAnswersPlaceholder}
-            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
-          />
-        </label>
-        <label className="space-y-2 text-sm md:col-span-2">
-          <span className="font-medium text-slate-700 dark:text-slate-200">{copy.explanation}</span>
+          <div className="font-medium text-slate-700 dark:text-slate-200">{copy.explanation}</div>
           <textarea
             value={values.explanation}
             onChange={onInputChange('explanation')}
@@ -129,19 +134,19 @@ export function QuestionForm({ values, onChange, copy }: QuestionFormProps) {
           />
         </label>
         <label className="space-y-2 text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-200">{copy.cdnImagePrefix}</span>
+          <div className="font-medium text-slate-700 dark:text-slate-200">{copy.cdnImagePrefix}</div>
           <input
             value={values.cdnImagePrefix}
             onChange={onInputChange('cdnImagePrefix')}
-            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
+            className="min-h-11 w-full rounded-2xl border border-black/10 bg-white px-4 py-2.5 outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
           />
         </label>
         <label className="space-y-2 text-sm">
-          <span className="font-medium text-slate-700 dark:text-slate-200">{copy.questionImage}</span>
+          <div className="font-medium text-slate-700 dark:text-slate-200">{copy.questionImage}</div>
           <input
             value={values.questionImage}
             onChange={onInputChange('questionImage')}
-            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
+            className="min-h-11 w-full rounded-2xl border border-black/10 bg-white px-4 py-2.5 outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
           />
         </label>
       </div>
