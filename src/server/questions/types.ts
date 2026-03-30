@@ -7,7 +7,7 @@ export type QuestionListItemDto = {
   difficulty: string;
   tags: string[];
   keywords: string[];
-  isFirst: boolean;
+  asFirst: boolean;
   updatedAt: string | null;
 };
 
@@ -25,7 +25,7 @@ export type QuestionDetailDto = {
   difficulty: string;
   category: string;
   subCategory: string | null;
-  isFirst: boolean;
+  asFirst: boolean;
   tags: string[];
   keywords: string[];
   createdAt: string | null;
@@ -61,7 +61,7 @@ export type QuestionUpsertInput = {
   difficulty: string;
   category: string;
   subCategory?: string | null;
-  isFirst?: boolean;
+  asFirst?: boolean;
   tags?: string[];
   keywords?: string[];
 };

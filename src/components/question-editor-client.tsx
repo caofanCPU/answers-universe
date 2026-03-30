@@ -53,7 +53,7 @@ type QuestionEditorClientProps = {
       explanation: string;
       cdnImagePrefix: string;
       questionImage: string;
-      isFirst: string;
+      asFirst: string;
     };
   };
 };
@@ -108,7 +108,7 @@ function emptyFormValues(): QuestionFormValues {
     category: '',
     subCategory: '',
     tags: [],
-    isFirst: false,
+    asFirst: false,
   };
 }
 
@@ -128,7 +128,7 @@ function detailToFormValues(detail: QuestionDetailDto): QuestionFormValues {
     category: detail.category,
     subCategory: detail.subCategory ?? '',
     tags: detail.tags,
-    isFirst: detail.isFirst,
+    asFirst: detail.asFirst,
   };
 }
 
@@ -150,7 +150,7 @@ function formValuesToPayload(
     category: values.category.trim(),
     subCategory: values.subCategory.trim(),
     tags: values.tags,
-    isFirst: values.isFirst,
+    asFirst: values.asFirst,
   };
 }
 
@@ -174,7 +174,7 @@ function formValuesToPreview(
     category: payload.category || '',
     subCategory: payload.subCategory || null,
     tags: payload.tags ?? [],
-    isFirst: payload.isFirst ?? false,
+    asFirst: payload.asFirst ?? false,
     createdAt: null,
     updatedAt: null,
   };

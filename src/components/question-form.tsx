@@ -38,7 +38,7 @@ type QuestionFormProps = {
     explanation: string;
     cdnImagePrefix: string;
     questionImage: string;
-    isFirst: string;
+    asFirst: string;
   };
 };
 
@@ -96,7 +96,7 @@ export function QuestionForm({
     (field: keyof QuestionFormValues) =>
     (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const value =
-        field === 'isFirst'
+        field === 'asFirst'
           ? (event.target as HTMLInputElement).checked
           : event.target.value;
       updateField(values, onChange, field, value);
@@ -227,11 +227,11 @@ export function QuestionForm({
         <label className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
           <input
             type="checkbox"
-            checked={values.isFirst}
-            onChange={onInputChange('isFirst')}
+            checked={values.asFirst}
+            onChange={onInputChange('asFirst')}
             className="h-4 w-4 rounded border-black/10"
           />
-          <span>{usb.isFirst}</span>
+          <span>{usb.asFirst}</span>
         </label>
       </div>
     </form>

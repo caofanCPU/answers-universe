@@ -72,7 +72,6 @@ Answer-Universe 是一个题库内容管理与查看产品。当前工程已经�
 - `incorrectAnswers` 转为字符串数组
 - `tags` 转为标签数组
 - `cdnImagePrefix + questionImage` 转为完整图片地址
-- `asFirst` 转为布尔值字段，如 `isFirst`
 
 ### 2.4 功能说明
 

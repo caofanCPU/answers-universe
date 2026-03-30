@@ -11,7 +11,7 @@ export type QuestionViewModel = {
   category: string;
   subCategory: string | null;
   tags: string[];
-  isFirst: boolean;
+  asFirst: boolean;
   createdAt?: string | null;
   updatedAt?: string | null;
 };
@@ -27,5 +27,5 @@ export type QuestionFormValues = {
   category: string;
   subCategory: string;
   tags: string[];
-  isFirst: boolean;
+  asFirst: boolean;
 };

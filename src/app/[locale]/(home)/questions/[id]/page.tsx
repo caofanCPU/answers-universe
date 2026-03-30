@@ -63,7 +63,7 @@ export default async function QuestionDetailPage({
             explanation: formT('explanation'),
             cdnImagePrefix: formT('cdnImagePrefix'),
             questionImage: formT('questionImage'),
-            isFirst: formT('isFirst'),
+            asFirst: formT('asFirst'),
           },
         }}
       />

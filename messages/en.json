@@ -413,7 +413,7 @@
         "title": "Questions",
         "description": "The questions index is now connected to the list API. Category, sub category and difficulty filters are active. Pagination refinements can follow later.",
         "actions": {
-          "create": "Create Question"
+          "create": "Create"
         },
         "filters": {
           "category": {
@@ -440,7 +440,7 @@
         }
       },
       "questionsImport": {
-        "title": "JSON Import",
+        "title": "Import",
         "description": "Step one only covers frontend-local JSON parsing and preview. No backend request is sent yet. Once the local preview format is confirmed, the next step will add backend validation and batch commit.",
         "actions": {
           "backToList": "Back to List"
@@ -451,15 +451,15 @@
         "description": "The question detail page is now connected to the detail API. It currently supports question content, option display, answer reveal, explanation and right-side meta information.",
         "actions": {
           "backToList": "Back to List",
-          "edit": "Edit Question"
+          "edit": "Edit"
         }
       },
       "questionCreate": {
-        "title": "Create Question",
+        "title": "Create",
         "description": "The create page is now connected to the create API. You can edit the form, preview the result live, and redirect to the new detail page after saving.",
         "actions": {
           "backToList": "Back to List",
-          "submit": "Create Question"
+          "submit": "Create"
         },
         "notice": "Create mode is wired to the create API. Successful save will redirect to the detail page.",
         "status": {
@@ -473,7 +473,7 @@
         "description": "The edit page is now connected to detail loading and the update API. It loads the question first, then lets you edit and return to the detail page.",
         "actions": {
           "backToDetail": "Back to Detail",
-          "submit": "Update Question"
+          "submit": "Update"
         },
         "notice": "Edit mode is wired to detail loading and update API. Successful save will redirect to the detail page.",
         "status": {
@@ -513,7 +513,7 @@
         "explanation": "Explanation",
         "cdnImagePrefix": "CDN Prefix",
         "questionImage": "Image Path",
-        "isFirst": "Mark as first-release question"
+        "asFirst": "Mark as first-release question"
       }
     }
 }

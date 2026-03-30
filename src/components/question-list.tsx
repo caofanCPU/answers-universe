@@ -35,7 +35,7 @@ export function QuestionList({ locale, items }: QuestionListProps) {
                 <span className="rounded-full bg-slate-100 px-3 py-1 dark:bg-white/5">{item.category}</span>
                 <span className="rounded-full bg-slate-100 px-3 py-1 dark:bg-white/5">{item.subCategory}</span>
                 <span className="rounded-full bg-slate-100 px-3 py-1 dark:bg-white/5">{item.difficulty}</span>
-                {item.isFirst ? (
+                {item.asFirst ? (
                   <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
                     {isZh ? '首发' : 'First'}
                   </span>

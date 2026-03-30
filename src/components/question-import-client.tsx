@@ -15,17 +15,24 @@ import {
 type RawImportItem = {
   question?: unknown;
   cdnImagePrefix?: unknown;
+  cdn_image_prefix?: unknown;
   questionImage?: unknown;
+  question_image?: unknown;
   correctAnswer?: unknown;
+  correct_answer?: unknown;
   correctAnswerIndex?: unknown;
+  correct_answer_index?: unknown;
   incorrectAnswers?: unknown;
+  incorrect_answers?: unknown;
   explanation?: unknown;
   difficulty?: unknown;
   category?: unknown;
   subCategory?: unknown;
+  sub_category?: unknown;
   tags?: unknown;
   keywords?: unknown;
-  isFirst?: unknown;
+  asFirst?: unknown;
+  as_first?: unknown;
 };
 
 type ParseResult = {
@@ -41,13 +48,26 @@ const sampleJson = `[
     "correctAnswerIndex": 1,
     "incorrectAnswers": ["USB-A", "Mini USB", "Micro USB"],
     "explanation": "USB-C is reversible and widely adopted in modern devices.",
-    "difficulty": "Easy",
-    "category": "Hardware",
-    "subCategory": "USB Basics",
+    "difficulty": "easy",
+    "category": "Tech & Innovation",
+    "subCategory": "science",
     "tags": ["usb", "connector", "hardware"],
-    "isFirst": true
+    "asFirst": true
   }
 ]`;
+
+function normalizeImportItemAliases(item: RawImportItem): RawImportItem {
+  return {
+    ...item,
+    cdnImagePrefix: item.cdnImagePrefix ?? item.cdn_image_prefix,
+    questionImage: item.questionImage ?? item.question_image,
+    correctAnswer: item.correctAnswer ?? item.correct_answer,
+    correctAnswerIndex: item.correctAnswerIndex ?? item.correct_answer_index,
+    incorrectAnswers: item.incorrectAnswers ?? item.incorrect_answers,
+    subCategory: item.subCategory ?? item.sub_category,
+    asFirst: item.asFirst ?? item.as_first,
+  };
+}
 
 function normalizeString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
@@ -89,16 +109,17 @@ function isAllowedValue<T extends readonly string[]>(value: string, options: T):
 }
 
 function validateImportItem(item: RawImportItem, index: number): QuestionImportPreviewDto {
+  const normalizedItem = normalizeImportItemAliases(item);
   const errors: string[] = [];
-  const question = normalizeString(item.question);
-  const category = normalizeString(item.category);
-  const subCategory = normalizeString(item.subCategory);
-  const difficulty = normalizeString(item.difficulty);
-  const correctAnswer = normalizeString(item.correctAnswer);
-  const correctAnswerIndex = normalizeInteger(item.correctAnswerIndex);
-  const explanation = normalizeString(item.explanation);
-  const tags = normalizeTags(item.tags);
-  const keywords = normalizeTags(item.keywords);
+  const question = normalizeString(normalizedItem.question);
+  const category = normalizeString(normalizedItem.category);
+  const subCategory = normalizeString(normalizedItem.subCategory);
+  const difficulty = normalizeString(normalizedItem.difficulty);
+  const correctAnswer = normalizeString(normalizedItem.correctAnswer);
+  const correctAnswerIndex = normalizeInteger(normalizedItem.correctAnswerIndex);
+  const explanation = normalizeString(normalizedItem.explanation);
+  const tags = normalizeTags(normalizedItem.tags);
+  const keywords = normalizeTags(normalizedItem.keywords);
 
   if (!question) errors.push('question is required');
   if (!category) {
@@ -115,15 +136,15 @@ function validateImportItem(item: RawImportItem, index: number): QuestionImportP
     errors.push(`difficulty must be one of: ${QUESTION_DIFFICULTIES.join(', ')}`);
   }
   if (!correctAnswer) errors.push('correctAnswer is required');
-  if (item.correctAnswerIndex !== undefined && correctAnswerIndex === null) {
+  if (normalizedItem.correctAnswerIndex !== undefined && correctAnswerIndex === null) {
     errors.push('correctAnswerIndex must be an integer');
   }
   if (!explanation) errors.push('explanation is required');
 
-  if (!Array.isArray(item.incorrectAnswers)) {
+  if (!Array.isArray(normalizedItem.incorrectAnswers)) {
     errors.push('incorrectAnswers must be an array');
   } else {
-    const validIncorrectAnswers = item.incorrectAnswers.filter(
+    const validIncorrectAnswers = normalizedItem.incorrectAnswers.filter(
       (candidate): candidate is string => typeof candidate === 'string' && candidate.trim().length > 0
     );
     if (validIncorrectAnswers.length === 0) {
@@ -163,7 +184,7 @@ function parseImportText(source: string): ParseResult {
       };
     }
 
-    const rawItems = parsed as RawImportItem[];
+    const rawItems = (parsed as RawImportItem[]).map(normalizeImportItemAliases);
     const previews = rawItems.map((item, index) => validateImportItem(item, index));
 
     return {

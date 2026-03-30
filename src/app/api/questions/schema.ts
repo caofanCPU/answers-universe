@@ -20,7 +20,7 @@ export const questionUpsertSchema = z.object({
   difficulty: z.enum(QUESTION_DIFFICULTIES),
   category: z.enum(QUESTION_CATEGORIES),
   subCategory: optionalEnumLikeString(QUESTION_SUB_CATEGORIES),
-  isFirst: z.boolean().optional().default(false),
+  asFirst: z.boolean().optional().default(false),
   tags: optionalStringArray,
   keywords: optionalStringArray,
 });

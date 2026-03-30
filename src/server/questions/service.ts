@@ -170,7 +170,7 @@ export function buildQuestionListItemDto(record: Usb): QuestionListItemDto {
     difficulty: record.difficulty as QuestionDifficulty,
     tags: parseTags(record.tags),
     keywords: parseKeywords(record.keywords),
-    isFirst: record.asFirst === 1,
+    asFirst: record.asFirst === 1,
     updatedAt: toIsoString(record.updatedAt ?? null),
   };
 }
@@ -192,7 +192,7 @@ export function buildQuestionDetailDto(record: Usb): QuestionDetailDto {
     difficulty: record.difficulty as QuestionDifficulty,
     category: record.category as QuestionCategory,
     subCategory: record.subCategory,
-    isFirst: record.asFirst === 1,
+    asFirst: record.asFirst === 1,
     tags: parseTags(record.tags),
     keywords: parseKeywords(record.keywords),
     createdAt: toIsoString(record.createdAt ?? null),
@@ -274,7 +274,7 @@ function buildQuestionCreateInput(input: QuestionUpsertInput, userId: string): P
     difficulty,
     category,
     subCategory: subCategory ?? null,
-    asFirst: input.isFirst ? 1 : 0,
+    asFirst: input.asFirst ? 1 : 0,
     tags: stringifyTags(input.tags),
     keywords: normalizeStringArray(input.keywords),
     createUserId: userId,
@@ -308,7 +308,7 @@ function buildQuestionUpdateInput(input: QuestionUpsertInput, userId: string): P
     difficulty,
     category,
     subCategory: subCategory ?? null,
-    asFirst: input.isFirst ? 1 : 0,
+    asFirst: input.asFirst ? 1 : 0,
     tags: stringifyTags(input.tags),
     keywords: normalizeStringArray(input.keywords),
     updateUserId: userId,
@@ -430,25 +430,39 @@ function toInteger(value: unknown): number | null {
   return null;
 }
 
+function normalizeImportItemAliases(item: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...item,
+    cdnImagePrefix: item.cdnImagePrefix ?? item.cdn_image_prefix,
+    questionImage: item.questionImage ?? item.question_image,
+    correctAnswer: item.correctAnswer ?? item.correct_answer,
+    correctAnswerIndex: item.correctAnswerIndex ?? item.correct_answer_index,
+    incorrectAnswers: item.incorrectAnswers ?? item.incorrect_answers,
+    subCategory: item.subCategory ?? item.sub_category,
+    asFirst: item.asFirst ?? item.as_first,
+  };
+}
+
 export function validateQuestionImportItem(item: Record<string, unknown>, index: number): QuestionImportValidationItem {
+  const normalizedItem = normalizeImportItemAliases(item);
   const errors: string[] = [];
 
-  const question = isNonEmptyString(item.question) ? item.question.trim() : '';
-  const category = isNonEmptyString(item.category) ? normalizeCategory(item.category) : null;
-  const subCategory = isNonEmptyString(item.subCategory) ? normalizeSubCategory(item.subCategory) : null;
-  const difficulty = isNonEmptyString(item.difficulty) ? normalizeDifficulty(item.difficulty) : null;
-  const correctAnswer = isNonEmptyString(item.correctAnswer) ? item.correctAnswer.trim() : '';
-  const correctAnswerIndex = toInteger(item.correctAnswerIndex);
-  const explanation = isNonEmptyString(item.explanation) ? item.explanation.trim() : '';
-  const incorrectAnswers = toStringArray(item.incorrectAnswers);
-  const tags = toStringArray(item.tags);
-  const keywords = toStringArray(item.keywords);
+  const question = isNonEmptyString(normalizedItem.question) ? normalizedItem.question.trim() : '';
+  const category = isNonEmptyString(normalizedItem.category) ? normalizeCategory(normalizedItem.category) : null;
+  const subCategory = isNonEmptyString(normalizedItem.subCategory) ? normalizeSubCategory(normalizedItem.subCategory) : null;
+  const difficulty = isNonEmptyString(normalizedItem.difficulty) ? normalizeDifficulty(normalizedItem.difficulty) : null;
+  const correctAnswer = isNonEmptyString(normalizedItem.correctAnswer) ? normalizedItem.correctAnswer.trim() : '';
+  const correctAnswerIndex = toInteger(normalizedItem.correctAnswerIndex);
+  const explanation = isNonEmptyString(normalizedItem.explanation) ? normalizedItem.explanation.trim() : '';
+  const incorrectAnswers = toStringArray(normalizedItem.incorrectAnswers);
+  const tags = toStringArray(normalizedItem.tags);
+  const keywords = toStringArray(normalizedItem.keywords);
 
   if (!question) errors.push('question is required');
   if (!category) errors.push(`category must be one of: ${QUESTION_CATEGORIES.join(', ')}`);
   if (!difficulty) errors.push(`difficulty must be one of: ${QUESTION_DIFFICULTIES.join(', ')}`);
   if (!correctAnswer) errors.push('correctAnswer is required');
-  if (item.correctAnswerIndex !== undefined && correctAnswerIndex === null) {
+  if (normalizedItem.correctAnswerIndex !== undefined && correctAnswerIndex === null) {
     errors.push('correctAnswerIndex must be an integer');
   }
   if (!explanation) errors.push('explanation is required');
@@ -458,8 +472,8 @@ export function validateQuestionImportItem(item: Record<string, unknown>, index:
     errors.length === 0 && category && difficulty
       ? {
           question,
-          cdnImagePrefix: normalizeNullableString(typeof item.cdnImagePrefix === 'string' ? item.cdnImagePrefix : null),
-          questionImage: normalizeNullableString(typeof item.questionImage === 'string' ? item.questionImage : null),
+          cdnImagePrefix: normalizeNullableString(typeof normalizedItem.cdnImagePrefix === 'string' ? normalizedItem.cdnImagePrefix : null),
+          questionImage: normalizeNullableString(typeof normalizedItem.questionImage === 'string' ? normalizedItem.questionImage : null),
           correctAnswer,
           correctAnswerIndex: correctAnswerIndex ?? 0,
           incorrectAnswers,
@@ -469,7 +483,7 @@ export function validateQuestionImportItem(item: Record<string, unknown>, index:
           subCategory,
           tags,
           keywords,
-          isFirst: Boolean(item.isFirst),
+          asFirst: Boolean(normalizedItem.asFirst),
         }
       : null;
 

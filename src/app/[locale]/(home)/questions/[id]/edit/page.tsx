@@ -62,7 +62,7 @@ export default async function EditQuestionPage({
             explanation: formT('explanation'),
             cdnImagePrefix: formT('cdnImagePrefix'),
             questionImage: formT('questionImage'),
-            isFirst: formT('isFirst'),
+            asFirst: formT('asFirst'),
           },
         }}
       />
