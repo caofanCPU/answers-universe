@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { buildReadonlyAnswerOptions } from './question-answer-options';
 import { QuestionDetail } from './question-detail';
 import type { QuestionDetailDto } from '@/server/questions/types';
 
@@ -93,9 +94,15 @@ export function QuestionDetailClient({ locale, id }: QuestionDetailClientProps) 
     return null;
   }
 
+  const answerOptions = buildReadonlyAnswerOptions(
+    state.item.correctAnswer,
+    state.item.incorrectAnswers,
+    state.item.id
+  );
+
   return (
     <div className="grid gap-6">
-      <QuestionDetail locale={locale} question={state.item} />
+      <QuestionDetail locale={locale} question={state.item} answerOptions={answerOptions} />
     </div>
   );
 }

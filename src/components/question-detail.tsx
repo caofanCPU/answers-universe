@@ -34,9 +34,9 @@ export function QuestionDetail({
     <div className="space-y-6 rounded-3xl border border-black/10 p-6 dark:border-white/10">
       <div className="space-y-3">
         <div className="flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <span className={metaPillClassName}>{question.category}</span>
-          <span className={metaPillClassName}>{question.subCategory ?? '--'}</span>
-          <span className={metaPillClassName}>{question.difficulty}</span>
+          {question.category ? <span className={metaPillClassName}>{question.category}</span> : null}
+          {question.subCategory ? <span className={metaPillClassName}>{question.subCategory}</span> : null}
+          {question.difficulty ? <span className={metaPillClassName}>{question.difficulty}</span> : null}
         </div>
         <div className="flex items-start gap-3">
           <h2 className="min-w-0 flex-1 text-2xl font-semibold text-slate-900 dark:text-white">{question.question}</h2>

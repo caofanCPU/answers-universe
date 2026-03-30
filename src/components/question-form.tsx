@@ -188,6 +188,7 @@ export function QuestionForm({
           options={subCategoryOptions}
           onChange={(value) => updateField(values, onChange, 'subCategory', value)}
           emptyLabel={usb.subCategoryEmpty}
+          allowClear
         />
         <XFormPills
           label={

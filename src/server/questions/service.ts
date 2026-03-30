@@ -1,5 +1,5 @@
 import { prisma } from '@windrun-huaiin/backend-core/prisma';
-import type { Prisma, Usb } from '@windrun-huaiin/backend-core/prisma/client';
+import type { Prisma, Usb } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import type {
   QuestionImportCommitResult,

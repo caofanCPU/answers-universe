@@ -9,6 +9,7 @@ type XFormPillsProps = {
   options: XPillOption[];
   onChange: (value: string) => void;
   emptyLabel: string;
+  allowClear?: boolean;
   className?: string;
 };
 
@@ -18,6 +19,7 @@ export function XFormPills({
   options,
   onChange,
   emptyLabel,
+  allowClear = false,
   className,
 }: XFormPillsProps) {
   return (
@@ -29,6 +31,7 @@ export function XFormPills({
         onChange={onChange}
         options={options}
         emptyLabel={emptyLabel}
+        allowClear={allowClear}
         maxPillWidthClassName="max-w-[150px] sm:max-w-[220px]"
       />
     </div>
