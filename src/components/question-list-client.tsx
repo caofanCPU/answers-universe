@@ -16,26 +16,23 @@ type ListState = {
 };
 
 function buildQuery(params: {
-  keyword: string;
   category: string;
+  subCategory: string;
   difficulty: string;
-  tags: string;
 }) {
   const searchParams = new URLSearchParams();
-  if (params.keyword.trim()) searchParams.set('keyword', params.keyword.trim());
   if (params.category.trim()) searchParams.set('category', params.category.trim());
+  if (params.subCategory.trim()) searchParams.set('subCategory', params.subCategory.trim());
   if (params.difficulty.trim()) searchParams.set('difficulty', params.difficulty.trim());
-  if (params.tags.trim()) searchParams.set('tags', params.tags.trim());
   searchParams.set('page', '1');
   searchParams.set('pageSize', '20');
   return searchParams.toString();
 }
 
 export function QuestionListClient({ locale }: QuestionListClientProps) {
-  const [keyword, setKeyword] = useState('');
   const [category, setCategory] = useState('');
+  const [subCategory, setSubCategory] = useState('');
   const [difficulty, setDifficulty] = useState('');
-  const [tags, setTags] = useState('');
   const [state, setState] = useState<ListState>({
     items: [],
     loading: true,
@@ -43,8 +40,8 @@ export function QuestionListClient({ locale }: QuestionListClientProps) {
   });
 
   const queryString = useMemo(
-    () => buildQuery({ keyword, category, difficulty, tags }),
-    [keyword, category, difficulty, tags]
+    () => buildQuery({ category, subCategory, difficulty }),
+    [category, subCategory, difficulty]
   );
 
   useEffect(() => {
@@ -94,14 +91,12 @@ export function QuestionListClient({ locale }: QuestionListClientProps) {
     <div className="space-y-6">
       <QuestionListFilters
         locale={locale}
-        keyword={keyword}
         category={category}
+        subCategory={subCategory}
         difficulty={difficulty}
-        tags={tags}
-        onKeywordChange={setKeyword}
         onCategoryChange={setCategory}
+        onSubCategoryChange={setSubCategory}
         onDifficultyChange={setDifficulty}
-        onTagsChange={setTags}
       />
 
       {state.loading ? (

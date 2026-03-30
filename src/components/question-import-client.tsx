@@ -18,6 +18,7 @@ type RawImportItem = {
   category?: unknown;
   subCategory?: unknown;
   tags?: unknown;
+  keywords?: unknown;
   isFirst?: unknown;
 };
 
@@ -72,6 +73,7 @@ function validateImportItem(item: RawImportItem, index: number): QuestionImportP
   const correctAnswer = normalizeString(item.correctAnswer);
   const explanation = normalizeString(item.explanation);
   const tags = normalizeTags(item.tags);
+  const keywords = normalizeTags(item.keywords);
 
   if (!question) errors.push('question is required');
   if (!category) errors.push('category is required');
@@ -100,6 +102,7 @@ function validateImportItem(item: RawImportItem, index: number): QuestionImportP
     subCategory,
     difficulty,
     tags,
+    keywords,
   };
 }
 

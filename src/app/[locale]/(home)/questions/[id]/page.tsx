@@ -1,4 +1,5 @@
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
+import { getTranslations } from 'next-intl/server';
 import { QuestionDetailClient } from '@/components/question-detail-client';
 import { QuestionPageShell } from '@/components/question-page-shell';
 
@@ -8,23 +9,20 @@ export default async function QuestionDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
+  const t = await getTranslations({ locale, namespace: 'faqPage.questionDetail' });
 
   return (
     <QuestionPageShell
-      title={locale === 'zh' ? `题目详情 #${id}` : `Question Detail #${id}`}
-      description={
-        locale === 'zh'
-          ? '题目详情页现已接入详情接口。当前可以查看题干、选项、答案显隐、解析和右侧元信息。'
-          : 'The question detail page is now connected to the detail API. It currently supports question content, option display, answer reveal, explanation and right-side meta information.'
-      }
+      title={t('title', { id })}
+      description={t('description')}
       actions={[
         {
           href: getAsNeededLocalizedUrl(locale, '/questions'),
-          label: locale === 'zh' ? '返回列表' : 'Back to List',
+          label: t('actions.backToList'),
         },
         {
           href: getAsNeededLocalizedUrl(locale, `/questions/${id}/edit`),
-          label: locale === 'zh' ? '编辑题目' : 'Edit Question',
+          label: t('actions.edit'),
           primary: true,
         },
       ]}

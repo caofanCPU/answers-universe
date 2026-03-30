@@ -1,5 +1,6 @@
 import { prisma } from '@windrun-huaiin/backend-core/prisma';
 import type { Prisma, Usb } from '@windrun-huaiin/backend-core/prisma/client';
+import { randomUUID } from 'node:crypto';
 import type {
   QuestionImportCommitResult,
   QuestionImportValidationItem,
@@ -10,6 +11,14 @@ import type {
   QuestionListResult,
   QuestionUpsertInput,
 } from './types';
+import {
+  QUESTION_CATEGORIES,
+  QUESTION_DIFFICULTIES,
+  QUESTION_SUB_CATEGORIES,
+  type QuestionCategory,
+  type QuestionDifficulty,
+  type QuestionSubCategory,
+} from './constants';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;
@@ -39,6 +48,16 @@ function normalizeTags(tags?: string[]): string[] {
     .filter(Boolean);
 }
 
+function normalizeStringArray(values?: string[]): string[] {
+  if (!values) {
+    return [];
+  }
+
+  return values
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
 function normalizeNullableString(value: string | null | undefined): string | null {
   if (!value) {
     return null;
@@ -63,7 +82,7 @@ function stringifyTags(tags?: string[]): string {
   return normalizeTags(tags).join(',');
 }
 
-function parseIncorrectAnswers(raw: Prisma.JsonValue): string[] {
+function parseJsonStringArray(raw: Prisma.JsonValue): string[] {
   if (Array.isArray(raw)) {
     return raw
       .filter((item): item is string => typeof item === 'string')
@@ -72,6 +91,36 @@ function parseIncorrectAnswers(raw: Prisma.JsonValue): string[] {
   }
 
   return [];
+}
+
+function parseIncorrectAnswers(raw: Prisma.JsonValue): string[] {
+  return parseJsonStringArray(raw);
+}
+
+function parseKeywords(raw: Prisma.JsonValue | null): string[] {
+  if (!raw) {
+    return [];
+  }
+
+  return parseJsonStringArray(raw);
+}
+
+function normalizeDifficulty(value: string): QuestionDifficulty | null {
+  const normalized = value.trim().toLowerCase();
+  return QUESTION_DIFFICULTIES.find((item) => item === normalized) ?? null;
+}
+
+function normalizeCategory(value: string): QuestionCategory | null {
+  const normalized = value.trim().toLowerCase();
+
+  return (
+    QUESTION_CATEGORIES.find((item) => item.toLowerCase() === normalized) ?? null
+  );
+}
+
+function normalizeSubCategory(value: string): QuestionSubCategory | null {
+  const normalized = value.trim().toLowerCase();
+  return QUESTION_SUB_CATEGORIES.find((item) => item === normalized) ?? null;
 }
 
 function buildQuestionImageUrl(cdnImagePrefix: string | null, questionImage: string | null): string | null {
@@ -95,11 +144,13 @@ function toIsoString(value: Date | null): string | null {
 export function buildQuestionListItemDto(record: Usb): QuestionListItemDto {
   return {
     id: record.id.toString(),
+    uuid: record.questionUuid,
     question: record.question,
-    category: record.category,
+    category: record.category as QuestionCategory,
     subCategory: record.subCategory,
-    difficulty: record.difficulty,
+    difficulty: record.difficulty as QuestionDifficulty,
     tags: parseTags(record.tags),
+    keywords: parseKeywords(record.keywords),
     isFirst: record.asFirst === 1,
     updatedAt: toIsoString(record.updatedAt ?? null),
   };
@@ -108,6 +159,7 @@ export function buildQuestionListItemDto(record: Usb): QuestionListItemDto {
 export function buildQuestionDetailDto(record: Usb): QuestionDetailDto {
   return {
     id: record.id.toString(),
+    uuid: record.questionUuid,
     question: record.question,
     cdnImagePrefix: record.cdnImagePrefix ?? null,
     questionImage: record.questionImage ?? null,
@@ -115,37 +167,37 @@ export function buildQuestionDetailDto(record: Usb): QuestionDetailDto {
     correctAnswer: record.correctAnswer,
     incorrectAnswers: parseIncorrectAnswers(record.incorrectAnswers),
     explanation: record.explanation,
-    difficulty: record.difficulty,
-    category: record.category,
+    difficulty: record.difficulty as QuestionDifficulty,
+    category: record.category as QuestionCategory,
     subCategory: record.subCategory,
     isFirst: record.asFirst === 1,
     tags: parseTags(record.tags),
+    keywords: parseKeywords(record.keywords),
     createdAt: toIsoString(record.createdAt ?? null),
     updatedAt: toIsoString(record.updatedAt ?? null),
   };
 }
 
 function buildQuestionWhereInput(params: QuestionListParams): Prisma.UsbWhereInput {
-  const keyword = params.keyword?.trim();
-  const category = params.category?.trim();
-  const difficulty = params.difficulty?.trim();
-  const tags = normalizeTags(params.tags);
+  const category = params.category;
+  const subCategory = params.subCategory;
+  const difficulty = params.difficulty;
 
   const andConditions: Prisma.UsbWhereInput[] = [];
-
-  if (keyword) {
-    andConditions.push({
-      question: {
-        contains: keyword,
-        mode: 'insensitive',
-      },
-    });
-  }
 
   if (category) {
     andConditions.push({
       category: {
         equals: category,
+        mode: 'insensitive',
+      },
+    });
+  }
+
+  if (subCategory) {
+    andConditions.push({
+      subCategory: {
+        equals: subCategory,
         mode: 'insensitive',
       },
     });
@@ -160,15 +212,6 @@ function buildQuestionWhereInput(params: QuestionListParams): Prisma.UsbWhereInp
     });
   }
 
-  for (const tag of tags) {
-    andConditions.push({
-      tags: {
-        contains: tag,
-        mode: 'insensitive',
-      },
-    });
-  }
-
   if (andConditions.length === 0) {
     return {};
   }
@@ -177,36 +220,71 @@ function buildQuestionWhereInput(params: QuestionListParams): Prisma.UsbWhereInp
 }
 
 function buildQuestionCreateInput(input: QuestionUpsertInput, userId: string): Prisma.UsbUncheckedCreateInput {
+  const difficulty = normalizeDifficulty(input.difficulty);
+  const category = normalizeCategory(input.category);
+  const subCategory = normalizeSubCategory(input.subCategory);
+
+  if (!difficulty) {
+    throw new Error(`Invalid difficulty: ${input.difficulty}`);
+  }
+
+  if (!category) {
+    throw new Error(`Invalid category: ${input.category}`);
+  }
+
+  if (!subCategory) {
+    throw new Error(`Invalid subCategory: ${input.subCategory}`);
+  }
+
   return {
+    questionUuid: randomUUID(),
     question: input.question.trim(),
     cdnImagePrefix: normalizeNullableString(input.cdnImagePrefix),
     questionImage: normalizeNullableString(input.questionImage),
     correctAnswer: input.correctAnswer.trim(),
-    incorrectAnswers: input.incorrectAnswers.map((item) => item.trim()).filter(Boolean),
+    incorrectAnswers: normalizeStringArray(input.incorrectAnswers),
     explanation: input.explanation.trim(),
-    difficulty: input.difficulty.trim(),
-    category: input.category.trim(),
-    subCategory: input.subCategory.trim(),
+    difficulty,
+    category,
+    subCategory,
     asFirst: input.isFirst ? 1 : 0,
     tags: stringifyTags(input.tags),
+    keywords: normalizeStringArray(input.keywords),
     createUserId: userId,
     updateUserId: userId,
   };
 }
 
 function buildQuestionUpdateInput(input: QuestionUpsertInput, userId: string): Prisma.UsbUncheckedUpdateInput {
+  const difficulty = normalizeDifficulty(input.difficulty);
+  const category = normalizeCategory(input.category);
+  const subCategory = normalizeSubCategory(input.subCategory);
+
+  if (!difficulty) {
+    throw new Error(`Invalid difficulty: ${input.difficulty}`);
+  }
+
+  if (!category) {
+    throw new Error(`Invalid category: ${input.category}`);
+  }
+
+  if (!subCategory) {
+    throw new Error(`Invalid subCategory: ${input.subCategory}`);
+  }
+
   return {
     question: input.question.trim(),
     cdnImagePrefix: normalizeNullableString(input.cdnImagePrefix),
     questionImage: normalizeNullableString(input.questionImage),
     correctAnswer: input.correctAnswer.trim(),
-    incorrectAnswers: input.incorrectAnswers.map((item) => item.trim()).filter(Boolean),
+    incorrectAnswers: normalizeStringArray(input.incorrectAnswers),
     explanation: input.explanation.trim(),
-    difficulty: input.difficulty.trim(),
-    category: input.category.trim(),
-    subCategory: input.subCategory.trim(),
+    difficulty,
+    category,
+    subCategory,
     asFirst: input.isFirst ? 1 : 0,
     tags: stringifyTags(input.tags),
+    keywords: normalizeStringArray(input.keywords),
     updateUserId: userId,
   };
 }
@@ -225,10 +303,9 @@ export async function getQuestionList(params: Partial<QuestionListParams>): Prom
   const where = buildQuestionWhereInput({
     page,
     pageSize,
-    keyword: params.keyword,
     category: params.category,
+    subCategory: params.subCategory,
     difficulty: params.difficulty,
-    tags: params.tags,
   });
 
   const skip = (page - 1) * pageSize;
@@ -312,24 +389,25 @@ export function validateQuestionImportItem(item: Record<string, unknown>, index:
   const errors: string[] = [];
 
   const question = isNonEmptyString(item.question) ? item.question.trim() : '';
-  const category = isNonEmptyString(item.category) ? item.category.trim() : '';
-  const subCategory = isNonEmptyString(item.subCategory) ? item.subCategory.trim() : '';
-  const difficulty = isNonEmptyString(item.difficulty) ? item.difficulty.trim() : '';
+  const category = isNonEmptyString(item.category) ? normalizeCategory(item.category) : null;
+  const subCategory = isNonEmptyString(item.subCategory) ? normalizeSubCategory(item.subCategory) : null;
+  const difficulty = isNonEmptyString(item.difficulty) ? normalizeDifficulty(item.difficulty) : null;
   const correctAnswer = isNonEmptyString(item.correctAnswer) ? item.correctAnswer.trim() : '';
   const explanation = isNonEmptyString(item.explanation) ? item.explanation.trim() : '';
   const incorrectAnswers = toStringArray(item.incorrectAnswers);
   const tags = toStringArray(item.tags);
+  const keywords = toStringArray(item.keywords);
 
   if (!question) errors.push('question is required');
-  if (!category) errors.push('category is required');
-  if (!subCategory) errors.push('subCategory is required');
-  if (!difficulty) errors.push('difficulty is required');
+  if (!category) errors.push(`category must be one of: ${QUESTION_CATEGORIES.join(', ')}`);
+  if (!subCategory) errors.push(`subCategory must be one of: ${QUESTION_SUB_CATEGORIES.join(', ')}`);
+  if (!difficulty) errors.push(`difficulty must be one of: ${QUESTION_DIFFICULTIES.join(', ')}`);
   if (!correctAnswer) errors.push('correctAnswer is required');
   if (!explanation) errors.push('explanation is required');
   if (incorrectAnswers.length === 0) errors.push('incorrectAnswers must contain at least one answer');
 
   const payload: QuestionUpsertInput | null =
-    errors.length === 0
+    errors.length === 0 && category && difficulty && subCategory
       ? {
           question,
           cdnImagePrefix: normalizeNullableString(typeof item.cdnImagePrefix === 'string' ? item.cdnImagePrefix : null),
@@ -341,6 +419,7 @@ export function validateQuestionImportItem(item: Record<string, unknown>, index:
           category,
           subCategory,
           tags,
+          keywords,
           isFirst: Boolean(item.isFirst),
         }
       : null;
@@ -350,10 +429,11 @@ export function validateQuestionImportItem(item: Record<string, unknown>, index:
     valid: errors.length === 0,
     errors,
     question,
-    category,
-    subCategory,
-    difficulty,
+    category: category ?? '',
+    subCategory: subCategory ?? '',
+    difficulty: difficulty ?? '',
     tags,
+    keywords,
     payload,
   };
 }

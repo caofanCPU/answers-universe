@@ -1,16 +1,19 @@
 export type QuestionListItemDto = {
   id: string;
+  uuid: string;
   question: string;
   category: string;
   subCategory: string;
   difficulty: string;
   tags: string[];
+  keywords: string[];
   isFirst: boolean;
   updatedAt: string | null;
 };
 
 export type QuestionDetailDto = {
   id: string;
+  uuid: string;
   question: string;
   cdnImagePrefix: string | null;
   questionImage: string | null;
@@ -23,6 +26,7 @@ export type QuestionDetailDto = {
   subCategory: string;
   isFirst: boolean;
   tags: string[];
+  keywords: string[];
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -30,10 +34,9 @@ export type QuestionDetailDto = {
 export type QuestionListParams = {
   page: number;
   pageSize: number;
-  keyword?: string;
   category?: string;
+  subCategory?: string;
   difficulty?: string;
-  tags?: string[];
 };
 
 export type QuestionListResult = {
@@ -58,6 +61,7 @@ export type QuestionUpsertInput = {
   subCategory: string;
   isFirst?: boolean;
   tags?: string[];
+  keywords?: string[];
 };
 
 export type QuestionImportPreviewDto = {
@@ -69,6 +73,7 @@ export type QuestionImportPreviewDto = {
   subCategory: string;
   difficulty: string;
   tags: string[];
+  keywords: string[];
 };
 
 export type QuestionImportValidationItem = QuestionImportPreviewDto & {

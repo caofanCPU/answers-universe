@@ -1,77 +1,86 @@
 'use client';
 
+import {
+  QUESTION_CATEGORIES,
+  QUESTION_DIFFICULTIES,
+  QUESTION_SUB_CATEGORIES,
+} from '@/server/questions/constants';
+
 type QuestionListFiltersProps = {
   locale: string;
-  keyword: string;
   category: string;
+  subCategory: string;
   difficulty: string;
-  tags: string;
-  onKeywordChange: (value: string) => void;
   onCategoryChange: (value: string) => void;
+  onSubCategoryChange: (value: string) => void;
   onDifficultyChange: (value: string) => void;
-  onTagsChange: (value: string) => void;
 };
 
 export function QuestionListFilters(props: QuestionListFiltersProps) {
   const {
     locale,
-    keyword,
     category,
+    subCategory,
     difficulty,
-    tags,
-    onKeywordChange,
     onCategoryChange,
+    onSubCategoryChange,
     onDifficultyChange,
-    onTagsChange,
   } = props;
 
   const isZh = locale === 'zh';
 
   return (
-    <div className="grid gap-4 rounded-3xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-slate-950 md:grid-cols-4">
-      <label className="space-y-2 text-sm">
-        <span className="font-medium text-slate-700 dark:text-slate-200">
-          {isZh ? '关键词' : 'Keyword'}
-        </span>
-        <input
-          value={keyword}
-          onChange={(event) => onKeywordChange(event.target.value)}
-          placeholder={isZh ? '搜索题干' : 'Search question text'}
-          className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
-        />
-      </label>
+    <div className="grid gap-4 rounded-3xl border border-black/10 bg-white p-5 dark:border-white/10 dark:bg-slate-950 md:grid-cols-3">
       <label className="space-y-2 text-sm">
         <span className="font-medium text-slate-700 dark:text-slate-200">
           {isZh ? '主分类' : 'Category'}
         </span>
-        <input
+        <select
           value={category}
           onChange={(event) => onCategoryChange(event.target.value)}
-          placeholder={isZh ? '例如 Hardware' : 'Example: Hardware'}
           className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
-        />
+        >
+          <option value="">{isZh ? '全部主分类' : 'All categories'}</option>
+          {QUESTION_CATEGORIES.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="space-y-2 text-sm">
+        <span className="font-medium text-slate-700 dark:text-slate-200">
+          {isZh ? '次分类' : 'Sub Category'}
+        </span>
+        <select
+          value={subCategory}
+          onChange={(event) => onSubCategoryChange(event.target.value)}
+          className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
+        >
+          <option value="">{isZh ? '全部次分类' : 'All sub categories'}</option>
+          {QUESTION_SUB_CATEGORIES.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
       </label>
       <label className="space-y-2 text-sm">
         <span className="font-medium text-slate-700 dark:text-slate-200">
           {isZh ? '难度' : 'Difficulty'}
         </span>
-        <input
+        <select
           value={difficulty}
           onChange={(event) => onDifficultyChange(event.target.value)}
-          placeholder={isZh ? '例如 Easy' : 'Example: Easy'}
           className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
-        />
-      </label>
-      <label className="space-y-2 text-sm">
-        <span className="font-medium text-slate-700 dark:text-slate-200">
-          {isZh ? '标签' : 'Tags'}
-        </span>
-        <input
-          value={tags}
-          onChange={(event) => onTagsChange(event.target.value)}
-          placeholder={isZh ? '逗号分隔' : 'Comma separated'}
-          className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
-        />
+        >
+          <option value="">{isZh ? '全部难度' : 'All difficulties'}</option>
+          {QUESTION_DIFFICULTIES.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
       </label>
     </div>
   );

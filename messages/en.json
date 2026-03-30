@@ -7,11 +7,11 @@
     "keywords": "AI SaaS template, Next.js boilerplate, Stripe billing, credit-based pricing, anonymous onboarding, Fumadocs, Prisma PostgreSQL, Clerk authentication"
   },
   "hero": {
-    "mainTitle": "Ship a paid AI product with",
-    "mainEyesOn": "Diaomao",
+    "mainTitle": "All the universe's intelligence will",
+    "mainEyesOn": "Answer You",
     "description": "Pricing that upgrades itself. Credits that never leak. Docs that stay in sync. Stripe flows that just work. Diaomao is the full-stack chassis trusted by makers who refuse to waste another weekend on billing infrastructure.",
-    "button": "Get Diaomao →",
-    "about": "SSR-first • Mobile-perfected • Fingerprint → Clerk seamless onboarding",
+    "button": "View Question List",
+    "about": "QuestionsWorkspace·AI park",
     "heroImageAlt": "Diaomao – Modern pricing, credit dashboard and documentation system",
     "heroImageUrl": "https://r2.d8ger.com/default.webp"
   },
@@ -407,5 +407,43 @@
     "copyMarkdown": "Copy page as Markdown",
     "copyMarkdownDone": "Copied!",
     "editOnGithub": "Edit this page on GitHub"
-  }
+  },
+  "faqPage": {
+      "questionsList": {
+        "title": "Questions",
+        "description": "The questions index is now connected to the list API. Category, sub category and difficulty filters are active. Pagination refinements can follow later.",
+        "actions": {
+          "create": "Create Question"
+        }
+      },
+      "questionsImport": {
+        "title": "JSON Import",
+        "description": "Step one only covers frontend-local JSON parsing and preview. No backend request is sent yet. Once the local preview format is confirmed, the next step will add backend validation and batch commit.",
+        "actions": {
+          "backToList": "Back to List"
+        }
+      },
+      "questionDetail": {
+        "title": "Question Detail #{id}",
+        "description": "The question detail page is now connected to the detail API. It currently supports question content, option display, answer reveal, explanation and right-side meta information.",
+        "actions": {
+          "backToList": "Back to List",
+          "edit": "Edit Question"
+        }
+      },
+      "questionCreate": {
+        "title": "Create Question",
+        "description": "The create page is now connected to the create API. You can edit the form, preview the result live, and redirect to the new detail page after saving.",
+        "actions": {
+          "backToList": "Back to List"
+        }
+      },
+      "questionEdit": {
+        "title": "Edit Question #{id}",
+        "description": "The edit page is now connected to detail loading and the update API. It loads the question first, then lets you edit and return to the detail page.",
+        "actions": {
+          "backToDetail": "Back to Detail"
+        }
+      }
+    }
 }

@@ -1,4 +1,5 @@
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
+import { getTranslations } from 'next-intl/server';
 import { QuestionEditorClient } from '@/components/question-editor-client';
 import { QuestionPageShell } from '@/components/question-page-shell';
 
@@ -8,19 +9,16 @@ export default async function NewQuestionPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'faqPage.questionCreate' });
 
   return (
     <QuestionPageShell
-      title={locale === 'zh' ? '录入题目' : 'Create Question'}
-      description={
-        locale === 'zh'
-          ? '录入页现已接入创建接口。当前可以填写表单、实时预览，并在保存后跳转到新建题目的详情页。'
-          : 'The create page is now connected to the create API. You can edit the form, preview the result live, and redirect to the new detail page after saving.'
-      }
+      title={t('title')}
+      description={t('description')}
       actions={[
         {
           href: getAsNeededLocalizedUrl(locale, '/questions'),
-          label: locale === 'zh' ? '返回列表' : 'Back to List',
+          label: t('actions.backToList'),
         },
       ]}
     >

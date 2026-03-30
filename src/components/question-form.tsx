@@ -2,6 +2,11 @@
 
 import type { ChangeEvent } from 'react';
 import type { QuestionFormValues } from './question-ui-types';
+import {
+  QUESTION_CATEGORIES,
+  QUESTION_DIFFICULTIES,
+  QUESTION_SUB_CATEGORIES,
+} from '@/server/questions/constants';
 
 type QuestionFormProps = {
   locale: string;
@@ -26,7 +31,7 @@ export function QuestionForm({ locale, values, onChange }: QuestionFormProps) {
 
   const onInputChange =
     (field: keyof QuestionFormValues) =>
-    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       const value =
         field === 'isFirst'
           ? (event.target as HTMLInputElement).checked
@@ -48,27 +53,48 @@ export function QuestionForm({ locale, values, onChange }: QuestionFormProps) {
         </label>
         <label className="space-y-2 text-sm">
           <span className="font-medium text-slate-700 dark:text-slate-200">{isZh ? '主分类' : 'Category'}</span>
-          <input
+          <select
             value={values.category}
             onChange={onInputChange('category')}
             className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
-          />
+          >
+            <option value="">{isZh ? '请选择主分类' : 'Select category'}</option>
+            {QUESTION_CATEGORIES.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="space-y-2 text-sm">
           <span className="font-medium text-slate-700 dark:text-slate-200">{isZh ? '次分类' : 'Sub Category'}</span>
-          <input
+          <select
             value={values.subCategory}
             onChange={onInputChange('subCategory')}
             className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
-          />
+          >
+            <option value="">{isZh ? '请选择次分类' : 'Select sub category'}</option>
+            {QUESTION_SUB_CATEGORIES.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="space-y-2 text-sm">
           <span className="font-medium text-slate-700 dark:text-slate-200">{isZh ? '难度' : 'Difficulty'}</span>
-          <input
+          <select
             value={values.difficulty}
             onChange={onInputChange('difficulty')}
             className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-950 dark:text-white"
-          />
+          >
+            <option value="">{isZh ? '请选择难度' : 'Select difficulty'}</option>
+            {QUESTION_DIFFICULTIES.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="space-y-2 text-sm">
           <span className="font-medium text-slate-700 dark:text-slate-200">{isZh ? '标签' : 'Tags'}</span>
