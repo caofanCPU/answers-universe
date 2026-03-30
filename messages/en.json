@@ -432,6 +432,11 @@
         "status": {
           "loading": "Loading questions...",
           "loadFailed": "Failed to load questions: "
+        },
+        "pagination": {
+          "summary": "{page}/{totalPages}, Total {total}",
+          "previous": "Previous",
+          "next": "Next"
         }
       },
       "questionsImport": {

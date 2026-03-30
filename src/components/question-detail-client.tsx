@@ -97,6 +97,7 @@ export function QuestionDetailClient({ locale, id }: QuestionDetailClientProps) 
   const answerOptions = buildReadonlyAnswerOptions(
     state.item.correctAnswer,
     state.item.incorrectAnswers,
+    state.item.correctAnswerIndex,
     state.item.id
   );
 

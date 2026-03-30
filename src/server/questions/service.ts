@@ -9,6 +9,7 @@ import type {
   QuestionListItemDto,
   QuestionListParams,
   QuestionListResult,
+  QuestionMutationResult,
   QuestionUpsertInput,
 } from './types';
 import {
@@ -97,6 +98,24 @@ function parseIncorrectAnswers(raw: Prisma.JsonValue): string[] {
   return parseJsonStringArray(raw);
 }
 
+function normalizeCorrectAnswerIndex(
+  value: number | null | undefined,
+  correctAnswer: string,
+  incorrectAnswers: string[]
+): number {
+  const totalOptions = (correctAnswer.trim() ? 1 : 0) + incorrectAnswers.length;
+
+  if (totalOptions <= 0) {
+    return 0;
+  }
+
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value >= totalOptions) {
+    return 0;
+  }
+
+  return value;
+}
+
 function parseKeywords(raw: Prisma.JsonValue | null): string[] {
   if (!raw) {
     return [];
@@ -157,6 +176,8 @@ export function buildQuestionListItemDto(record: Usb): QuestionListItemDto {
 }
 
 export function buildQuestionDetailDto(record: Usb): QuestionDetailDto {
+  const incorrectAnswers = parseIncorrectAnswers(record.incorrectAnswers);
+
   return {
     id: record.id.toString(),
     uuid: record.questionUuid,
@@ -165,7 +186,8 @@ export function buildQuestionDetailDto(record: Usb): QuestionDetailDto {
     questionImage: record.questionImage ?? null,
     questionImageUrl: buildQuestionImageUrl(record.cdnImagePrefix ?? null, record.questionImage ?? null),
     correctAnswer: record.correctAnswer,
-    incorrectAnswers: parseIncorrectAnswers(record.incorrectAnswers),
+    correctAnswerIndex: normalizeCorrectAnswerIndex(record.correctAnswerIndex, record.correctAnswer, incorrectAnswers),
+    incorrectAnswers,
     explanation: record.explanation,
     difficulty: record.difficulty as QuestionDifficulty,
     category: record.category as QuestionCategory,
@@ -175,6 +197,12 @@ export function buildQuestionDetailDto(record: Usb): QuestionDetailDto {
     keywords: parseKeywords(record.keywords),
     createdAt: toIsoString(record.createdAt ?? null),
     updatedAt: toIsoString(record.updatedAt ?? null),
+  };
+}
+
+function buildQuestionMutationResult(record: Pick<Usb, 'id'>): QuestionMutationResult {
+  return {
+    id: record.id.toString(),
   };
 }
 
@@ -212,9 +240,9 @@ function buildQuestionWhereInput(params: QuestionListParams): Prisma.UsbWhereInp
     });
   }
 
-  if (andConditions.length === 0) {
-    return {};
-  }
+  andConditions.unshift({
+    deleted: 0,
+  });
 
   return { AND: andConditions };
 }
@@ -223,6 +251,8 @@ function buildQuestionCreateInput(input: QuestionUpsertInput, userId: string): P
   const difficulty = normalizeDifficulty(input.difficulty);
   const category = normalizeCategory(input.category);
   const subCategory = input.subCategory ? normalizeSubCategory(input.subCategory) : null;
+  const incorrectAnswers = normalizeStringArray(input.incorrectAnswers);
+  const correctAnswer = input.correctAnswer.trim();
 
   if (!difficulty) {
     throw new Error(`Invalid difficulty: ${input.difficulty}`);
@@ -237,8 +267,9 @@ function buildQuestionCreateInput(input: QuestionUpsertInput, userId: string): P
     question: input.question.trim(),
     cdnImagePrefix: normalizeNullableString(input.cdnImagePrefix),
     questionImage: normalizeNullableString(input.questionImage),
-    correctAnswer: input.correctAnswer.trim(),
-    incorrectAnswers: normalizeStringArray(input.incorrectAnswers),
+    correctAnswer,
+    correctAnswerIndex: normalizeCorrectAnswerIndex(input.correctAnswerIndex, correctAnswer, incorrectAnswers),
+    incorrectAnswers,
     explanation: input.explanation.trim(),
     difficulty,
     category,
@@ -255,6 +286,8 @@ function buildQuestionUpdateInput(input: QuestionUpsertInput, userId: string): P
   const difficulty = normalizeDifficulty(input.difficulty);
   const category = normalizeCategory(input.category);
   const subCategory = input.subCategory ? normalizeSubCategory(input.subCategory) : null;
+  const incorrectAnswers = normalizeStringArray(input.incorrectAnswers);
+  const correctAnswer = input.correctAnswer.trim();
 
   if (!difficulty) {
     throw new Error(`Invalid difficulty: ${input.difficulty}`);
@@ -268,8 +301,9 @@ function buildQuestionUpdateInput(input: QuestionUpsertInput, userId: string): P
     question: input.question.trim(),
     cdnImagePrefix: normalizeNullableString(input.cdnImagePrefix),
     questionImage: normalizeNullableString(input.questionImage),
-    correctAnswer: input.correctAnswer.trim(),
-    incorrectAnswers: normalizeStringArray(input.incorrectAnswers),
+    correctAnswer,
+    correctAnswerIndex: normalizeCorrectAnswerIndex(input.correctAnswerIndex, correctAnswer, incorrectAnswers),
+    incorrectAnswers,
     explanation: input.explanation.trim(),
     difficulty,
     category,
@@ -286,7 +320,7 @@ export async function getQuestionById(id: bigint): Promise<QuestionDetailDto | n
     where: { id },
   });
 
-  return record ? buildQuestionDetailDto(record) : null;
+  return record && record.deleted === 0 ? buildQuestionDetailDto(record) : null;
 }
 
 export async function getQuestionList(params: Partial<QuestionListParams>): Promise<QuestionListResult> {
@@ -325,34 +359,40 @@ export async function getQuestionList(params: Partial<QuestionListParams>): Prom
   };
 }
 
-export async function createQuestion(input: QuestionUpsertInput, userId: string): Promise<QuestionDetailDto> {
+export async function createQuestion(input: QuestionUpsertInput, userId: string): Promise<QuestionMutationResult> {
   const record = await prisma.usb.create({
     data: buildQuestionCreateInput(input, userId),
+    select: {
+      id: true,
+    },
   });
 
-  return buildQuestionDetailDto(record);
+  return buildQuestionMutationResult(record);
 }
 
 export async function updateQuestion(
   id: bigint,
   input: QuestionUpsertInput,
   userId: string
-): Promise<QuestionDetailDto | null> {
+): Promise<QuestionMutationResult | null> {
   const exists = await prisma.usb.findUnique({
     where: { id },
-    select: { id: true },
+    select: { id: true, deleted: true },
   });
 
-  if (!exists) {
+  if (!exists || exists.deleted !== 0) {
     return null;
   }
 
   const record = await prisma.usb.update({
     where: { id },
     data: buildQuestionUpdateInput(input, userId),
+    select: {
+      id: true,
+    },
   });
 
-  return buildQuestionDetailDto(record);
+  return buildQuestionMutationResult(record);
 }
 
 function isNonEmptyString(value: unknown): value is string {
@@ -377,6 +417,19 @@ function toStringArray(value: unknown): string[] {
   return [];
 }
 
+function toInteger(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isInteger(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isInteger(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
 export function validateQuestionImportItem(item: Record<string, unknown>, index: number): QuestionImportValidationItem {
   const errors: string[] = [];
 
@@ -385,6 +438,7 @@ export function validateQuestionImportItem(item: Record<string, unknown>, index:
   const subCategory = isNonEmptyString(item.subCategory) ? normalizeSubCategory(item.subCategory) : null;
   const difficulty = isNonEmptyString(item.difficulty) ? normalizeDifficulty(item.difficulty) : null;
   const correctAnswer = isNonEmptyString(item.correctAnswer) ? item.correctAnswer.trim() : '';
+  const correctAnswerIndex = toInteger(item.correctAnswerIndex);
   const explanation = isNonEmptyString(item.explanation) ? item.explanation.trim() : '';
   const incorrectAnswers = toStringArray(item.incorrectAnswers);
   const tags = toStringArray(item.tags);
@@ -394,6 +448,9 @@ export function validateQuestionImportItem(item: Record<string, unknown>, index:
   if (!category) errors.push(`category must be one of: ${QUESTION_CATEGORIES.join(', ')}`);
   if (!difficulty) errors.push(`difficulty must be one of: ${QUESTION_DIFFICULTIES.join(', ')}`);
   if (!correctAnswer) errors.push('correctAnswer is required');
+  if (item.correctAnswerIndex !== undefined && correctAnswerIndex === null) {
+    errors.push('correctAnswerIndex must be an integer');
+  }
   if (!explanation) errors.push('explanation is required');
   if (incorrectAnswers.length === 0) errors.push('incorrectAnswers must contain at least one answer');
 
@@ -404,6 +461,7 @@ export function validateQuestionImportItem(item: Record<string, unknown>, index:
           cdnImagePrefix: normalizeNullableString(typeof item.cdnImagePrefix === 'string' ? item.cdnImagePrefix : null),
           questionImage: normalizeNullableString(typeof item.questionImage === 'string' ? item.questionImage : null),
           correctAnswer,
+          correctAnswerIndex: correctAnswerIndex ?? 0,
           incorrectAnswers,
           explanation,
           difficulty,

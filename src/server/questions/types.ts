@@ -19,6 +19,7 @@ export type QuestionDetailDto = {
   questionImage: string | null;
   questionImageUrl: string | null;
   correctAnswer: string;
+  correctAnswerIndex: number;
   incorrectAnswers: string[];
   explanation: string;
   difficulty: string;
@@ -54,6 +55,7 @@ export type QuestionUpsertInput = {
   cdnImagePrefix?: string | null;
   questionImage?: string | null;
   correctAnswer: string;
+  correctAnswerIndex?: number;
   incorrectAnswers: string[];
   explanation: string;
   difficulty: string;
@@ -62,6 +64,10 @@ export type QuestionUpsertInput = {
   isFirst?: boolean;
   tags?: string[];
   keywords?: string[];
+};
+
+export type QuestionMutationResult = {
+  id: string;
 };
 
 export type QuestionImportPreviewDto = {

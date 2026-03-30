@@ -56,23 +56,32 @@ function getAnswerLabel(index: number): string {
 
 export function buildAnswerOptionDrafts(
   correctAnswer: string,
-  incorrectAnswers: string[]
+  incorrectAnswers: string[],
+  correctAnswerIndex = 0
 ): QuestionAnswerOptionDraft[] {
   const correct = sanitizeAnswerText(correctAnswer);
   const incorrect = incorrectAnswers.map(sanitizeAnswerText).filter(Boolean);
+  const correctIndex = Math.max(0, Math.min(correctAnswerIndex, incorrect.length));
+  const options = incorrect.map((text, index) => ({
+    id: `incorrect-${index}-${text}`,
+    text,
+    isCorrect: false,
+  }));
 
-  return [
-    ...(correct ? [{ id: 'correct-0', text: correct, isCorrect: true }] : []),
-    ...incorrect.map((text, index) => ({
-      id: `incorrect-${index}-${text}`,
-      text,
-      isCorrect: false,
-    })),
-  ];
+  if (correct) {
+    options.splice(correctIndex, 0, {
+      id: `correct-${correctIndex}`,
+      text: correct,
+      isCorrect: true,
+    });
+  }
+
+  return options;
 }
 
 export function splitAnswerOptionDrafts(options: QuestionAnswerOptionDraft[]): {
   correctAnswer: string;
+  correctAnswerIndex: number;
   incorrectAnswers: string[];
 } {
   const normalized = options.map((option) => ({
@@ -85,12 +94,14 @@ export function splitAnswerOptionDrafts(options: QuestionAnswerOptionDraft[]): {
   if (!selectedCorrect) {
     return {
       correctAnswer: '',
+      correctAnswerIndex: 0,
       incorrectAnswers: [],
     };
   }
 
   return {
     correctAnswer: selectedCorrect.text,
+    correctAnswerIndex: Math.max(0, normalized.findIndex((option) => option.id === selectedCorrect.id)),
     incorrectAnswers: normalized.filter((option) => option.id !== selectedCorrect.id).map((option) => option.text),
   };
 }
@@ -98,15 +109,11 @@ export function splitAnswerOptionDrafts(options: QuestionAnswerOptionDraft[]): {
 export function buildReadonlyAnswerOptions(
   correctAnswer: string,
   incorrectAnswers: string[],
-  seed: string
+  correctAnswerIndex: number,
+  seed?: string
 ): QuestionAnswerOptionDraft[] {
-  return buildAnswerOptionDrafts(correctAnswer, incorrectAnswers)
-    .map((option) => ({
-      ...option,
-      sortKey: hashString(`${seed}-${option.id}-${option.text}`),
-    }))
-    .sort((left, right) => left.sortKey - right.sortKey)
-    .map(({ sortKey: _sortKey, ...option }) => option);
+  const _seed = seed ? hashString(seed) : 0;
+  return buildAnswerOptionDrafts(correctAnswer, incorrectAnswers, correctAnswerIndex);
 }
 
 export function QuestionAnswerOptions({

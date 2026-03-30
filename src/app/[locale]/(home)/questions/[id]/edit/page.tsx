@@ -11,6 +11,8 @@ export default async function EditQuestionPage({
   const { locale, id } = await params;
   const t = await getTranslations({ locale, namespace: 'faqPage.questionEdit' });
   const formT = await getTranslations({ locale, namespace: 'faqPage.questionForm' });
+  const listT = await getTranslations({ locale, namespace: 'faqPage.questionCreate' });
+  const importT = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
 
   return (
     <QuestionPageShell
@@ -18,8 +20,12 @@ export default async function EditQuestionPage({
       description={t('description')}
       actions={[
         {
-          href: getAsNeededLocalizedUrl(locale, `/questions/${id}`),
-          label: t('actions.backToDetail'),
+          href: getAsNeededLocalizedUrl(locale, '/questions'),
+          label: listT('actions.backToList'),
+        },
+        {
+          href: getAsNeededLocalizedUrl(locale, '/questions/import'),
+          label: importT('title'),
         },
       ]}
     >

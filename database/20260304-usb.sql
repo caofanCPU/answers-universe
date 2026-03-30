@@ -1,12 +1,13 @@
--- DROP TABLE faq.usb
--- 创建faq.usb表
-CREATE TABLE IF NOT EXISTS faq.usb (
+-- DROP TABLE IF EXISTS faq.usb;
+
+CREATE TABLE faq.usb (
     id BIGSERIAL PRIMARY KEY,
     question_uuid UUID NOT NULL,
     question TEXT NOT NULL,
     cdn_image_prefix VARCHAR(50),
     question_image VARCHAR(255),
     correct_answer TEXT NOT NULL,
+    correct_answer_index INTEGER NOT NULL DEFAULT 0,
     incorrect_answers JSON NOT NULL,
     explanation TEXT NOT NULL,
     difficulty VARCHAR(30) NOT NULL,
@@ -15,11 +16,15 @@ CREATE TABLE IF NOT EXISTS faq.usb (
     as_first SMALLINT NOT NULL DEFAULT 0,
     tags TEXT NOT NULL DEFAULT '',
     keywords JSON,
+    deleted INTEGER NOT NULL DEFAULT 0,
     create_user_id UUID NOT NULL,
     update_user_id UUID NOT NULL,
     created_at TIMESTAMPTZ(6) DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ(6) DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_usb_question_uuid UNIQUE (question_uuid),
+    CONSTRAINT chk_usb_correct_answer_index CHECK (correct_answer_index >= 0),
+    CONSTRAINT chk_usb_deleted CHECK (deleted IN (0, 1)),
+    CONSTRAINT chk_usb_as_first CHECK (as_first IN (0, 1)),
     CONSTRAINT chk_usb_difficulty CHECK (difficulty IN ('easy', 'medium', 'hard')),
     CONSTRAINT chk_usb_category CHECK (
         category IN (
@@ -43,10 +48,9 @@ CREATE TABLE IF NOT EXISTS faq.usb (
         )
     ),
     CONSTRAINT chk_usb_sub_category CHECK (
-        sub_category IN ('animal', 'movie', 'science', 'car', 'soccer', 'chemistry')
+        sub_category IS NULL OR sub_category IN ('animal', 'movie', 'science', 'car', 'soccer', 'chemistry')
     )
 );
 
--- 创建核心索引
 CREATE INDEX idx_usb_category ON faq.usb(category);
 CREATE INDEX idx_usb_difficulty ON faq.usb(difficulty);

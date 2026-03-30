@@ -1,5 +1,6 @@
 'use client';
 
+import { useLayoutEffect, useRef } from 'react';
 import type { QuestionFormValues } from './question-ui-types';
 import { QuestionAnswerOptions, type QuestionAnswerOptionDraft } from './question-answer-options';
 import {
@@ -75,9 +76,21 @@ export function QuestionForm({
   questionNotice,
   usb: usb,
 }: QuestionFormProps) {
+  const questionTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const categoryOptions = QUESTION_CATEGORIES.map((option) => ({ label: option, value: option }));
   const subCategoryOptions = QUESTION_SUB_CATEGORIES.map((option) => ({ label: option, value: option }));
   const difficultyOptions = QUESTION_DIFFICULTIES.map((option) => ({ label: option, value: option }));
+
+  useLayoutEffect(() => {
+    const element = questionTextareaRef.current;
+
+    if (!element) {
+      return;
+    }
+
+    element.style.height = '0px';
+    element.style.height = `${element.scrollHeight}px`;
+  }, [values.question]);
 
   const onInputChange =
     (field: keyof QuestionFormValues) =>
@@ -113,10 +126,11 @@ export function QuestionForm({
             ) : null}
           </div>
           <textarea
+            ref={questionTextareaRef}
             value={values.question}
             onChange={onInputChange('question')}
-            rows={4}
-            className="w-full rounded-2xl border border-black/10 px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:text-white"
+            rows={1}
+            className="min-h-32 w-full resize-none rounded-2xl border border-black/10 px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:text-white"
           />
         </label>
         <label className="space-y-2 text-sm md:col-span-2">

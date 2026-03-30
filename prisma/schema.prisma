@@ -195,12 +195,14 @@ model Usb {
   cdnImagePrefix  String?     @map("cdn_image_prefix") @db.VarChar(50)
   questionImage   String?     @map("question_image") @db.VarChar(255)
   correctAnswer   String      @map("correct_answer") @db.Text
+  correctAnswerIndex Int      @default(0) @map("correct_answer_index")
   incorrectAnswers Json    @map("incorrect_answers")
   explanation     String      @db.Text
   difficulty      String      @db.VarChar(30)
   category        String      @db.VarChar(100)
   subCategory        String?     @map("sub_category") @db.VarChar(500)
   asFirst         Int         @map("as_first") @default(0) @db.SmallInt
+  deleted         Int         @default(0)
   tags            String      @map("tags") @default("") @db.Text
   keywords        Json?       @map("keywords")
   createUserId    String      @map("create_user_id") @db.Uuid

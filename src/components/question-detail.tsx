@@ -2,7 +2,6 @@ import Image from 'next/image';
 import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 import { themeBgColor, themeBorderColor, themeIconColor } from '@windrun-huaiin/base-ui/lib';
 import { cn } from '@windrun-huaiin/lib/utils';
-import { SiteEyeIcon, SiteEyeOffIcon } from '@/lib/site-config';
 import type { QuestionAnswerOptionDraft } from './question-answer-options';
 import type { QuestionViewModel } from './question-ui-types';
 
@@ -11,7 +10,7 @@ type QuestionDetailProps = {
   question: QuestionViewModel;
   answerOptions: QuestionAnswerOptionDraft[];
   previewAsPlayer?: boolean;
-  onTogglePreviewMode?: () => void;
+  bottomActions?: React.ReactNode;
 };
 
 export function QuestionDetail({
@@ -19,7 +18,7 @@ export function QuestionDetail({
   question,
   answerOptions,
   previewAsPlayer = false,
-  onTogglePreviewMode,
+  bottomActions,
 }: QuestionDetailProps) {
   const isZh = locale === 'zh';
   const options = answerOptions.filter((option) => option.text.trim());
@@ -38,20 +37,9 @@ export function QuestionDetail({
           {question.subCategory ? <span className={metaPillClassName}>{question.subCategory}</span> : null}
           {question.difficulty ? <span className={metaPillClassName}>{question.difficulty}</span> : null}
         </div>
-        <div className="flex items-start gap-3">
-          <h2 className="min-w-0 flex-1 text-2xl font-semibold text-slate-900 dark:text-white">{question.question}</h2>
-          <button
-            type="button"
-            onClick={onTogglePreviewMode}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-black/5 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
-            aria-pressed={previewAsPlayer}
-            aria-label={previewAsPlayer ? (isZh ? '显示完整预览' : 'Show full preview') : isZh ? '切换答题视角' : 'Switch to player view'}
-          >
-            {previewAsPlayer ? <SiteEyeOffIcon className="h-4 w-4" /> : <SiteEyeIcon className="h-4 w-4" />}
-          </button>
-        </div>
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{question.question}</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isZh ? '这是题目主体展示区，后续会由详情 API 提供真实数据。' : 'This is the main question view. Real detail data will be connected in the next step.'}
+          {isZh ? '这是当前题目的完整预览。' : 'This is the full preview for the current question.'}
         </p>
       </div>
 
@@ -102,14 +90,22 @@ export function QuestionDetail({
       ) : null}
 
       {question.questionImageUrl ? (
-        <div className="overflow-hidden rounded-3xl border border-black/10 dark:border-white/10">
+        <div
+          className={cn(
+            'overflow-hidden rounded-3xl border border-black/10 dark:border-white/10',
+            previewAsPlayer ? 'mx-auto max-h-60 max-w-xs' : 'mx-auto max-h-[28rem] max-w-xl'
+          )}
+        >
           <Image
             src={question.questionImageUrl}
             alt={question.question}
             width={420}
             height={236}
-            className="h-auto w-full"
-            sizes="(max-width: 1024px) 100vw, 420px"
+            className={cn(
+              'mx-auto',
+              previewAsPlayer ? 'h-60 w-auto object-contain' : 'max-h-[28rem] w-auto object-contain'
+            )}
+            sizes={previewAsPlayer ? '(max-width: 768px) 240px, 240px' : '(max-width: 1024px) 70vw, 420px'}
           />
         </div>
       ) : null}
@@ -126,6 +122,12 @@ export function QuestionDetail({
               </span>
             ))}
           </div>
+        </div>
+      ) : null}
+
+      {bottomActions ? (
+        <div className="-mx-6 -mb-6 mt-6 border-t border-black/10 px-6 py-4 dark:border-white/10">
+          <div className="flex items-center justify-end gap-3">{bottomActions}</div>
         </div>
       ) : null}
     </div>

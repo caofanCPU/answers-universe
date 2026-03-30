@@ -1,5 +1,8 @@
+'use client';
+
 import Link from 'next/link';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
+import { saveQuestionGroupContext } from './question-group-context';
 import type { QuestionListItemDto } from '@/server/questions/types';
 
 type QuestionListProps = {
@@ -9,6 +12,7 @@ type QuestionListProps = {
 
 export function QuestionList({ locale, items }: QuestionListProps) {
   const isZh = locale === 'zh';
+  const groupIds = items.map((item) => item.id);
 
   if (items.length === 0) {
     return (
@@ -37,7 +41,11 @@ export function QuestionList({ locale, items }: QuestionListProps) {
                   </span>
                 ) : null}
               </div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{item.question}</h2>
+              <h2
+                className="overflow-hidden text-lg font-semibold text-slate-900 [-webkit-box-orient:vertical] [-webkit-line-clamp:4] [display:-webkit-box] dark:text-white md:min-h-[3.5rem] md:[-webkit-line-clamp:2]"
+              >
+                {item.question}
+              </h2>
               <div className="flex flex-wrap gap-2">
                 {item.tags.map((tag) => (
                   <span
@@ -49,15 +57,17 @@ export function QuestionList({ locale, items }: QuestionListProps) {
                 ))}
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex justify-end gap-3">
               <Link
                 href={getAsNeededLocalizedUrl(locale, `/questions/${item.id}`)}
+                onClick={() => saveQuestionGroupContext({ groupIds })}
                 className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
               >
                 {isZh ? '查看' : 'View'}
               </Link>
               <Link
                 href={getAsNeededLocalizedUrl(locale, `/questions/${item.id}/edit`)}
+                onClick={() => saveQuestionGroupContext({ groupIds })}
                 className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-purple-400 to-pink-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:brightness-110"
               >
                 {isZh ? '编辑' : 'Edit'}

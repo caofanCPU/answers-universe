@@ -14,6 +14,7 @@ export const questionUpsertSchema = z.object({
   cdnImagePrefix: optionalString,
   questionImage: optionalString,
   correctAnswer: z.string().trim().min(1, 'correctAnswer is required'),
+  correctAnswerIndex: z.coerce.number().int().optional().default(0),
   incorrectAnswers: z.array(z.string().trim().min(1)).default([]),
   explanation: z.string().trim().min(1, 'explanation is required'),
   difficulty: z.enum(QUESTION_DIFFICULTIES),

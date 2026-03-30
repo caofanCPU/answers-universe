@@ -416,6 +416,11 @@
         "status": {
           "loading": "正在加载题目列表...",
           "loadFailed": "列表加载失败："
+        },
+        "pagination": {
+          "summary": "{page}/{totalPages}, 共 {total} 题",
+          "previous": "上一页",
+          "next": "下一页"
         }
       },
       "questionsImport": {

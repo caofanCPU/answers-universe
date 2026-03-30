@@ -10,6 +10,7 @@ export default async function QuestionsPage({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'faqPage.questionsList' });
+  const importT = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
 
   return (
     <QuestionPageShell
@@ -20,6 +21,10 @@ export default async function QuestionsPage({
           href: getAsNeededLocalizedUrl(locale, '/questions/new'),
           label: t('actions.create'),
           primary: true,
+        },
+        {
+          href: getAsNeededLocalizedUrl(locale, '/questions/import'),
+          label: importT('title'),
         },
       ]}
     >
@@ -36,6 +41,11 @@ export default async function QuestionsPage({
           },
           loading: t('status.loading'),
           loadFailed: t('status.loadFailed'),
+          pagination: {
+            summary: t.raw('pagination.summary'),
+            previous: t('pagination.previous'),
+            next: t('pagination.next'),
+          },
         }}
       />
     </QuestionPageShell>

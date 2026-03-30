@@ -10,6 +10,7 @@ export default async function QuestionImportPage({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
+  const createT = await getTranslations({ locale, namespace: 'faqPage.questionCreate' });
 
   return (
     <QuestionPageShell
@@ -19,6 +20,11 @@ export default async function QuestionImportPage({
         {
           href: getAsNeededLocalizedUrl(locale, '/questions'),
           label: t('actions.backToList'),
+        },
+        {
+          href: getAsNeededLocalizedUrl(locale, '/questions/new'),
+          label: createT('title'),
+          primary: true,
         },
       ]}
     >

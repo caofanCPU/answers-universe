@@ -6,12 +6,18 @@ import type {
   QuestionImportPreviewDto,
   QuestionImportValidationResult,
 } from '@/server/questions/types';
+import {
+  QUESTION_CATEGORIES,
+  QUESTION_DIFFICULTIES,
+  QUESTION_SUB_CATEGORIES,
+} from '@/server/questions/constants';
 
 type RawImportItem = {
   question?: unknown;
   cdnImagePrefix?: unknown;
   questionImage?: unknown;
   correctAnswer?: unknown;
+  correctAnswerIndex?: unknown;
   incorrectAnswers?: unknown;
   explanation?: unknown;
   difficulty?: unknown;
@@ -32,6 +38,7 @@ const sampleJson = `[
   {
     "question": "Which USB connector is reversible and commonly used by modern laptops and phones?",
     "correctAnswer": "USB-C",
+    "correctAnswerIndex": 1,
     "incorrectAnswers": ["USB-A", "Mini USB", "Micro USB"],
     "explanation": "USB-C is reversible and widely adopted in modern devices.",
     "difficulty": "Easy",
@@ -64,6 +71,23 @@ function normalizeTags(value: unknown): string[] {
   return [];
 }
 
+function normalizeInteger(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isInteger(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isInteger(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function isAllowedValue<T extends readonly string[]>(value: string, options: T): value is T[number] {
+  return options.includes(value);
+}
+
 function validateImportItem(item: RawImportItem, index: number): QuestionImportPreviewDto {
   const errors: string[] = [];
   const question = normalizeString(item.question);
@@ -71,15 +95,29 @@ function validateImportItem(item: RawImportItem, index: number): QuestionImportP
   const subCategory = normalizeString(item.subCategory);
   const difficulty = normalizeString(item.difficulty);
   const correctAnswer = normalizeString(item.correctAnswer);
+  const correctAnswerIndex = normalizeInteger(item.correctAnswerIndex);
   const explanation = normalizeString(item.explanation);
   const tags = normalizeTags(item.tags);
   const keywords = normalizeTags(item.keywords);
 
   if (!question) errors.push('question is required');
-  if (!category) errors.push('category is required');
-  if (!subCategory) errors.push('subCategory is required');
-  if (!difficulty) errors.push('difficulty is required');
+  if (!category) {
+    errors.push('category is required');
+  } else if (!isAllowedValue(category, QUESTION_CATEGORIES)) {
+    errors.push(`category must be one of: ${QUESTION_CATEGORIES.join(', ')}`);
+  }
+  if (subCategory && !isAllowedValue(subCategory, QUESTION_SUB_CATEGORIES)) {
+    errors.push(`subCategory must be one of: ${QUESTION_SUB_CATEGORIES.join(', ')}`);
+  }
+  if (!difficulty) {
+    errors.push('difficulty is required');
+  } else if (!isAllowedValue(difficulty, QUESTION_DIFFICULTIES)) {
+    errors.push(`difficulty must be one of: ${QUESTION_DIFFICULTIES.join(', ')}`);
+  }
   if (!correctAnswer) errors.push('correctAnswer is required');
+  if (item.correctAnswerIndex !== undefined && correctAnswerIndex === null) {
+    errors.push('correctAnswerIndex must be an integer');
+  }
   if (!explanation) errors.push('explanation is required');
 
   if (!Array.isArray(item.incorrectAnswers)) {
