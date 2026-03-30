@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { themeBgColor, themeBorderColor, themeIconColor, themeRingColor } from '@windrun-huaiin/base-ui/lib';
+import { themeBgColor, themeBorderColor, themeIconColor } from '@windrun-huaiin/base-ui/lib';
 import { cn } from '@windrun-huaiin/lib/utils';
 
 export type XPillOption = {
@@ -61,6 +61,7 @@ export function XPillSelect(props: XPillSelectProps) {
 
   const [draftValue, setDraftValue] = useState('');
   const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   const normalizedOptions = useMemo(
@@ -149,15 +150,37 @@ export function XPillSelect(props: XPillSelectProps) {
     props.onChange(selectedValues.filter((item) => item !== nextValue));
   }
 
+  function toggleOpen() {
+    if (disabled) {
+      return;
+    }
+
+    setOpen((current) => !current);
+  }
+
   return (
     <div ref={rootRef} className={cn('relative', className)}>
-      <button
-        type="button"
-        onClick={() => !disabled && setOpen((current) => !current)}
-        disabled={disabled}
+      <div
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-disabled={disabled}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        onMouseEnter={() => !disabled && setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onClick={toggleOpen}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+          }
+
+          event.preventDefault();
+          toggleOpen();
+        }}
         className={cn(
-          'flex min-h-11 w-full items-center justify-between gap-3 rounded-full border border-black/10 bg-white px-4 py-2.5 text-left transition hover:border-black/20 dark:border-white/10 dark:bg-slate-950 dark:hover:border-white/20',
-          open && [themeBorderColor, themeRingColor, 'ring-4'],
+          'flex min-h-11 w-full items-center justify-between gap-3 rounded-full border border-black/10 bg-white px-4 py-2.5 text-left transition dark:border-white/10 dark:bg-slate-950',
+          !disabled && 'cursor-pointer',
+          !disabled && (hovered || open) && themeBorderColor,
           disabled && 'cursor-not-allowed opacity-60'
         )}
       >
@@ -195,10 +218,17 @@ export function XPillSelect(props: XPillSelectProps) {
         <ChevronDown
           className={cn('h-4 w-4 shrink-0 text-slate-500 transition-transform dark:text-slate-400', open && 'rotate-180')}
         />
-      </button>
+      </div>
 
       {open ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 space-y-3 rounded-3xl border border-black/10 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-slate-950">
+        <div
+          role="listbox"
+          aria-multiselectable={props.mode === 'multiple' ? true : undefined}
+          className={cn(
+            'absolute left-0 right-0 top-[calc(100%+0.375rem)] z-50 space-y-3 rounded-3xl border border-black/10 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-slate-950',
+            open && themeBorderColor
+          )}
+        >
           {inputEnabled ? (
             <input
               value={draftValue}

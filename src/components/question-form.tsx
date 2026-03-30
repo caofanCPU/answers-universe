@@ -92,7 +92,7 @@ export function QuestionForm({ values, onChange, copy }: QuestionFormProps) {
           onChange={(value) => updateField(values, onChange, 'difficulty', value)}
           emptyLabel={copy.difficultyEmpty}
         />
-        <label className="space-y-2 text-sm md:col-span-2">
+        <div className="space-y-2 text-sm md:col-span-2">
           <span className="font-medium text-slate-700 dark:text-slate-200">{copy.tagsLabel}</span>
           <XTokenInput
             value={values.tags}
@@ -100,7 +100,7 @@ export function QuestionForm({ values, onChange, copy }: QuestionFormProps) {
             placeholder={copy.tagsPlaceholder}
             emptyLabel={copy.tagsEmpty}
           />
-        </label>
+        </div>
         <label className="space-y-2 text-sm md:col-span-2">
           <span className="font-medium text-slate-700 dark:text-slate-200">{copy.correctAnswer}</span>
           <input

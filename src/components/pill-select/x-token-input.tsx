@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { X } from 'lucide-react';
 import { themeBgColor, themeBorderColor, themeIconColor, themeRingColor } from '@windrun-huaiin/base-ui/lib';
 import { cn } from '@windrun-huaiin/lib/utils';
 
@@ -32,6 +33,8 @@ export function XTokenInput({
   maxPillWidthClassName = 'max-w-[180px] sm:max-w-[220px]',
 }: XTokenInputProps) {
   const [draftValue, setDraftValue] = useState('');
+  const [focused, setFocused] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const tokens = dedupeTokens(value);
 
@@ -56,66 +59,97 @@ export function XTokenInput({
     }
 
     onChange(tokens.filter((item) => item !== target));
+    inputRef.current?.focus();
   }
 
   return (
     <div className={cn('space-y-2', className)}>
       <div
+        ref={rootRef}
         onClick={() => inputRef.current?.focus()}
+        onFocusCapture={() => setFocused(true)}
+        onBlurCapture={(event) => {
+          if (rootRef.current?.contains(event.relatedTarget as Node | null)) {
+            return;
+          }
+
+          setFocused(false);
+        }}
         className={cn(
           'min-h-11 rounded-3xl border border-black/10 bg-white px-3 py-2.5 transition dark:border-white/10 dark:bg-slate-950',
-          themeBorderColor,
-          themeRingColor,
-          'focus-within:ring-4'
+          focused && themeBorderColor
         )}
       >
         <div className="flex flex-wrap items-center gap-2">
-          {tokens.map((token) => (
-            <button
-              key={token}
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                removeToken(token);
+          {tokens.length > 0 ? (
+            <ul className="contents" role="list">
+              {tokens.map((token) => (
+                <li key={token} className="list-none">
+                  <span
+                    className={cn(
+                      'inline-flex max-w-full items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold transition',
+                      themeBgColor,
+                      themeIconColor,
+                      disabled && 'opacity-60'
+                    )}
+                    title={token}
+                  >
+                    <span className={cn('truncate', maxPillWidthClassName)}>{token}</span>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        removeToken(token);
+                      }}
+                      disabled={disabled}
+                      aria-label={`Remove ${token}`}
+                      className={cn(
+                        'inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full transition',
+                        'hover:bg-black/10 dark:hover:bg-white/10',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
+                        themeRingColor,
+                        disabled && 'cursor-not-allowed'
+                      )}
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <div
+            className={cn(
+              'flex-1',
+              tokens.length === 0 ? 'min-w-[160px]' : draftValue || focused ? 'min-w-[96px]' : 'min-w-0'
+            )}
+          >
+            <input
+              ref={inputRef}
+              value={draftValue}
+              onChange={(event) => setDraftValue(event.target.value.replaceAll(',', ''))}
+              onKeyDown={(event) => {
+                if (event.key === 'Backspace' && !draftValue && tokens.length > 0) {
+                  event.preventDefault();
+                  removeToken(tokens[tokens.length - 1]);
+                  return;
+                }
+
+                if (event.key !== 'Enter') {
+                  return;
+                }
+
+                event.preventDefault();
+                commitToken(draftValue);
               }}
               disabled={disabled}
+              placeholder={tokens.length === 0 ? placeholder : undefined}
               className={cn(
-                'inline-flex max-w-full items-center rounded-full px-3 py-1 text-xs font-semibold transition',
-                themeBgColor,
-                themeIconColor,
-                'hover:brightness-95 dark:hover:brightness-110',
-                disabled && 'cursor-not-allowed opacity-60'
+                'bg-transparent px-1 py-1 text-sm text-slate-700 outline-none dark:text-white',
+                tokens.length === 0 || draftValue || focused ? 'w-full' : 'w-0'
               )}
-              title={token}
-            >
-              <span className={cn('truncate', maxPillWidthClassName)}>{token}</span>
-            </button>
-          ))}
-          <input
-            ref={inputRef}
-            value={draftValue}
-            onChange={(event) => setDraftValue(event.target.value.replaceAll(',', ''))}
-            onKeyDown={(event) => {
-              if (event.key === 'Backspace' && !draftValue && tokens.length > 0) {
-                event.preventDefault();
-                removeToken(tokens[tokens.length - 1]);
-                return;
-              }
-
-              if (event.key !== 'Enter') {
-                return;
-              }
-
-              event.preventDefault();
-              commitToken(draftValue);
-            }}
-            disabled={disabled}
-            placeholder={tokens.length === 0 ? placeholder : undefined}
-            className={cn(
-              'bg-transparent px-1 py-1 text-sm text-slate-700 outline-none dark:text-white',
-              tokens.length === 0 ? 'min-w-[220px] flex-1' : draftValue ? 'min-w-[96px] flex-1' : 'w-6 flex-none'
-            )}
-          />
+            />
+          </div>
         </div>
       </div>
       {tokens.length === 0 && emptyLabel ? (
