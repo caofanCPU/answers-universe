@@ -179,22 +179,24 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
 
   return (
     <div className="space-y-4">
-      <QuestionListFilters
-        id={id}
-        uuid={uuid}
-        uuidInvalid={hasInvalidUuid}
-        asFirst={asFirst}
-        category={category}
-        subCategory={subCategory}
-        difficulty={difficulty}
-        copy={copy.filters}
-        onIdChange={setId}
-        onUuidChange={setUuid}
-        onAsFirstChange={setAsFirst}
-        onCategoryChange={setCategory}
-        onSubCategoryChange={setSubCategory}
-        onDifficultyChange={setDifficulty}
-      />
+      <div className="mb-4 sm:mb-5">
+        <QuestionListFilters
+          id={id}
+          uuid={uuid}
+          uuidInvalid={hasInvalidUuid}
+          asFirst={asFirst}
+          category={category}
+          subCategory={subCategory}
+          difficulty={difficulty}
+          copy={copy.filters}
+          onIdChange={setId}
+          onUuidChange={setUuid}
+          onAsFirstChange={setAsFirst}
+          onCategoryChange={setCategory}
+          onSubCategoryChange={setSubCategory}
+          onDifficultyChange={setDifficulty}
+        />
+      </div>
 
       {state.loading ? (
         <div className="rounded-3xl border border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
