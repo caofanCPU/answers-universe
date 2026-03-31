@@ -218,6 +218,39 @@ export function QuestionImportClient({ locale }: { locale: string }) {
     const invalid = total - valid;
     return { total, valid, invalid };
   }, [result.previews]);
+  const hasValidationResult = submitted;
+  const validationSummary = !hasValidationResult
+    ? { total: 0, valid: 0, invalid: 0 }
+    : serverValidation
+      ? {
+          total: serverValidation.total,
+          valid: serverValidation.validCount,
+          invalid: serverValidation.invalidCount,
+        }
+      : summary;
+  const invalidReasons = useMemo(() => {
+    if (!submitted || result.parseError) {
+      return [];
+    }
+
+    const items = serverValidation?.items ?? result.previews;
+    const counts = new Map<string, number>();
+
+    for (const item of items) {
+      for (const error of item.errors) {
+        counts.set(error, (counts.get(error) ?? 0) + 1);
+      }
+    }
+
+    return Array.from(counts.entries())
+      .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+      .map(([reason, count]) => ({ reason, count }));
+  }, [result.parseError, result.previews, serverValidation, submitted]);
+  const commitEnabled =
+    !committing &&
+    !result.parseError &&
+    result.rawItems.length > 0 &&
+    (serverValidation ? serverValidation.invalidCount === 0 : false);
 
   async function handleValidate() {
     setSubmitted(true);
@@ -286,19 +319,76 @@ export function QuestionImportClient({ locale }: { locale: string }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-      <div className="space-y-4">
-        <div className="rounded-3xl border border-black/10 p-6 dark:border-white/10">
-          <div className="mb-4 space-y-2">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              {isZh ? 'JSON 输入区' : 'JSON Input'}
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {isZh
-                ? '这一步只在前端本地解析 JSON，不会请求后端。你可以直接粘贴测试数据并查看本地预览结果。'
-                : 'This step parses JSON locally in the frontend only. No backend request is made yet.'}
-            </p>
+    <div className="space-y-6">
+      <div className="rounded-3xl border border-black/10 p-6 dark:border-white/10">
+        <div className="border-b border-black/10 pb-4 dark:border-white/10">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {isZh ? 'JSON 输入区' : 'JSON Input'}
+              </h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-white/5 dark:text-slate-300">
+                  {isZh ? `总数 ${validationSummary.total}` : `Total ${validationSummary.total}`}
+                </span>
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                  {isZh ? `通过 ${validationSummary.valid}` : `Valid ${validationSummary.valid}`}
+                </span>
+                <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-300">
+                  {isZh ? `错误 ${validationSummary.invalid}` : `Invalid ${validationSummary.invalid}`}
+                </span>
+                {commitResult ? (
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                    {isZh ? `已入库 ${commitResult.successCount}` : `Imported ${commitResult.successCount}`}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setSource(sampleJson);
+                setSubmitted(false);
+                setServerValidation(null);
+                setCommitResult(null);
+                setServerError(null);
+              }}
+              className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+            >
+              {isZh ? '重置' : 'Reset'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleValidate()}
+              className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+            >
+              {validating
+                ? isZh
+                  ? '校验中...'
+                  : 'Loading...'
+                : isZh
+                  ? '校验'
+                  : 'Validate'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleCommit()}
+              disabled={!commitEnabled}
+              className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-purple-400 to-pink-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {committing
+                ? isZh
+                  ? '入库中...'
+                  : 'Loading...'
+                : isZh
+                  ? '确认批量入库'
+                  : 'Commit'}
+            </button>
+            </div>
           </div>
+        </div>
+        <div className="mt-4">
           <textarea
             value={source}
             onChange={(event) => {
@@ -309,189 +399,50 @@ export function QuestionImportClient({ locale }: { locale: string }) {
               setServerError(null);
             }}
             rows={22}
-            className="w-full rounded-3xl border border-black/10 bg-slate-50 px-4 py-4 font-mono text-sm outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-900 dark:text-white"
+            className="min-h-128 w-full rounded-3xl border border-black/10 bg-slate-50 px-4 py-4 font-mono text-sm outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-900 dark:text-white"
           />
-          <div className="mt-4 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => void handleValidate()}
-              className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-purple-400 to-pink-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:brightness-110"
-            >
-              {validating
-                ? isZh
-                  ? '后端校验中...'
-                  : 'Validating...'
-                : isZh
-                  ? '解析并校验'
-                  : 'Parse and Validate'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSource(sampleJson);
-                setSubmitted(false);
-              }}
-              className="inline-flex items-center justify-center rounded-full border border-black/10 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-            >
-              {isZh ? '恢复示例数据' : 'Reset Sample'}
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleCommit()}
-              disabled={
-                committing ||
-                !!result.parseError ||
-                result.rawItems.length === 0 ||
-                (serverValidation ? serverValidation.invalidCount > 0 : false)
-              }
-              className="inline-flex items-center justify-center rounded-full border border-black/10 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-            >
-              {committing
-                ? isZh
-                  ? '批量入库中...'
-                  : 'Committing...'
-                : isZh
-                  ? '批量入库'
-                  : 'Commit Import'}
-            </button>
-          </div>
         </div>
+        {submitted && result.parseError ? (
+          <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
+            {result.parseError}
+          </div>
+        ) : null}
+        {serverError ? (
+          <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
+            {serverError}
+          </div>
+        ) : null}
       </div>
 
-      <div className="space-y-4">
-        <div className="rounded-3xl border border-black/10 p-6 dark:border-white/10">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {isZh ? '解析结果摘要' : 'Parse Summary'}
-          </h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-            <div className="rounded-2xl bg-slate-50 p-4 dark:bg-white/5">
-              <div className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                {isZh ? '总数' : 'Total'}
+      <div className="rounded-3xl border border-black/10 p-6 dark:border-white/10">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+          {isZh ? '不通过原因汇总' : 'Top Validation Errors'}
+        </h2>
+        {!submitted ? (
+          <div className="mt-4 rounded-2xl border border-dashed border-black/10 px-4 py-6 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
+            {isZh ? '点击“校验”后在这里查看错误原因汇总。' : 'Run validation to view summarized errors here.'}
+          </div>
+        ) : !result.parseError && invalidReasons.length > 0 ? (
+          <div className="mt-4 rounded-2xl border border-black/10 bg-slate-50 px-4 py-4 dark:border-white/10 dark:bg-white/5">
+            <div className="max-h-64 overflow-y-auto rounded-2xl border border-black/10 bg-white/70 p-3 dark:border-white/10 dark:bg-slate-950/40">
+              <div className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+                {invalidReasons.slice(0, 8).map((item) => (
+                  <div key={item.reason} className="flex items-start justify-between gap-3">
+                    <span className="min-w-0 wrap-break-word">{item.reason}</span>
+                    <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-500/10 dark:text-red-300">
+                      ×{item.count}
+                    </span>
+                  </div>
+                ))}
               </div>
-              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">{summary.total}</div>
-            </div>
-            <div className="rounded-2xl bg-emerald-50 p-4 dark:bg-emerald-500/10">
-              <div className="text-xs uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">
-                {isZh ? '可导入' : 'Valid'}
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">{summary.valid}</div>
-            </div>
-            <div className="rounded-2xl bg-red-50 p-4 dark:bg-red-500/10">
-              <div className="text-xs uppercase tracking-[0.2em] text-red-700 dark:text-red-300">
-                {isZh ? '错误' : 'Invalid'}
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">{summary.invalid}</div>
             </div>
           </div>
-
-          {submitted && result.parseError ? (
-            <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
-              {result.parseError}
-            </div>
-          ) : null}
-
-          {serverValidation ? (
-            <div className="mt-4 rounded-2xl border border-black/10 bg-slate-50 px-4 py-4 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
-              <div className="font-semibold">{isZh ? '后端校验结果' : 'Backend Validation'}</div>
-              <div className="mt-2">
-                {isZh ? '可导入：' : 'Valid: '}
-                {serverValidation.validCount}
-                {' / '}
-                {serverValidation.total}
-              </div>
-              <div>
-                {isZh ? '错误：' : 'Invalid: '}
-                {serverValidation.invalidCount}
-              </div>
-            </div>
-          ) : null}
-
-          {commitResult ? (
-            <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-200">
-              <div className="font-semibold">{isZh ? '批量入库结果' : 'Commit Result'}</div>
-              <div className="mt-2">
-                {isZh ? '成功：' : 'Success: '}
-                {commitResult.successCount}
-              </div>
-              <div>
-                {isZh ? '失败：' : 'Failed: '}
-                {commitResult.failedCount}
-              </div>
-            </div>
-          ) : null}
-
-          {serverError ? (
-            <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
-              {serverError}
-            </div>
-          ) : null}
-
-          {!submitted ? (
-            <div className="mt-4 rounded-2xl border border-dashed border-black/10 px-4 py-6 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
-              {isZh ? '点击“解析并预览”后显示本地解析结果。' : 'Click "Parse and Preview" to show local parse results.'}
-            </div>
-          ) : null}
-        </div>
+        ) : (
+          <div className="mt-4 rounded-2xl border border-dashed border-black/10 px-4 py-6 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
+            {isZh ? '当前没有需要展示的错误原因。' : 'There are no validation errors to display.'}
+          </div>
+        )}
       </div>
-
-      {submitted && !result.parseError ? (
-        <div className="lg:col-span-2 space-y-4">
-          {(serverValidation?.items ?? result.previews).map((item) => (
-            <article
-              key={`${item.index}-${item.question}`}
-              className="rounded-3xl border border-black/10 p-5 dark:border-white/10"
-            >
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div className="space-y-3">
-                  <div className="flex flex-wrap gap-2 text-xs">
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-white/5 dark:text-slate-300">
-                      #{item.index + 1}
-                    </span>
-                    <span
-                      className={
-                        item.valid
-                          ? 'rounded-full bg-emerald-100 px-3 py-1 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
-                          : 'rounded-full bg-red-100 px-3 py-1 text-red-700 dark:bg-red-500/10 dark:text-red-300'
-                      }
-                    >
-                      {item.valid ? (isZh ? '可导入' : 'Valid') : isZh ? '存在错误' : 'Invalid'}
-                    </span>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-white/5 dark:text-slate-300">
-                      {item.category || '--'}
-                    </span>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-white/5 dark:text-slate-300">
-                      {item.difficulty || '--'}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {item.question || (isZh ? '未提供题干' : 'Missing question')}
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {item.tags.map((tag) => (
-                      <span
-                        key={`${item.index}-${tag}`}
-                        className="rounded-full border border-black/10 px-3 py-1 text-xs text-slate-600 dark:border-white/10 dark:text-slate-300"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                {!item.valid ? (
-                  <div className="min-w-[260px] rounded-2xl bg-red-50 px-4 py-4 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-200">
-                    <div className="font-semibold">{isZh ? '错误原因' : 'Errors'}</div>
-                    <ul className="mt-2 list-disc space-y-1 pl-5">
-                      {item.errors.map((error) => (
-                        <li key={`${item.index}-${error}`}>{error}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-            </article>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }
