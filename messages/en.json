@@ -411,7 +411,7 @@
   "faqPage": {
       "questionsList": {
         "title": "Questions",
-        "description": "The questions index is now connected to the list API. Category, sub category and difficulty filters are active. Pagination refinements can follow later.",
+        "description": "",
         "actions": {
           "create": "Create"
         },
@@ -441,14 +441,14 @@
       },
       "questionsImport": {
         "title": "Import",
-        "description": "Step one only covers frontend-local JSON parsing and preview. No backend request is sent yet. Once the local preview format is confirmed, the next step will add backend validation and batch commit.",
+        "description": "",
         "actions": {
           "backToList": "Back to List"
         }
       },
       "questionDetail": {
         "title": "Question Detail #{id}",
-        "description": "The question detail page is now connected to the detail API. It currently supports question content, option display, answer reveal, explanation and right-side meta information.",
+        "description": "",
         "actions": {
           "backToList": "Back to List",
           "edit": "Edit"
@@ -456,7 +456,7 @@
       },
       "questionCreate": {
         "title": "Create",
-        "description": "The create page is now connected to the create API. You can edit the form, preview the result live, and redirect to the new detail page after saving.",
+        "description": "",
         "actions": {
           "backToList": "Back to List",
           "submit": "Create"
@@ -470,7 +470,7 @@
       },
       "questionEdit": {
         "title": "Edit Question #{id}",
-        "description": "The edit page is now connected to detail loading and the update API. It loads the question first, then lets you edit and return to the detail page.",
+        "description": "",
         "actions": {
           "backToDetail": "Back to Detail",
           "submit": "Update"

@@ -15,7 +15,6 @@ Answer-Universe 是一个题库内容管理与查看产品。当前工程已经�
 
 涉及的主要参考文件：
 
-- [UI.md](./UI.md)
 - [prisma/schema.prisma](./prisma/schema.prisma)
 - [src/components/hero.tsx](./src/components/hero.tsx)
 
@@ -49,29 +48,7 @@ Answer-Universe 是一个题库内容管理与查看产品。当前工程已经�
 
 ### 2.3 数据模型
 
-一期数据基于 `Usb` 模型，字段包括：
-
-- `id`：题目主键
-- `question`：题干正文
-- `cdnImagePrefix`：图片 CDN 前缀
-- `questionImage`：题目图片路径
-- `correctAnswer`：正确答案
-- `incorrectAnswers`：错误答案列表，JSON 存储
-- `explanation`：题目解析
-- `difficulty`：难度
-- `category`：主分类
-- `subCategory`：次分类
-- `asFirst`：是否首发标记
-- `tags`：附加标签
-- `createUserId`：创建用户
-- `updateUserId`：更新用户
-- `createdAt` / `updatedAt`：创建与更新时间
-
-服务层对外输出时，建议统一转换为页面直接可用的数据结构：
-
-- `incorrectAnswers` 转为字符串数组
-- `tags` 转为标签数组
-- `cdnImagePrefix + questionImage` 转为完整图片地址
+基于 `Usb` 模型
 
 ### 2.4 功能说明
 

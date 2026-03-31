@@ -4,7 +4,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
+import { themeButtonGradientClass, themeButtonGradientHoverClass } from '@windrun-huaiin/base-ui/lib';
+import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
+import { cn } from '@windrun-huaiin/lib/utils';
 import { SiteEyeIcon, SiteEyeOffIcon } from '@/lib/site-config';
 import { loadQuestionGroupContext } from './question-group-context';
 import {
@@ -372,7 +375,7 @@ export function QuestionEditorClient({
   return (
     <div className="mx-auto flex w-full max-w-6xl min-w-0 flex-col gap-4 pb-32">
       <div className="sticky top-4 z-20 w-full">
-        <div className="rounded-[1.75rem] border border-black/10 bg-white/95 p-3 shadow-lg shadow-black/5 backdrop-blur dark:border-white/10 dark:bg-slate-950/90 dark:shadow-black/20">
+        <div className="rounded-[1.75rem] border border-black/10 p-3 dark:border-white/10">
           <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 lg:grid-cols-[12rem_minmax(0,1fr)_12rem]">
             <div className="flex min-w-0 items-center">
               <Link
@@ -387,26 +390,28 @@ export function QuestionEditorClient({
             </div>
 
             <div className="flex min-w-0 justify-center">
-              <div className="inline-flex max-w-full items-center rounded-full border border-black/10 bg-white/90 p-1 shadow-sm dark:border-white/10 dark:bg-slate-950/90">
+              <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-black/10 p-1 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() => setActiveView('edit')}
-                  className={
+                  className={cn(
+                    'rounded-full px-5 py-2 text-sm transition',
                     activeView === 'edit'
-                      ? 'rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm dark:bg-white dark:text-slate-950'
-                      : 'rounded-full px-5 py-2 text-sm font-medium text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
-                  }
+                      ? cn('text-white rounded-full shadow-sm', themeButtonGradientClass, themeButtonGradientHoverClass)
+                      : 'text-gray-800 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100'
+                  )}
                 >
                   {isZh ? '编辑' : 'Edit'}
                 </button>
                 <button
                   type="button"
                   onClick={openPreview}
-                  className={
+                  className={cn(
+                    'rounded-full px-5 py-2 text-sm transition',
                     activeView === 'preview'
-                      ? 'rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm dark:bg-white dark:text-slate-950'
-                      : 'rounded-full px-5 py-2 text-sm font-medium text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
-                  }
+                      ? cn('text-white rounded-full shadow-sm', themeButtonGradientClass, themeButtonGradientHoverClass)
+                      : 'text-gray-800 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100'
+                  )}
                 >
                   {isZh ? '预览' : 'Preview'}
                 </button>
@@ -444,7 +449,7 @@ export function QuestionEditorClient({
         />
       )}
       <div className="sticky bottom-4 z-20 w-full">
-        <div className="rounded-[1.75rem] border border-black/10 bg-white/95 p-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur dark:border-white/10 dark:bg-slate-950/90 dark:shadow-black/30">
+        <div className="rounded-[1.75rem] border border-black/10 bg-neutral-100 p-3 dark:border-white/10 dark:bg-neutral-900">
           {activeView === 'edit' ? (
             <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex min-w-0 items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
@@ -520,18 +525,13 @@ export function QuestionEditorClient({
                 ) : null}
               </div>
               <div className="flex min-w-0 items-center justify-end">
-                <button
-                  type="button"
+                <GradientButton
                   onClick={() => void onSubmit()}
                   disabled={saving || loading}
-                  className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full bg-linear-to-r from-purple-400 to-pink-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5 sm:py-3"
-                  aria-label={submitLabel}
                   title={submitLabel}
-                >
-                  {submitSucceeded ? <icons.Check className="h-4 w-4" /> : <icons.QrCode className="h-4 w-4" />}
-                  <span className="truncate sm:hidden">{submitSucceeded ? submitLabel : saving ? submitLabel : isZh ? '提交' : 'Submit'}</span>
-                  <span className="hidden truncate sm:inline">{submitLabel}</span>
-                </button>
+                  align="center"
+                  className="min-w-0 sm:w-auto"
+                />
               </div>
             </div>
           )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef } from 'react';
+import { useId, useLayoutEffect, useRef } from 'react';
 import type { QuestionFormValues } from './question-ui-types';
 import { QuestionAnswerOptions, type QuestionAnswerOptionDraft } from './question-answer-options';
 import {
@@ -9,7 +9,7 @@ import {
   QUESTION_SUB_CATEGORIES,
 } from '@/server/questions/constants';
 import { XFormPills, XTokenInput } from '@/components/pill-select';
-import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
+import { InfoTooltip } from './info-tooltip';
 
 type QuestionFormProps = {
   values: QuestionFormValues;
@@ -76,6 +76,7 @@ export function QuestionForm({
   questionNotice,
   usb: usb,
 }: QuestionFormProps) {
+  const questionFieldId = useId();
   const questionTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const categoryOptions = QUESTION_CATEGORIES.map((option) => ({ label: option, value: option }));
   const subCategoryOptions = QUESTION_SUB_CATEGORIES.map((option) => ({ label: option, value: option }));
@@ -105,34 +106,22 @@ export function QuestionForm({
   return (
     <form className="w-full min-w-0 space-y-5 rounded-3xl border border-black/10 p-6 dark:border-white/10">
       <div className="grid min-w-0 gap-4 md:grid-cols-2">
-        <label className="space-y-2 text-sm md:col-span-2">
+        <div className="space-y-2 text-sm md:col-span-2">
           <div className="flex items-center gap-2">
-            <div className="font-medium text-slate-700 dark:text-slate-200">
+            <label htmlFor={questionFieldId} className="font-medium text-slate-700 dark:text-slate-200">
               {usb.question} <RequiredMark />
-            </div>
-            {questionNotice ? (
-              <div className="group relative inline-flex">
-                <button
-                  type="button"
-                  className="inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-400 transition hover:bg-black/5 hover:text-slate-700 focus-visible:bg-black/5 focus-visible:text-slate-700 focus-visible:outline-none dark:hover:bg-white/5 dark:hover:text-white dark:focus-visible:bg-white/5 dark:focus-visible:text-white"
-                  aria-label={questionNotice}
-                >
-                  <icons.CircleQuestionMark className="h-4 w-4" />
-                </button>
-                <div className="pointer-events-none absolute left-full top-1/2 z-10 ml-2 hidden w-72 -translate-y-1/2 rounded-2xl border border-black/10 px-3 py-2 text-xs leading-5 text-slate-600 shadow-xl group-hover:block group-focus-within:block dark:border-white/10 dark:text-slate-300">
-                  {questionNotice}
-                </div>
-              </div>
-            ) : null}
+            </label>
+            {questionNotice ? <InfoTooltip content={questionNotice} /> : null}
           </div>
           <textarea
+            id={questionFieldId}
             ref={questionTextareaRef}
             value={values.question}
             onChange={onInputChange('question')}
             rows={1}
             className="min-h-32 w-full min-w-0 resize-none rounded-2xl border border-black/10 px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:text-white"
           />
-        </label>
+        </div>
         <label className="space-y-2 text-sm md:col-span-2">
           <div className="font-medium text-slate-700 dark:text-slate-200">
             {usb.answersLabel} <RequiredMark />

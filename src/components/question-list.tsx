@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
+import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
 import { saveQuestionGroupContext } from './question-group-context';
 import type { QuestionListItemDto } from '@/server/questions/types';
 
@@ -65,13 +66,15 @@ export function QuestionList({ locale, items }: QuestionListProps) {
               >
                 {isZh ? '查看' : 'View'}
               </Link>
-              <Link
-                href={getAsNeededLocalizedUrl(locale, `/questions/${item.id}/edit`)}
-                onClick={() => saveQuestionGroupContext({ groupIds })}
-                className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-purple-400 to-pink-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:brightness-110"
-              >
-                {isZh ? '编辑' : 'Edit'}
-              </Link>
+              <span onClickCapture={() => saveQuestionGroupContext({ groupIds })}>
+                <GradientButton
+                  href={getAsNeededLocalizedUrl(locale, `/questions/${item.id}/edit`)}
+                  openInNewTab={false}
+                  title={isZh ? '编辑' : 'Edit'}
+                  align="center"
+                  className="sm:w-auto"
+                />
+              </span>
             </div>
           </div>
         </article>

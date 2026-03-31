@@ -1,5 +1,6 @@
 'use client';
 
+import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
 import { useMemo, useState } from 'react';
 import type {
   QuestionImportCommitResult,
@@ -371,20 +372,14 @@ export function QuestionImportClient({ locale }: { locale: string }) {
                   ? '校验'
                   : 'Validate'}
             </button>
-            <button
-              type="button"
+            <GradientButton
               onClick={() => void handleCommit()}
               disabled={!commitEnabled}
-              className="inline-flex items-center justify-center rounded-full bg-linear-to-r from-purple-400 to-pink-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {committing
-                ? isZh
-                  ? '入库中...'
-                  : 'Loading...'
-                : isZh
-                  ? '确认批量入库'
-                  : 'Commit'}
-            </button>
+              title={isZh ? '确认批量入库' : 'Commit'}
+              loadingText={isZh ? '入库中...' : 'Loading...'}
+              align="center"
+              className="sm:w-auto"
+            />
             </div>
           </div>
         </div>
