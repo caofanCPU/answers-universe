@@ -128,7 +128,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
   }, [queryString]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <QuestionListFilters
         category={category}
         subCategory={subCategory}
@@ -155,17 +155,17 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
       {!state.loading && !state.error ? <QuestionList locale={locale} items={state.items} /> : null}
 
       {!state.loading && !state.error ? (
-        <div className="flex items-center justify-center gap-3 rounded-3xl border border-black/10 px-5 py-4 text-sm text-slate-600 dark:border-white/10 dark:text-slate-300">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center rounded-3xl border border-black/10 px-3 py-2.5 text-xs text-slate-600 dark:border-white/10 dark:text-slate-300 sm:px-4 sm:text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => setPage((current) => Math.max(1, current - 1))}
               disabled={state.pagination.page <= 1}
-              className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2 font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+              className="inline-flex items-center justify-center rounded-full border border-black/10 px-3 py-1.5 font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
             >
               {copy.pagination.previous}
             </button>
-            <div className="min-w-28 text-center font-medium text-slate-600 dark:text-slate-300">
+            <div className="min-w-24 text-center font-medium text-slate-600 dark:text-slate-300 sm:min-w-28">
               {copy.pagination.summary
                 .replace('{page}', String(state.pagination.page))
                 .replace('{totalPages}', String(Math.max(state.pagination.totalPages, 1)))
@@ -175,7 +175,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
               type="button"
               onClick={() => setPage((current) => Math.min(state.pagination.totalPages || 1, current + 1))}
               disabled={state.pagination.totalPages <= 1 || state.pagination.page >= state.pagination.totalPages}
-              className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2 font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+              className="inline-flex items-center justify-center rounded-full border border-black/10 px-3 py-1.5 font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
             >
               {copy.pagination.next}
             </button>

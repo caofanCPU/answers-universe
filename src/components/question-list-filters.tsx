@@ -40,7 +40,7 @@ export function QuestionListFilters(props: QuestionListFiltersProps) {
   const difficultyOptions = QUESTION_DIFFICULTIES.map((option) => ({ label: option, value: option }));
 
   return (
-    <div className="grid gap-5 rounded-3xl border border-black/10 p-5 dark:border-white/10 lg:grid-cols-3">
+    <div className="grid gap-3 rounded-3xl border border-black/10 p-3.5 dark:border-white/10 lg:grid-cols-3 lg:gap-4 lg:p-4">
       <XFilterPills
         label={copy.categoryLabel}
         value={category}

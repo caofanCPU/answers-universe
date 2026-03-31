@@ -21,13 +21,14 @@ export function XFilterPills({
   className,
 }: XFilterPillsProps) {
   return (
-    <div className={cn('space-y-2', className)}>
-      <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{label}</div>
+    <div className={cn('space-y-1.5', className)}>
+      <div className="text-xs font-medium text-slate-700 dark:text-slate-200">{label}</div>
       <XPillSelect
         mode="single"
         value={value}
         onChange={onChange}
         options={[{ label: allLabel, value: '' }, ...options]}
+        size="compact"
         maxPillWidthClassName="max-w-[150px] sm:max-w-[220px]"
       />
     </div>

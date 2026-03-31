@@ -17,6 +17,7 @@ type XPillSelectBaseProps = {
   pillClassName?: string;
   emptyLabel?: string;
   maxPillWidthClassName?: string;
+  size?: 'default' | 'compact';
   inputEnabled?: boolean;
   inputPlaceholder?: string;
   onInputTransform?: (value: string) => string;
@@ -54,6 +55,7 @@ export function XPillSelect(props: XPillSelectProps) {
     pillClassName,
     emptyLabel,
     maxPillWidthClassName = 'max-w-[180px] sm:max-w-[220px]',
+    size = 'default',
     inputEnabled = false,
     inputPlaceholder,
     onInputTransform,
@@ -63,6 +65,7 @@ export function XPillSelect(props: XPillSelectProps) {
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const compact = size === 'compact';
 
   const normalizedOptions = useMemo(
     () => options.map((option) => ({ ...option, value: option.value.trim() })).filter((option) => option.value),
@@ -178,7 +181,8 @@ export function XPillSelect(props: XPillSelectProps) {
           toggleOpen();
         }}
         className={cn(
-          'flex min-h-11 w-full items-center justify-between gap-3 rounded-full border border-black/10 px-4 py-2.5 text-left transition dark:border-white/10',
+          'flex w-full items-center justify-between rounded-full border border-black/10 text-left transition dark:border-white/10',
+          compact ? 'min-h-9 gap-2 px-3 py-1.5' : 'min-h-11 gap-3 px-4 py-2.5',
           !disabled && 'cursor-pointer',
           !disabled && (hovered || open) && themeBorderColor,
           disabled && 'cursor-not-allowed opacity-60'
@@ -199,7 +203,8 @@ export function XPillSelect(props: XPillSelectProps) {
                   }}
                   disabled={disabled}
                   className={cn(
-                    'inline-flex max-w-full items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition',
+                    'inline-flex max-w-full items-center rounded-full font-semibold transition',
+                    compact ? 'gap-1 px-2.5 py-0.5 text-[11px]' : 'gap-1.5 px-3 py-1 text-xs',
                     themeBgColor,
                     themeIconColor,
                     'hover:brightness-95 dark:hover:brightness-110',
@@ -212,11 +217,17 @@ export function XPillSelect(props: XPillSelectProps) {
               );
             })
           ) : (
-            <span className="text-sm text-slate-500 dark:text-slate-400">{emptyLabel}</span>
+            <span className={cn(compact ? 'text-xs' : 'text-sm', 'text-slate-500 dark:text-slate-400')}>
+              {emptyLabel}
+            </span>
           )}
         </div>
         <icons.ChevronDown
-          className={cn('h-4 w-4 shrink-0 text-slate-500 transition-transform dark:text-slate-400', open && 'rotate-180')}
+          className={cn(
+            compact ? 'h-3.5 w-3.5' : 'h-4 w-4',
+            'shrink-0 text-slate-500 transition-transform dark:text-slate-400',
+            open && 'rotate-180'
+          )}
         />
       </div>
 
@@ -225,7 +236,8 @@ export function XPillSelect(props: XPillSelectProps) {
           role="listbox"
           aria-multiselectable={props.mode === 'multiple' ? true : undefined}
           className={cn(
-            'absolute left-0 right-0 top-[calc(100%+0.375rem)] z-50 space-y-3 rounded-3xl border border-black/10 bg-neutral-100 p-4 shadow-xl dark:border-white/10 dark:bg-neutral-900',
+            'absolute left-0 right-0 top-[calc(100%+0.375rem)] z-50 rounded-3xl border border-black/10 bg-neutral-100 shadow-xl dark:border-white/10 dark:bg-neutral-900',
+            compact ? 'space-y-2.5 p-3' : 'space-y-3 p-4',
             open && themeBorderColor
           )}
         >
@@ -243,12 +255,15 @@ export function XPillSelect(props: XPillSelectProps) {
               }}
               disabled={disabled}
               placeholder={inputPlaceholder}
-              className="w-full rounded-full border border-black/10 px-4 py-2.5 text-sm text-slate-700 outline-none transition focus:border-purple-400 dark:border-white/10 dark:text-white"
+              className={cn(
+                'w-full rounded-full border border-black/10 text-slate-700 outline-none transition focus:border-purple-400 dark:border-white/10 dark:text-white',
+                compact ? 'px-3 py-1.5 text-xs' : 'px-4 py-2.5 text-sm'
+              )}
             />
           ) : null}
 
           {normalizedOptions.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
+            <div className={cn('flex flex-wrap', compact ? 'gap-1.5' : 'gap-2')}>
               {normalizedOptions.map((option) => {
                 const active = isSelected(option.value);
 
@@ -259,7 +274,8 @@ export function XPillSelect(props: XPillSelectProps) {
                     onClick={() => toggleValue(option.value)}
                     disabled={disabled}
                     className={cn(
-                      'inline-flex items-center justify-center rounded-full border px-4 py-2 text-xs font-semibold transition-colors',
+                      'inline-flex items-center justify-center rounded-full border font-semibold transition-colors',
+                      compact ? 'px-3 py-1 text-[11px]' : 'px-4 py-2 text-xs',
                       'bg-neutral-200 text-neutral-700 hover:bg-neutral-300 dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700',
                       active &&
                         [themeBgColor, themeBorderColor, themeIconColor],

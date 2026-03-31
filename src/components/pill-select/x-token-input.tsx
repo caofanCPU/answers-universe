@@ -13,6 +13,7 @@ type XTokenInputProps = {
   disabled?: boolean;
   className?: string;
   maxPillWidthClassName?: string;
+  size?: 'default' | 'compact';
 };
 
 function sanitizeToken(value: string): string {
@@ -31,12 +32,14 @@ export function XTokenInput({
   disabled = false,
   className,
   maxPillWidthClassName = 'max-w-[180px] sm:max-w-[220px]',
+  size = 'default',
 }: XTokenInputProps) {
   const [draftValue, setDraftValue] = useState('');
   const [focused, setFocused] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const tokens = dedupeTokens(value);
+  const compact = size === 'compact';
 
   function commitToken(rawValue: string) {
     if (disabled) {
@@ -77,18 +80,20 @@ export function XTokenInput({
           setFocused(false);
         }}
         className={cn(
-          'min-h-11 w-full min-w-0 rounded-3xl border border-black/10 px-4 py-2.5 transition dark:border-white/10',
+          'w-full min-w-0 rounded-3xl border border-black/10 transition dark:border-white/10',
+          compact ? 'min-h-9 px-3 py-1.5' : 'min-h-11 px-4 py-2.5',
           focused && themeBorderColor
         )}
       >
-        <div className="flex w-full min-w-0 flex-wrap items-center gap-2">
+        <div className={cn('flex w-full min-w-0 flex-wrap items-center', compact ? 'gap-1.5' : 'gap-2')}>
           {tokens.length > 0 ? (
             <ul className="contents" role="list">
               {tokens.map((token) => (
                 <li key={token} className="max-w-full list-none">
                   <span
                     className={cn(
-                      'inline-flex max-w-full items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold transition',
+                      'inline-flex max-w-full items-center rounded-full font-semibold transition',
+                      compact ? 'gap-1 px-2.5 py-0.5 text-[11px]' : 'gap-1 px-3 py-1 text-xs',
                       themeBgColor,
                       themeIconColor,
                       disabled && 'opacity-60'
@@ -105,14 +110,15 @@ export function XTokenInput({
                       disabled={disabled}
                       aria-label={`Remove ${token}`}
                       className={cn(
-                        'inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full transition',
+                        'inline-flex shrink-0 items-center justify-center rounded-full transition',
+                        compact ? 'h-3.5 w-3.5' : 'h-4 w-4',
                         'hover:bg-black/10 dark:hover:bg-white/10',
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
                         themeRingColor,
                         disabled && 'cursor-not-allowed'
                       )}
                     >
-                      <icons.X className="h-2.5 w-2.5" />
+                      <icons.X className={cn(compact ? 'h-2 w-2' : 'h-2.5 w-2.5')} />
                     </button>
                   </span>
                 </li>
@@ -150,7 +156,8 @@ export function XTokenInput({
               disabled={disabled}
               placeholder={tokens.length === 0 ? placeholder : undefined}
               className={cn(
-                'bg-transparent py-0.5 text-sm text-slate-700 outline-none dark:text-white',
+                'bg-transparent outline-none dark:text-white',
+                compact ? 'py-0 text-xs text-slate-700' : 'py-0.5 text-sm text-slate-700',
                 tokens.length === 0 || draftValue || focused ? 'w-full' : 'w-0'
               )}
             />
@@ -158,7 +165,9 @@ export function XTokenInput({
         </div>
       </div>
       {tokens.length === 0 && emptyLabel ? (
-        <div className="text-sm text-slate-500 dark:text-slate-400">{emptyLabel}</div>
+        <div className={cn(compact ? 'text-xs' : 'text-sm', 'text-slate-500 dark:text-slate-400')}>
+          {emptyLabel}
+        </div>
       ) : null}
     </div>
   );
