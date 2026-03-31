@@ -103,8 +103,8 @@ export function QuestionForm({
     };
 
   return (
-    <form className="space-y-5 rounded-3xl border border-black/10 p-6 dark:border-white/10">
-      <div className="grid gap-4 md:grid-cols-2">
+    <form className="w-full min-w-0 space-y-5 rounded-3xl border border-black/10 p-6 dark:border-white/10">
+      <div className="grid min-w-0 gap-4 md:grid-cols-2">
         <label className="space-y-2 text-sm md:col-span-2">
           <div className="flex items-center gap-2">
             <div className="font-medium text-slate-700 dark:text-slate-200">
@@ -130,7 +130,7 @@ export function QuestionForm({
             value={values.question}
             onChange={onInputChange('question')}
             rows={1}
-            className="min-h-32 w-full resize-none rounded-2xl border border-black/10 px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:text-white"
+            className="min-h-32 w-full min-w-0 resize-none rounded-2xl border border-black/10 px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:text-white"
           />
         </label>
         <label className="space-y-2 text-sm md:col-span-2">
@@ -159,7 +159,7 @@ export function QuestionForm({
             value={values.explanation}
             onChange={onInputChange('explanation')}
             rows={5}
-            className="w-full rounded-2xl border border-black/10 px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:text-white"
+            className="w-full min-w-0 rounded-2xl border border-black/10 px-4 py-3 outline-none transition focus:border-purple-400 dark:border-white/10 dark:text-white"
           />
         </label>
         <label className="space-y-2 text-sm">

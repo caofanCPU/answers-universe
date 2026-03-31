@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
 import { SiteEyeIcon, SiteEyeOffIcon } from '@/lib/site-config';
@@ -24,6 +25,8 @@ type QuestionEditorClientProps = {
   mode: 'create' | 'edit';
   id?: string;
   initialPreviewOpen?: boolean;
+  backHref: string;
+  backLabel: string;
   usb: {
     noticeCreate: string;
     noticeEdit: string;
@@ -185,18 +188,31 @@ export function QuestionEditorClient({
   mode,
   id,
   initialPreviewOpen = false,
+  backHref,
+  backLabel,
   usb,
 }: QuestionEditorClientProps) {
   const isZh = locale === 'zh';
   const router = useRouter();
+  const pathname = usePathname();
   const [values, setValues] = useState<QuestionFormValues>(emptyFormValues());
   const [answerOptions, setAnswerOptions] = useState<QuestionAnswerOptionDraft[]>([]);
   const [previewAsPlayer, setPreviewAsPlayer] = useState(false);
   const [activeView, setActiveView] = useState<'edit' | 'preview'>(initialPreviewOpen ? 'preview' : 'edit');
   const [loading, setLoading] = useState(mode === 'edit');
   const [saving, setSaving] = useState(false);
+  const [submitSucceeded, setSubmitSucceeded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [groupIds, setGroupIds] = useState<string[]>([]);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     setActiveView(initialPreviewOpen ? 'preview' : 'edit');
@@ -258,6 +274,12 @@ export function QuestionEditorClient({
   const currentGroupIndex = id ? groupIds.findIndex((item) => item === id) : -1;
   const previousQuestionId = currentGroupIndex > 0 ? groupIds[currentGroupIndex - 1] : null;
   const nextQuestionId = currentGroupIndex >= 0 && currentGroupIndex < groupIds.length - 1 ? groupIds[currentGroupIndex + 1] : null;
+  const hasGroupNavigation = currentGroupIndex >= 0 && groupIds.length > 1;
+
+  function openPreview() {
+    setActiveView('preview');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   function handleQuestionNavigation(targetId: string | null) {
     if (!targetId) {
@@ -269,12 +291,14 @@ export function QuestionEditorClient({
 
   async function onSubmit() {
     setSaving(true);
+    setSubmitSucceeded(false);
     setError(null);
 
     try {
       const payload = formValuesToPayload(values, answerOptions);
       const url = mode === 'create' ? '/api/questions' : `/api/questions/${id}`;
       const method = mode === 'create' ? 'POST' : 'PUT';
+      const startedAt = Date.now();
 
       const response = await fetch(url, {
         method,
@@ -290,7 +314,31 @@ export function QuestionEditorClient({
       }
 
       const data = (await response.json()) as QuestionMutationResult;
-      router.push(getAsNeededLocalizedUrl(locale, `/questions/${data.id}`));
+      const minimumSavingDuration = 700;
+      const elapsed = Date.now() - startedAt;
+
+      if (elapsed < minimumSavingDuration) {
+        await new Promise((resolve) => setTimeout(resolve, minimumSavingDuration - elapsed));
+      }
+
+      const destination = getAsNeededLocalizedUrl(locale, `/questions/${data.id}`);
+      const isSamePreviewRoute = pathname === destination;
+
+      setSubmitSucceeded(true);
+
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+
+      if (isSamePreviewRoute) {
+        successTimerRef.current = setTimeout(() => {
+          setSubmitSucceeded(false);
+        }, 1400);
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 450));
+      router.push(destination);
       router.refresh();
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unknown error');
@@ -299,34 +347,72 @@ export function QuestionEditorClient({
     }
   }
 
-  const submitLabel = saving ? usb.saving : mode === 'create' ? usb.createButton : usb.updateButton;
+  const submitLabel = submitSucceeded
+    ? isZh
+      ? '已提交'
+      : 'Saved'
+    : saving
+      ? usb.saving
+      : mode === 'create'
+        ? usb.createButton
+        : usb.updateButton;
+  const activeStatusText =
+    activeView === 'edit'
+      ? isZh
+        ? '草稿态'
+        : 'Draft'
+      : isZh
+        ? hasGroupNavigation
+          ? `${currentGroupIndex + 1}/${groupIds.length}`
+          : '预览态'
+        : hasGroupNavigation
+          ? `${currentGroupIndex + 1}/${groupIds.length}`
+          : 'Preview';
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-center">
-        <div className="inline-flex items-center rounded-full border border-black/10 bg-white/90 p-1 shadow-sm dark:border-white/10 dark:bg-slate-950/90">
-          <button
-            type="button"
-            onClick={() => setActiveView('edit')}
-            className={
-              activeView === 'edit'
-                ? 'rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm dark:bg-white dark:text-slate-950'
-                : 'rounded-full px-5 py-2 text-sm font-medium text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
-            }
-          >
-            {isZh ? '编辑' : 'Edit'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView('preview')}
-            className={
-              activeView === 'preview'
-                ? 'rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm dark:bg-white dark:text-slate-950'
-                : 'rounded-full px-5 py-2 text-sm font-medium text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
-            }
-          >
-            {isZh ? '预览' : 'Preview'}
-          </button>
+    <div className="mx-auto flex w-full max-w-6xl min-w-0 flex-col gap-4 pb-32">
+      <div className="sticky top-4 z-20 w-full">
+        <div className="rounded-[1.75rem] border border-black/10 bg-white/95 p-3 shadow-lg shadow-black/5 backdrop-blur dark:border-white/10 dark:bg-slate-950/90 dark:shadow-black/20">
+          <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 lg:grid-cols-[12rem_minmax(0,1fr)_12rem]">
+            <div className="flex min-w-0 items-center">
+              <Link
+                href={backHref}
+                className="inline-flex items-center gap-2 rounded-full border border-black/10 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5 sm:px-4"
+                aria-label={backLabel}
+                title={backLabel}
+              >
+                <icons.ChevronLeft className="h-4 w-4" />
+                <span className="hidden lg:inline">{backLabel}</span>
+              </Link>
+            </div>
+
+            <div className="flex min-w-0 justify-center">
+              <div className="inline-flex max-w-full items-center rounded-full border border-black/10 bg-white/90 p-1 shadow-sm dark:border-white/10 dark:bg-slate-950/90">
+                <button
+                  type="button"
+                  onClick={() => setActiveView('edit')}
+                  className={
+                    activeView === 'edit'
+                      ? 'rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm dark:bg-white dark:text-slate-950'
+                      : 'rounded-full px-5 py-2 text-sm font-medium text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
+                  }
+                >
+                  {isZh ? '编辑' : 'Edit'}
+                </button>
+                <button
+                  type="button"
+                  onClick={openPreview}
+                  className={
+                    activeView === 'preview'
+                      ? 'rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm dark:bg-white dark:text-slate-950'
+                      : 'rounded-full px-5 py-2 text-sm font-medium text-slate-500 transition hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
+                  }
+                >
+                  {isZh ? '预览' : 'Preview'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       {loading ? (
@@ -355,53 +441,102 @@ export function QuestionEditorClient({
           question={previewQuestion}
           answerOptions={answerOptions}
           previewAsPlayer={previewAsPlayer}
-          bottomActions={(
-            <>
-              <div className="flex items-center gap-3">
+        />
+      )}
+      <div className="sticky bottom-4 z-20 w-full">
+        <div className="rounded-[1.75rem] border border-black/10 bg-white/95 p-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur dark:border-white/10 dark:bg-slate-950/90 dark:shadow-black/30">
+          {activeView === 'edit' ? (
+            <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex min-w-0 items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                <SiteEyeOffIcon className="h-4 w-4 shrink-0" />
+                <span className="min-w-0 break-words">{isZh ? '草稿态，修改需先预览确认后提交。' : 'Draft state. Review in preview before submit.'}</span>
+              </div>
+              <div className="flex min-w-0 items-center justify-end gap-2">
+                <div
+                  className="inline-flex min-w-0 items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-medium text-slate-600 dark:bg-white/5 dark:text-slate-300"
+                  aria-label={activeStatusText}
+                  title={activeStatusText}
+                >
+                  <SiteEyeOffIcon className="h-4 w-4" />
+                  <span className="truncate">{activeStatusText}</span>
+                </div>
                 <button
                   type="button"
-                  onClick={() => handleQuestionNavigation(previousQuestionId)}
-                  disabled={!previousQuestionId}
-                  className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                  onClick={openPreview}
+                  className="inline-flex items-center justify-center gap-2 self-end rounded-full border border-black/10 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5 sm:px-5 sm:py-3"
                 >
-                  {isZh ? '上一题' : 'Previous'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuestionNavigation(nextQuestionId)}
-                  disabled={!nextQuestionId}
-                  className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-                >
-                  {isZh ? '下一题' : 'Next'}
+                  <SiteEyeIcon className="h-4 w-4" />
+                  <span className="sm:hidden">{isZh ? '预览' : 'Review'}</span>
+                  <span className="hidden sm:inline">{isZh ? '去预览确认' : 'Review in Preview'}</span>
+                  <icons.ChevronRight className="hidden h-4 w-4 sm:block" />
                 </button>
               </div>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPreviewAsPlayer((value) => !value)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-slate-500 transition hover:border-black/20 hover:bg-black/5 hover:text-slate-800 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
-                  aria-pressed={previewAsPlayer}
-                  aria-label={previewAsPlayer ? (isZh ? '显示完整预览' : 'Show full preview') : isZh ? '切换答题视角' : 'Switch to player view'}
-                  title={previewAsPlayer ? (isZh ? '显示完整预览' : 'Show full preview') : isZh ? '切换答题视角' : 'Switch to player view'}
+            </div>
+          ) : (
+            <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex min-w-0 items-center gap-2">
+                {hasGroupNavigation ? (
+                  <button
+                    type="button"
+                    onClick={() => handleQuestionNavigation(previousQuestionId)}
+                    disabled={!previousQuestionId}
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                    aria-label={isZh ? '上一题' : 'Previous'}
+                    title={isZh ? '上一题' : 'Previous'}
+                  >
+                    <icons.ChevronLeft className="h-4 w-4" />
+                  </button>
+                ) : null}
+                <div
+                  className="inline-flex min-w-0 items-center rounded-full border border-black/10 bg-slate-50/90 p-1 dark:border-white/10 dark:bg-white/5"
+                  aria-label={hasGroupNavigation ? `${isZh ? '当前进度' : 'Progress'} ${activeStatusText}` : activeStatusText}
+                  title={hasGroupNavigation ? `${isZh ? '当前进度' : 'Progress'} ${activeStatusText}` : activeStatusText}
                 >
-                  {previewAsPlayer ? <SiteEyeOffIcon className="h-4 w-4" /> : <SiteEyeIcon className="h-4 w-4" />}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewAsPlayer((value) => !value)}
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-black/5 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+                    aria-pressed={previewAsPlayer}
+                    aria-label={previewAsPlayer ? (isZh ? '显示完整预览' : 'Show full preview') : isZh ? '切换答题视角' : 'Switch to player view'}
+                    title={previewAsPlayer ? (isZh ? '显示完整预览' : 'Show full preview') : isZh ? '切换答题视角' : 'Switch to player view'}
+                  >
+                    {previewAsPlayer ? <SiteEyeOffIcon className="h-4 w-4" /> : <SiteEyeIcon className="h-4 w-4" />}
+                  </button>
+                  <div className="min-w-0 px-2 text-center text-xs font-medium text-slate-600 dark:text-slate-300 sm:px-3">
+                    <span className="truncate">{activeStatusText}</span>
+                  </div>
+                </div>
+                {hasGroupNavigation ? (
+                  <button
+                    type="button"
+                    onClick={() => handleQuestionNavigation(nextQuestionId)}
+                    disabled={!nextQuestionId}
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                    aria-label={isZh ? '下一题' : 'Next'}
+                    title={isZh ? '下一题' : 'Next'}
+                  >
+                    <icons.ChevronRight className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
+              <div className="flex min-w-0 items-center justify-end">
                 <button
                   type="button"
                   onClick={() => void onSubmit()}
                   disabled={saving || loading}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-linear-to-r from-purple-400 to-pink-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex min-w-0 items-center justify-center gap-2 rounded-full bg-linear-to-r from-purple-400 to-pink-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5 sm:py-3"
                   aria-label={submitLabel}
                   title={submitLabel}
                 >
-                  <icons.QrCode className="h-4 w-4" />
-                  <span>{submitLabel}</span>
+                  {submitSucceeded ? <icons.Check className="h-4 w-4" /> : <icons.QrCode className="h-4 w-4" />}
+                  <span className="truncate sm:hidden">{submitSucceeded ? submitLabel : saving ? submitLabel : isZh ? '提交' : 'Submit'}</span>
+                  <span className="hidden truncate sm:inline">{submitLabel}</span>
                 </button>
               </div>
-            </>
+            </div>
           )}
-        />
-      )}
+        </div>
+      </div>
       {error ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
           {usb.submitFailed}

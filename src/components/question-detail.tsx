@@ -10,7 +10,6 @@ type QuestionDetailProps = {
   question: QuestionViewModel;
   answerOptions: QuestionAnswerOptionDraft[];
   previewAsPlayer?: boolean;
-  bottomActions?: React.ReactNode;
 };
 
 export function QuestionDetail({
@@ -18,7 +17,6 @@ export function QuestionDetail({
   question,
   answerOptions,
   previewAsPlayer = false,
-  bottomActions,
 }: QuestionDetailProps) {
   const isZh = locale === 'zh';
   const options = answerOptions.filter((option) => option.text.trim());
@@ -30,14 +28,14 @@ export function QuestionDetail({
     );
 
   return (
-    <div className="space-y-6 rounded-3xl border border-black/10 p-6 dark:border-white/10">
-      <div className="space-y-3">
+    <div className="w-full min-w-0 space-y-6 rounded-3xl border border-black/10 p-6 dark:border-white/10">
+      <div className="min-w-0 space-y-3">
         <div className="flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
           {question.category ? <span className={metaPillClassName}>{question.category}</span> : null}
           {question.subCategory ? <span className={metaPillClassName}>{question.subCategory}</span> : null}
           {question.difficulty ? <span className={metaPillClassName}>{question.difficulty}</span> : null}
         </div>
-        <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{question.question}</h2>
+        <h2 className="min-w-0 break-words text-2xl font-semibold text-slate-900 dark:text-white">{question.question}</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {isZh ? '这是当前题目的完整预览。' : 'This is the full preview for the current question.'}
         </p>
@@ -52,7 +50,7 @@ export function QuestionDetail({
             <div
               key={option.id}
               className={cn(
-                'flex items-center gap-3 rounded-2xl border border-black/10 px-4 py-4 text-sm text-slate-700 dark:border-white/10 dark:text-slate-200',
+                'flex min-w-0 items-center gap-3 rounded-2xl border border-black/10 px-4 py-4 text-sm text-slate-700 dark:border-white/10 dark:text-slate-200',
                 !previewAsPlayer && option.isCorrect && [themeBorderColor, themeIconColor]
               )}
             >
@@ -64,12 +62,12 @@ export function QuestionDetail({
               >
                 {String.fromCharCode(65 + index)}.
               </span>
-              <span
-                className={cn(
-                  'min-w-0 flex-1',
-                  !previewAsPlayer && option.isCorrect && themeIconColor
-                )}
-              >
+                <span
+                  className={cn(
+                    'min-w-0 flex-1 break-words',
+                    !previewAsPlayer && option.isCorrect && themeIconColor
+                  )}
+                >
                 {option.text}
               </span>
               {!previewAsPlayer && option.isCorrect ? <icons.Check className="h-4 w-4 shrink-0" /> : null}
@@ -83,7 +81,7 @@ export function QuestionDetail({
           <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
             {isZh ? '题目说明' : 'Explanation'}
           </div>
-          <div className="rounded-2xl border border-black/10 px-4 py-4 text-sm leading-7 text-slate-700 dark:border-white/10 dark:text-slate-200">
+          <div className="min-w-0 break-words rounded-2xl border border-black/10 px-4 py-4 text-sm leading-7 text-slate-700 dark:border-white/10 dark:text-slate-200">
             {question.explanation}
           </div>
         </div>
@@ -122,12 +120,6 @@ export function QuestionDetail({
               </span>
             ))}
           </div>
-        </div>
-      ) : null}
-
-      {bottomActions ? (
-        <div className="-mx-6 -mb-6 mt-6 border-t border-black/10 px-6 py-4 dark:border-white/10">
-          <div className="flex items-center justify-end gap-3">{bottomActions}</div>
         </div>
       ) : null}
     </div>

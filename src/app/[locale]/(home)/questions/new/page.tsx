@@ -19,18 +19,17 @@ export default async function NewQuestionPage({
       description={t('description')}
       actions={[
         {
-          href: getAsNeededLocalizedUrl(locale, '/questions'),
-          label: t('actions.backToList'),
-        },
-        {
           href: getAsNeededLocalizedUrl(locale, '/questions/import'),
           label: importT('title'),
+          primary: true,
         },
       ]}
     >
       <QuestionEditorClient
         locale={locale}
         mode="create"
+        backHref={getAsNeededLocalizedUrl(locale, '/questions')}
+        backLabel={t('actions.backToList')}
         usb={{
           noticeCreate: t('notice'),
           noticeEdit: t('notice'),

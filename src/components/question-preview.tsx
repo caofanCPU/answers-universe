@@ -36,29 +36,25 @@ export function QuestionPreview({
         question={question}
         answerOptions={answerOptions}
         previewAsPlayer={previewAsPlayer}
-        bottomActions={(
-          <>
-            <button
-              type="button"
-              onClick={onTogglePreviewMode}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-black/5 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
-              aria-pressed={previewAsPlayer}
-              aria-label={previewAsPlayer ? (isZh ? '显示完整预览' : 'Show full preview') : isZh ? '切换答题视角' : 'Switch to player view'}
-            >
-              {previewAsPlayer ? <SiteEyeOffIcon className="h-4 w-4" /> : <SiteEyeIcon className="h-4 w-4" />}
-            </button>
-            <button
-              type="button"
-              onClick={onOpenDialog}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-black/5 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
-              aria-label={isZh ? '放大预览' : 'Open preview'}
-            >
-              <icons.QrCode className="h-4 w-4" />
-            </button>
-          </>
-        )}
       />
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onTogglePreviewMode}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-black/10 text-slate-400 transition hover:bg-black/5 hover:text-slate-700 dark:border-white/10 dark:hover:bg-white/5 dark:hover:text-white"
+          aria-pressed={previewAsPlayer}
+          aria-label={previewAsPlayer ? (isZh ? '显示完整预览' : 'Show full preview') : isZh ? '切换答题视角' : 'Switch to player view'}
+        >
+          {previewAsPlayer ? <SiteEyeOffIcon className="h-4 w-4" /> : <SiteEyeIcon className="h-4 w-4" />}
+        </button>
+        <button
+          type="button"
+          onClick={onOpenDialog}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-black/10 text-slate-400 transition hover:bg-black/5 hover:text-slate-700 dark:border-white/10 dark:hover:bg-white/5 dark:hover:text-white"
+          aria-label={isZh ? '放大预览' : 'Open preview'}
+        >
+          <icons.QrCode className="h-4 w-4" />
+        </button>
         <button
           type="button"
           onClick={onSubmit}

@@ -20,12 +20,13 @@ export default async function EditQuestionPage({
       description={t('description')}
       actions={[
         {
-          href: getAsNeededLocalizedUrl(locale, '/questions'),
-          label: listT('actions.backToList'),
+          href: getAsNeededLocalizedUrl(locale, '/questions/new'),
+          label: listT('title'),
         },
         {
           href: getAsNeededLocalizedUrl(locale, '/questions/import'),
           label: importT('title'),
+          primary: true,
         },
       ]}
     >
@@ -33,6 +34,8 @@ export default async function EditQuestionPage({
         locale={locale}
         mode="edit"
         id={id}
+        backHref={getAsNeededLocalizedUrl(locale, '/questions')}
+        backLabel={listT('actions.backToList')}
         usb={{
           noticeCreate: t('notice'),
           noticeEdit: t('notice'),

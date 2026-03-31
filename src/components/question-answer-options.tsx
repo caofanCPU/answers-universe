@@ -205,10 +205,10 @@ export function QuestionAnswerOptions({
   }
 
   return (
-    <div className={cn(className)}>
+    <div className={cn('w-full min-w-0', className)}>
       <div className="overflow-hidden rounded-2xl border border-black/10 dark:border-white/10">
         {!readOnly ? (
-          <div className="flex min-h-11 items-center gap-3 px-4 py-2.5">
+          <div className="flex min-h-11 min-w-0 items-center gap-3 px-4 py-2.5">
             <input
               ref={inputRef}
               value={draftValue}
@@ -282,7 +282,7 @@ export function QuestionAnswerOptions({
                       setDraggingId(null);
                     }}
                     className={cn(
-                      'flex min-h-9 items-center gap-2 rounded-2xl border border-black/10 px-3 py-2 text-sm text-slate-700 transition dark:border-white/10 dark:text-slate-200',
+                      'flex min-h-9 min-w-0 items-center gap-2 rounded-2xl border border-black/10 px-3 py-2 text-sm text-slate-700 transition dark:border-white/10 dark:text-slate-200',
                       !readOnly && 'cursor-pointer',
                       option.isCorrect && showCorrectState && [themeBorderColor, themeIconColor],
                       !readOnly && draggingId === option.id && 'opacity-60'
@@ -329,7 +329,7 @@ export function QuestionAnswerOptions({
                         </span>
                         <span
                           className={cn(
-                            'truncate',
+                            'min-w-0 break-words',
                             option.isCorrect && showCorrectState && themeIconColor
                           )}
                         >

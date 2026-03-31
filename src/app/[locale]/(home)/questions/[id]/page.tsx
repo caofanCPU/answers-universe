@@ -12,6 +12,7 @@ export default async function QuestionDetailPage({
   const t = await getTranslations({ locale, namespace: 'faqPage.questionDetail' });
   const formT = await getTranslations({ locale, namespace: 'faqPage.questionForm' });
   const editT = await getTranslations({ locale, namespace: 'faqPage.questionEdit' });
+  const createT = await getTranslations({ locale, namespace: 'faqPage.questionCreate' });
   const importT = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
 
   return (
@@ -20,12 +21,13 @@ export default async function QuestionDetailPage({
       description={t('description')}
       actions={[
         {
-          href: getAsNeededLocalizedUrl(locale, '/questions'),
-          label: t('actions.backToList'),
+          href: getAsNeededLocalizedUrl(locale, '/questions/new'),
+          label: createT('title'),
         },
         {
           href: getAsNeededLocalizedUrl(locale, '/questions/import'),
           label: importT('title'),
+          primary: true,
         },
       ]}
     >
@@ -34,6 +36,8 @@ export default async function QuestionDetailPage({
         mode="edit"
         id={id}
         initialPreviewOpen
+        backHref={getAsNeededLocalizedUrl(locale, '/questions')}
+        backLabel={t('actions.backToList')}
         usb={{
           noticeCreate: editT('notice'),
           noticeEdit: editT('notice'),
