@@ -35,6 +35,9 @@ export type QuestionDetailDto = {
 export type QuestionListParams = {
   page: number;
   pageSize: number;
+  id?: bigint;
+  uuid?: string;
+  asFirst?: boolean;
   category?: string;
   subCategory?: string;
   difficulty?: string;
@@ -93,11 +96,17 @@ export type QuestionImportValidationResult = {
   items: QuestionImportValidationItem[];
 };
 
+export type QuestionImportDisplayFieldKey = 'fullInsertSql' | 'fullUuidSql';
+
+export type QuestionImportDisplayField = {
+  key: QuestionImportDisplayFieldKey;
+  value: string;
+};
+
 export type QuestionImportCommitResult = {
   total: number;
   successCount: number;
   failedCount: number;
-  ids: string[];
-  questionUuids: string[];
+  displayFields: QuestionImportDisplayField[];
   items: QuestionImportPreviewDto[];
 };

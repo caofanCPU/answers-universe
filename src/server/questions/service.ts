@@ -20,6 +20,7 @@ import {
   type QuestionDifficulty,
   type QuestionSubCategory,
 } from './constants';
+import { buildQuestionImportDisplayFields } from './import-result-format';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;
@@ -207,11 +208,34 @@ function buildQuestionMutationResult(record: Pick<Usb, 'id'>): QuestionMutationR
 }
 
 function buildQuestionWhereInput(params: QuestionListParams): Prisma.UsbWhereInput {
+  const id = params.id;
+  const uuid = params.uuid;
+  const asFirst = params.asFirst;
   const category = params.category;
   const subCategory = params.subCategory;
   const difficulty = params.difficulty;
 
   const andConditions: Prisma.UsbWhereInput[] = [];
+
+  if (id) {
+    andConditions.push({
+      id,
+    });
+  }
+
+  if (uuid) {
+    andConditions.push({
+      questionUuid: {
+        equals: uuid,
+      },
+    });
+  }
+
+  if (asFirst) {
+    andConditions.push({
+      asFirst: 1,
+    });
+  }
 
   if (category) {
     andConditions.push({
@@ -329,6 +353,9 @@ export async function getQuestionList(params: Partial<QuestionListParams>): Prom
   const where = buildQuestionWhereInput({
     page,
     pageSize,
+    id: params.id,
+    uuid: params.uuid,
+    asFirst: params.asFirst,
     category: params.category,
     subCategory: params.subCategory,
     difficulty: params.difficulty,
@@ -519,8 +546,13 @@ export async function importQuestions(
   userId: string
 ): Promise<QuestionImportCommitResult> {
   const validation = validateQuestionImportItems(items);
-  const ids: string[] = [];
-  const questionUuids: string[] = [];
+  const sqlRows: Array<{
+    questionId: string;
+    questionUuid: string;
+    category: string;
+    subCategory: string | null;
+    asFirst: boolean;
+  }> = [];
 
   for (const item of validation.items) {
     if (!item.payload) {
@@ -532,16 +564,20 @@ export async function importQuestions(
       select: { id: true, questionUuid: true },
     });
 
-    ids.push(created.id.toString());
-    questionUuids.push(created.questionUuid);
+    sqlRows.push({
+      questionId: created.id.toString(),
+      questionUuid: created.questionUuid,
+      category: item.payload.category,
+      subCategory: item.payload.subCategory ?? null,
+      asFirst: Boolean(item.payload.asFirst),
+    });
   }
 
   return {
     total: validation.total,
-    successCount: ids.length,
-    failedCount: validation.total - ids.length,
-    ids,
-    questionUuids,
+    successCount: sqlRows.length,
+    failedCount: validation.total - sqlRows.length,
+    displayFields: buildQuestionImportDisplayFields(sqlRows),
     items: validation.items.map(({ payload: _payload, ...rest }) => rest),
   };
 }

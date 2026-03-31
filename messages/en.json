@@ -427,6 +427,17 @@
           "difficulty": {
             "label": "Difficulty",
             "all": "All difficulties"
+          },
+          "id": {
+            "label": "ID",
+            "placeholder": "Enter question ID"
+          },
+          "uuid": {
+            "label": "UUID",
+            "placeholder": "Enter question UUID"
+          },
+          "first": {
+            "label": "First"
           }
         },
         "status": {

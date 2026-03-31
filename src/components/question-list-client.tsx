@@ -15,6 +15,11 @@ type QuestionListClientProps = {
       subCategoryAll: string;
       difficultyLabel: string;
       difficultyAll: string;
+      idLabel: string;
+      idPlaceholder: string;
+      uuidLabel: string;
+      uuidPlaceholder: string;
+      firstLabel: string;
     };
     loading: string;
     loadFailed: string;
@@ -33,13 +38,23 @@ type ListState = {
   error: string | null;
 };
 
+function isValidUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value);
+}
+
 function buildQuery(params: {
   page: number;
+  id: string;
+  uuid: string;
+  asFirst: boolean;
   category: string;
   subCategory: string;
   difficulty: string;
 }) {
   const searchParams = new URLSearchParams();
+  if (params.id.trim()) searchParams.set('id', params.id.trim());
+  if (params.uuid.trim()) searchParams.set('uuid', params.uuid.trim());
+  if (params.asFirst) searchParams.set('asFirst', 'true');
   if (params.category.trim()) searchParams.set('category', params.category.trim());
   if (params.subCategory.trim()) searchParams.set('subCategory', params.subCategory.trim());
   if (params.difficulty.trim()) searchParams.set('difficulty', params.difficulty.trim());
@@ -49,6 +64,9 @@ function buildQuery(params: {
 }
 
 export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
+  const [id, setId] = useState('');
+  const [uuid, setUuid] = useState('');
+  const [asFirst, setAsFirst] = useState(false);
   const [category, setCategory] = useState('');
   const [subCategory, setSubCategory] = useState('');
   const [difficulty, setDifficulty] = useState('');
@@ -66,15 +84,32 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
   });
 
   const queryString = useMemo(
-    () => buildQuery({ page, category, subCategory, difficulty }),
-    [page, category, subCategory, difficulty]
+    () => buildQuery({ page, id, uuid, asFirst, category, subCategory, difficulty }),
+    [page, id, uuid, asFirst, category, subCategory, difficulty]
   );
+  const normalizedUuid = uuid.trim().toLowerCase();
+  const hasInvalidUuid = normalizedUuid.length > 0 && !isValidUuid(normalizedUuid);
 
   useEffect(() => {
     setPage(1);
-  }, [category, subCategory, difficulty]);
+  }, [id, uuid, asFirst, category, subCategory, difficulty]);
 
   useEffect(() => {
+    if (hasInvalidUuid) {
+      setState({
+        items: [],
+        pagination: {
+          page: 1,
+          pageSize: 20,
+          total: 0,
+          totalPages: 0,
+        },
+        loading: false,
+        error: null,
+      });
+      return;
+    }
+
     const controller = new AbortController();
 
     async function run() {
@@ -86,6 +121,21 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
           signal: controller.signal,
           cache: 'no-store',
         });
+
+        if (response.status === 400) {
+          setState({
+            items: [],
+            pagination: {
+              page: 1,
+              pageSize: 20,
+              total: 0,
+              totalPages: 0,
+            },
+            loading: false,
+            error: null,
+          });
+          return;
+        }
 
         if (!response.ok) {
           throw new Error(`Request failed with status ${response.status}`);
@@ -125,15 +175,22 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
     void run();
 
     return () => controller.abort();
-  }, [queryString]);
+  }, [hasInvalidUuid, queryString]);
 
   return (
     <div className="space-y-4">
       <QuestionListFilters
+        id={id}
+        uuid={uuid}
+        uuidInvalid={hasInvalidUuid}
+        asFirst={asFirst}
         category={category}
         subCategory={subCategory}
         difficulty={difficulty}
         copy={copy.filters}
+        onIdChange={setId}
+        onUuidChange={setUuid}
+        onAsFirstChange={setAsFirst}
         onCategoryChange={setCategory}
         onSubCategoryChange={setSubCategory}
         onDifficultyChange={setDifficulty}

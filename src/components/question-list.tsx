@@ -1,6 +1,8 @@
 'use client';
 
+import { useRef, useState } from 'react';
 import Link from 'next/link';
+import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
 import { saveQuestionGroupContext } from './question-group-context';
@@ -14,6 +16,22 @@ type QuestionListProps = {
 export function QuestionList({ locale, items }: QuestionListProps) {
   const isZh = locale === 'zh';
   const groupIds = items.map((item) => item.id);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const copyResetTimerRef = useRef<number | null>(null);
+
+  async function copyText(key: string, value: string) {
+    await navigator.clipboard.writeText(value);
+    setCopiedField(key);
+
+    if (copyResetTimerRef.current) {
+      window.clearTimeout(copyResetTimerRef.current);
+    }
+
+    copyResetTimerRef.current = window.setTimeout(() => {
+      setCopiedField(null);
+      copyResetTimerRef.current = null;
+    }, 1400);
+  }
 
   if (items.length === 0) {
     return (
@@ -32,6 +50,34 @@ export function QuestionList({ locale, items }: QuestionListProps) {
         >
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div className="space-y-2">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => void copyText(`id-${item.id}`, item.id)}
+                  className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600 transition hover:bg-slate-100 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                  aria-label={isZh ? '复制题目 ID' : 'Copy question ID'}
+                  title={isZh ? '复制题目 ID' : 'Copy question ID'}
+                >
+                  <span className="shrink-0 font-medium text-slate-500 dark:text-slate-400">ID</span>
+                  <span className="truncate font-mono text-[11px] text-slate-800 dark:text-slate-100">{item.id}</span>
+                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 dark:text-slate-500">
+                    {copiedField === `id-${item.id}` ? <icons.X className="h-3 w-3" /> : <icons.Copy className="h-3 w-3" />}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void copyText(`uuid-${item.id}`, item.uuid)}
+                  className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600 transition hover:bg-slate-100 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                  aria-label={isZh ? '复制题目 UUID' : 'Copy question UUID'}
+                  title={isZh ? '复制题目 UUID' : 'Copy question UUID'}
+                >
+                  <span className="shrink-0 font-medium text-slate-500 dark:text-slate-400">UUID</span>
+                  <span className="truncate font-mono text-[11px] text-slate-800 dark:text-slate-100">{item.uuid}</span>
+                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 dark:text-slate-500">
+                    {copiedField === `uuid-${item.id}` ? <icons.X className="h-3 w-3" /> : <icons.Copy className="h-3 w-3" />}
+                  </span>
+                </button>
+              </div>
               <div className="flex flex-wrap gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
                 <span className="rounded-full bg-slate-100 px-2.5 py-0.5 dark:bg-white/5">{item.category}</span>
                 <span className="rounded-full bg-slate-100 px-2.5 py-0.5 dark:bg-white/5">{item.subCategory}</span>

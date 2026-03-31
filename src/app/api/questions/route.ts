@@ -51,6 +51,9 @@ export async function GET(req: NextRequest) {
     const query = questionListQuerySchema.parse({
       page: req.nextUrl.searchParams.get('page') ?? undefined,
       pageSize: req.nextUrl.searchParams.get('pageSize') ?? undefined,
+      id: req.nextUrl.searchParams.get('id') ?? undefined,
+      uuid: req.nextUrl.searchParams.get('uuid') ?? undefined,
+      asFirst: req.nextUrl.searchParams.get('asFirst') ?? undefined,
       category: req.nextUrl.searchParams.get('category') ?? undefined,
       subCategory: req.nextUrl.searchParams.get('subCategory') ?? undefined,
       difficulty: req.nextUrl.searchParams.get('difficulty') ?? undefined,

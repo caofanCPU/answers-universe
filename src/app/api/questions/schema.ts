@@ -3,6 +3,29 @@ import { QUESTION_CATEGORIES, QUESTION_DIFFICULTIES, QUESTION_SUB_CATEGORIES } f
 
 const optionalString = z.string().trim().optional().nullable();
 const optionalStringArray = z.array(z.string().trim().min(1)).optional().default([]);
+const optionalTrimmedString = z.preprocess(
+  (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+  z.string().trim().optional()
+);
+const optionalPositiveBigInt = z.preprocess(
+  (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+  z.coerce.bigint().positive().optional()
+);
+const optionalBooleanLike = z.preprocess((value) => {
+  if (value === '' || value === null || value === undefined) {
+    return undefined;
+  }
+
+  if (value === 'true' || value === '1' || value === true) {
+    return true;
+  }
+
+  if (value === 'false' || value === '0' || value === false) {
+    return false;
+  }
+
+  return value;
+}, z.boolean().optional());
 const optionalEnumLikeString = <T extends readonly [string, ...string[]]>(values: T) =>
   z.preprocess(
     (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
@@ -28,6 +51,9 @@ export const questionUpsertSchema = z.object({
 export const questionListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
   pageSize: z.coerce.number().int().min(1).max(100).optional().default(20),
+  id: optionalPositiveBigInt,
+  uuid: optionalTrimmedString,
+  asFirst: optionalBooleanLike,
   category: z.enum(QUESTION_CATEGORIES).optional(),
   subCategory: z.enum(QUESTION_SUB_CATEGORIES).optional(),
   difficulty: z.enum(QUESTION_DIFFICULTIES).optional(),

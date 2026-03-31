@@ -411,6 +411,17 @@
           "difficulty": {
             "label": "难度",
             "all": "全部难度"
+          },
+          "id": {
+            "label": "题目 ID",
+            "placeholder": "输入题目 ID"
+          },
+          "uuid": {
+            "label": "UUID",
+            "placeholder": "输入题目 UUID"
+          },
+          "first": {
+            "label": "First"
           }
         },
         "status": {

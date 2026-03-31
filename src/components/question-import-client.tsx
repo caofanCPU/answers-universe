@@ -5,6 +5,7 @@ import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/s
 import { useMemo, useRef, useState } from 'react';
 import type {
   QuestionImportCommitResult,
+  QuestionImportDisplayFieldKey,
   QuestionImportPreviewDto,
   QuestionImportValidationResult,
 } from '@/server/questions/types';
@@ -212,7 +213,7 @@ export function QuestionImportClient({ locale }: { locale: string }) {
   const [serverValidation, setServerValidation] = useState<QuestionImportValidationResult | null>(null);
   const [commitResult, setCommitResult] = useState<QuestionImportCommitResult | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [copiedField, setCopiedField] = useState<'ids' | 'questionUuids' | null>(null);
+  const [copiedField, setCopiedField] = useState<QuestionImportDisplayFieldKey | null>(null);
   const [lastValidatedSource, setLastValidatedSource] = useState<string | null>(null);
   const [lastCommittedSource, setLastCommittedSource] = useState<string | null>(null);
   const [duplicateNotice, setDuplicateNotice] = useState<string | null>(null);
@@ -255,11 +256,6 @@ export function QuestionImportClient({ locale }: { locale: string }) {
       .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
       .map(([reason, count]) => ({ reason, count }));
   }, [result.parseError, result.previews, serverValidation, submitted]);
-  const idsText = useMemo(() => commitResult?.ids.join(', ') ?? '', [commitResult]);
-  const questionUuidsText = useMemo(
-    () => commitResult?.questionUuids.map((item) => `'${item}'`).join(', ') ?? '',
-    [commitResult]
-  );
   const validateBlockedByDuplicate =
     normalizedSource.length > 0 && normalizedSource === lastValidatedSource;
   const commitBlockedByDuplicate =
@@ -358,7 +354,7 @@ export function QuestionImportClient({ locale }: { locale: string }) {
     }
   }
 
-  async function copyText(field: 'ids' | 'questionUuids', value: string) {
+  async function copyText(field: QuestionImportDisplayFieldKey, value: string) {
     if (!value) {
       return;
     }
@@ -374,6 +370,14 @@ export function QuestionImportClient({ locale }: { locale: string }) {
       setCopiedField(null);
       copyResetTimerRef.current = null;
     }, 1400);
+  }
+
+  function getDisplayFieldLabel(key: QuestionImportDisplayFieldKey): string {
+    if (key === 'fullInsertSql') {
+      return isZh ? '完整 SQL' : 'Full SQL';
+    }
+
+    return isZh ? '完整 UUID SQL' : 'Full UUID SQL';
   }
 
   async function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
@@ -523,52 +527,31 @@ export function QuestionImportClient({ locale }: { locale: string }) {
         </h2>
         {commitResult?.successCount ? (
           <div className="mt-4 space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  {isZh ? '题目 ID' : 'Question IDs'}
+            {commitResult.displayFields.map((field) => (
+              <div key={field.key} className="space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                    {getDisplayFieldLabel(field.key)}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void copyText(field.key, field.value)}
+                    className="inline-flex min-w-[84px] items-center justify-center gap-1.5 rounded-full border border-black/10 px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:border-black/20 hover:bg-black/5 hover:text-slate-800 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+                    aria-label={`${isZh ? '复制' : 'Copy'} ${getDisplayFieldLabel(field.key)}`}
+                    title={`${isZh ? '复制' : 'Copy'} ${getDisplayFieldLabel(field.key)}`}
+                  >
+                    {copiedField === field.key ? <icons.X className="h-3.5 w-3.5" /> : <icons.Copy className="h-3.5 w-3.5" />}
+                    <span>{copiedField === field.key ? 'Copied' : isZh ? '复制' : 'Copy'}</span>
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void copyText('ids', idsText)}
-                  className="inline-flex min-w-[84px] items-center justify-center gap-1.5 rounded-full border border-black/10 px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:border-black/20 hover:bg-black/5 hover:text-slate-800 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
-                  aria-label={isZh ? '复制题目 ID' : 'Copy question IDs'}
-                  title={isZh ? '复制题目 ID' : 'Copy question IDs'}
-                >
-                  {copiedField === 'ids' ? <icons.X className="h-3.5 w-3.5" /> : <icons.Copy className="h-3.5 w-3.5" />}
-                  <span>{copiedField === 'ids' ? 'Copied' : isZh ? '复制' : 'Copy'}</span>
-                </button>
+                <textarea
+                  readOnly
+                  value={field.value}
+                  rows={field.key === 'fullInsertSql' ? 6 : 4}
+                  className="w-full resize-none rounded-2xl border border-black/10 bg-slate-50 px-4 py-3 font-mono text-sm text-slate-700 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-slate-200"
+                />
               </div>
-              <textarea
-                readOnly
-                value={idsText}
-                rows={3}
-                className="w-full resize-none rounded-2xl border border-black/10 bg-slate-50 px-4 py-3 font-mono text-sm text-slate-700 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-slate-200"
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  {isZh ? '题目 UUID' : 'Question UUIDs'}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void copyText('questionUuids', questionUuidsText)}
-                  className="inline-flex min-w-[84px] items-center justify-center gap-1.5 rounded-full border border-black/10 px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:border-black/20 hover:bg-black/5 hover:text-slate-800 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
-                  aria-label={isZh ? '复制题目 UUID' : 'Copy question UUIDs'}
-                  title={isZh ? '复制题目 UUID' : 'Copy question UUIDs'}
-                >
-                  {copiedField === 'questionUuids' ? <icons.X className="h-3.5 w-3.5" /> : <icons.Copy className="h-3.5 w-3.5" />}
-                  <span>{copiedField === 'questionUuids' ? 'Copied' : isZh ? '复制' : 'Copy'}</span>
-                </button>
-              </div>
-              <textarea
-                readOnly
-                value={questionUuidsText}
-                rows={3}
-                className="w-full resize-none rounded-2xl border border-black/10 bg-slate-50 px-4 py-3 font-mono text-sm text-slate-700 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-slate-200"
-              />
-            </div>
+            ))}
           </div>
         ) : !submitted ? (
           <div className="mt-4 rounded-2xl border border-dashed border-black/10 px-4 py-6 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
