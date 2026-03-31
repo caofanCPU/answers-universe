@@ -519,7 +519,8 @@ export async function importQuestions(
   userId: string
 ): Promise<QuestionImportCommitResult> {
   const validation = validateQuestionImportItems(items);
-  const createdIds: string[] = [];
+  const ids: string[] = [];
+  const questionUuids: string[] = [];
 
   for (const item of validation.items) {
     if (!item.payload) {
@@ -528,17 +529,19 @@ export async function importQuestions(
 
     const created = await prisma.usb.create({
       data: buildQuestionCreateInput(item.payload, userId),
-      select: { id: true },
+      select: { id: true, questionUuid: true },
     });
 
-    createdIds.push(created.id.toString());
+    ids.push(created.id.toString());
+    questionUuids.push(created.questionUuid);
   }
 
   return {
     total: validation.total,
-    successCount: createdIds.length,
-    failedCount: validation.total - createdIds.length,
-    createdIds,
+    successCount: ids.length,
+    failedCount: validation.total - ids.length,
+    ids,
+    questionUuids,
     items: validation.items.map(({ payload: _payload, ...rest }) => rest),
   };
 }

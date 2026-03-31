@@ -97,6 +97,7 @@ export type QuestionImportCommitResult = {
   total: number;
   successCount: number;
   failedCount: number;
-  createdIds: string[];
+  ids: string[];
+  questionUuids: string[];
   items: QuestionImportPreviewDto[];
 };

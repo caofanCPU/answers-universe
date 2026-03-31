@@ -1,7 +1,8 @@
 'use client';
 
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
-import { useMemo, useState } from 'react';
+import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
+import { useMemo, useRef, useState } from 'react';
 import type {
   QuestionImportCommitResult,
   QuestionImportPreviewDto,
@@ -211,8 +212,15 @@ export function QuestionImportClient({ locale }: { locale: string }) {
   const [serverValidation, setServerValidation] = useState<QuestionImportValidationResult | null>(null);
   const [commitResult, setCommitResult] = useState<QuestionImportCommitResult | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<'ids' | 'questionUuids' | null>(null);
+  const [lastValidatedSource, setLastValidatedSource] = useState<string | null>(null);
+  const [lastCommittedSource, setLastCommittedSource] = useState<string | null>(null);
+  const [duplicateNotice, setDuplicateNotice] = useState<string | null>(null);
+  const copyResetTimerRef = useRef<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const result = useMemo(() => parseImportText(source), [source]);
+  const normalizedSource = useMemo(() => source.trim(), [source]);
   const summary = useMemo(() => {
     const total = result.previews.length;
     const valid = result.previews.filter((item) => item.valid).length;
@@ -247,6 +255,15 @@ export function QuestionImportClient({ locale }: { locale: string }) {
       .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
       .map(([reason, count]) => ({ reason, count }));
   }, [result.parseError, result.previews, serverValidation, submitted]);
+  const idsText = useMemo(() => commitResult?.ids.join(', ') ?? '', [commitResult]);
+  const questionUuidsText = useMemo(
+    () => commitResult?.questionUuids.map((item) => `'${item}'`).join(', ') ?? '',
+    [commitResult]
+  );
+  const validateBlockedByDuplicate =
+    normalizedSource.length > 0 && normalizedSource === lastValidatedSource;
+  const commitBlockedByDuplicate =
+    normalizedSource.length > 0 && normalizedSource === lastCommittedSource;
   const commitEnabled =
     !committing &&
     !result.parseError &&
@@ -254,6 +271,16 @@ export function QuestionImportClient({ locale }: { locale: string }) {
     (serverValidation ? serverValidation.invalidCount === 0 : false);
 
   async function handleValidate() {
+    if (validateBlockedByDuplicate) {
+      setDuplicateNotice(
+        isZh
+          ? '当前 JSON 已完成校验。若要再次校验相同内容，请先点击 Reset。'
+          : 'This JSON has already been validated. Click Reset before validating it again.'
+      );
+      return;
+    }
+
+    setDuplicateNotice(null);
     setSubmitted(true);
     setCommitResult(null);
     setServerValidation(null);
@@ -280,6 +307,7 @@ export function QuestionImportClient({ locale }: { locale: string }) {
 
       const data = (await response.json()) as QuestionImportValidationResult;
       setServerValidation(data);
+      setLastValidatedSource(normalizedSource);
     } catch (error) {
       setServerError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -288,6 +316,16 @@ export function QuestionImportClient({ locale }: { locale: string }) {
   }
 
   async function handleCommit() {
+    if (commitBlockedByDuplicate) {
+      setDuplicateNotice(
+        isZh
+          ? '当前 JSON 已完成入库。若要再次处理相同内容，请先点击 Reset。'
+          : 'This JSON has already been committed. Click Reset before processing it again.'
+      );
+      return;
+    }
+
+    setDuplicateNotice(null);
     setCommitResult(null);
     setServerError(null);
 
@@ -312,6 +350,7 @@ export function QuestionImportClient({ locale }: { locale: string }) {
 
       const data = (await response.json()) as QuestionImportCommitResult;
       setCommitResult(data);
+      setLastCommittedSource(normalizedSource);
     } catch (error) {
       setServerError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -319,9 +358,61 @@ export function QuestionImportClient({ locale }: { locale: string }) {
     }
   }
 
+  async function copyText(field: 'ids' | 'questionUuids', value: string) {
+    if (!value) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(value);
+    setCopiedField(field);
+
+    if (copyResetTimerRef.current) {
+      window.clearTimeout(copyResetTimerRef.current);
+    }
+
+    copyResetTimerRef.current = window.setTimeout(() => {
+      setCopiedField(null);
+      copyResetTimerRef.current = null;
+    }, 1400);
+  }
+
+  async function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    const normalizedName = file.name.trim().toLowerCase();
+    if (!normalizedName.endsWith('.json')) {
+      setServerError(isZh ? '仅支持上传 JSON 文件。' : 'Only JSON files are supported.');
+      return;
+    }
+
+    try {
+      const fileText = await file.text();
+      setSource(fileText);
+      setSubmitted(false);
+      setServerValidation(null);
+      setCommitResult(null);
+      setServerError(null);
+      setDuplicateNotice(null);
+    } catch (error) {
+      setServerError(error instanceof Error ? error.message : 'Failed to read file');
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-black/10 p-6 dark:border-white/10">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json,application/json"
+          className="hidden"
+          onChange={(event) => void handleFileSelect(event)}
+        />
         <div className="border-b border-black/10 pb-4 dark:border-white/10">
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
             <div className="space-y-3">
@@ -348,12 +439,22 @@ export function QuestionImportClient({ locale }: { locale: string }) {
             <div className="flex flex-wrap items-center gap-2 lg:justify-end">
             <button
               type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+            >
+              {isZh ? '上传 JSON' : 'Upload JSON'}
+            </button>
+            <button
+              type="button"
               onClick={() => {
                 setSource(sampleJson);
                 setSubmitted(false);
                 setServerValidation(null);
                 setCommitResult(null);
                 setServerError(null);
+                setLastValidatedSource(null);
+                setLastCommittedSource(null);
+                setDuplicateNotice(null);
               }}
               className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
             >
@@ -362,6 +463,7 @@ export function QuestionImportClient({ locale }: { locale: string }) {
             <button
               type="button"
               onClick={() => void handleValidate()}
+              disabled={validating}
               className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
             >
               {validating
@@ -383,6 +485,11 @@ export function QuestionImportClient({ locale }: { locale: string }) {
             </div>
           </div>
         </div>
+        {duplicateNotice ? (
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200">
+            {duplicateNotice}
+          </div>
+        ) : null}
         <div className="mt-4">
           <textarea
             value={source}
@@ -392,6 +499,7 @@ export function QuestionImportClient({ locale }: { locale: string }) {
               setServerValidation(null);
               setCommitResult(null);
               setServerError(null);
+              setDuplicateNotice(null);
             }}
             rows={22}
             className="min-h-128 w-full rounded-3xl border border-black/10 bg-slate-50 px-4 py-4 font-mono text-sm outline-none transition focus:border-purple-400 dark:border-white/10 dark:bg-slate-900 dark:text-white"
@@ -411,9 +519,58 @@ export function QuestionImportClient({ locale }: { locale: string }) {
 
       <div className="rounded-3xl border border-black/10 p-6 dark:border-white/10">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-          {isZh ? '不通过原因汇总' : 'Top Validation Errors'}
+          {commitResult?.successCount ? (isZh ? '导入结果' : 'Import Result') : isZh ? '不通过原因汇总' : 'Top Validation Errors'}
         </h2>
-        {!submitted ? (
+        {commitResult?.successCount ? (
+          <div className="mt-4 space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {isZh ? '题目 ID' : 'Question IDs'}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void copyText('ids', idsText)}
+                  className="inline-flex min-w-[84px] items-center justify-center gap-1.5 rounded-full border border-black/10 px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:border-black/20 hover:bg-black/5 hover:text-slate-800 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+                  aria-label={isZh ? '复制题目 ID' : 'Copy question IDs'}
+                  title={isZh ? '复制题目 ID' : 'Copy question IDs'}
+                >
+                  {copiedField === 'ids' ? <icons.X className="h-3.5 w-3.5" /> : <icons.Copy className="h-3.5 w-3.5" />}
+                  <span>{copiedField === 'ids' ? 'Copied' : isZh ? '复制' : 'Copy'}</span>
+                </button>
+              </div>
+              <textarea
+                readOnly
+                value={idsText}
+                rows={3}
+                className="w-full resize-none rounded-2xl border border-black/10 bg-slate-50 px-4 py-3 font-mono text-sm text-slate-700 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-slate-200"
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {isZh ? '题目 UUID' : 'Question UUIDs'}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void copyText('questionUuids', questionUuidsText)}
+                  className="inline-flex min-w-[84px] items-center justify-center gap-1.5 rounded-full border border-black/10 px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:border-black/20 hover:bg-black/5 hover:text-slate-800 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+                  aria-label={isZh ? '复制题目 UUID' : 'Copy question UUIDs'}
+                  title={isZh ? '复制题目 UUID' : 'Copy question UUIDs'}
+                >
+                  {copiedField === 'questionUuids' ? <icons.X className="h-3.5 w-3.5" /> : <icons.Copy className="h-3.5 w-3.5" />}
+                  <span>{copiedField === 'questionUuids' ? 'Copied' : isZh ? '复制' : 'Copy'}</span>
+                </button>
+              </div>
+              <textarea
+                readOnly
+                value={questionUuidsText}
+                rows={3}
+                className="w-full resize-none rounded-2xl border border-black/10 bg-slate-50 px-4 py-3 font-mono text-sm text-slate-700 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-slate-200"
+              />
+            </div>
+          </div>
+        ) : !submitted ? (
           <div className="mt-4 rounded-2xl border border-dashed border-black/10 px-4 py-6 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
             {isZh ? '点击“校验”后在这里查看错误原因汇总。' : 'Run validation to view summarized errors here.'}
           </div>

@@ -52,5 +52,7 @@ CREATE TABLE faq.usb (
     )
 );
 
+ALTER SEQUENCE faq.usb_id_seq RESTART WITH 10000;
+
 CREATE INDEX idx_usb_category ON faq.usb(category);
 CREATE INDEX idx_usb_difficulty ON faq.usb(difficulty);
