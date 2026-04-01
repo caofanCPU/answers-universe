@@ -34,6 +34,11 @@ export function QuestionDetail({
           {question.category ? <span className={metaPillClassName}>{question.category}</span> : null}
           {question.subCategory ? <span className={metaPillClassName}>{question.subCategory}</span> : null}
           {question.difficulty ? <span className={metaPillClassName}>{question.difficulty}</span> : null}
+          {question.asFirst ? (
+            <span className="inline-flex max-w-full items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 transition dark:bg-amber-500/10 dark:text-amber-300">
+              {isZh ? '首发' : 'First'}
+            </span>
+          ) : null}
         </div>
         <h2 className="min-w-0 break-words text-2xl font-semibold text-slate-900 dark:text-white">{question.question}</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">

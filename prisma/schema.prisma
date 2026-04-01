@@ -216,3 +216,21 @@ model Usb {
   @@map("usb")
   @@schema("faq")
 }
+
+model RandomUsb {
+  id           BigInt    @id @default(autoincrement())
+  showDate     DateTime  @map("show_date") @db.Date
+  questionId   BigInt    @unique @map("question_id")
+  questionUuid String    @map("question_uuid") @db.Uuid
+  asFirst      Int       @map("as_first") @default(0) @db.SmallInt
+  category     String    @db.VarChar(100)
+  sortOrder    Int       @map("sort_order")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([showDate, questionId], map: "uq_random_usb_show_date_question_id")
+  @@index([showDate], map: "idx_random_usb_show_date")
+  @@index([showDate, sortOrder], map: "idx_random_usb_show_date_sort_order")
+  @@map("random_usb")
+  @@schema("faq")
+}

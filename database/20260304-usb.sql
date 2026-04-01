@@ -56,3 +56,24 @@ ALTER SEQUENCE faq.usb_id_seq RESTART WITH 10000;
 
 CREATE INDEX idx_usb_category ON faq.usb(category);
 CREATE INDEX idx_usb_difficulty ON faq.usb(difficulty);
+
+
+-- DROP TABLE IF EXISTS faq.random_usb;
+
+CREATE TABLE faq.random_usb (
+    id BIGSERIAL PRIMARY KEY,
+    show_date DATE NOT NULL,
+    question_id BIGINT NOT NULL,
+    question_uuid UUID NOT NULL,
+    as_first SMALLINT NOT NULL DEFAULT 0,
+    category VARCHAR(100) NOT NULL,
+    sort_order INTEGER NOT NULL,
+    created_at TIMESTAMPTZ(6) DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ(6) DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_random_usb_question_id UNIQUE (question_id),
+    CONSTRAINT uq_random_usb_show_date_question_id UNIQUE (show_date, question_id),
+    CONSTRAINT chk_random_usb_as_first CHECK (as_first IN (0, 1))
+);
+
+CREATE INDEX idx_random_usb_show_date ON faq.random_usb(show_date);
+CREATE INDEX idx_random_usb_show_date_sort_order ON faq.random_usb(show_date, sort_order);

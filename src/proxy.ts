@@ -35,7 +35,8 @@ const protectedApiRoutes = createRouteMatcher([
   // 交易记录API
   '/api/transaction(.*)',
   // 题目API
-  '/api/questions(.*)'
+  '/api/questions(.*)',
+  '/api/random-questions(.*)',
 
 ]);
 
