@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
+import { themeButtonGradientClass, themeButtonGradientHoverClass } from '@windrun-huaiin/base-ui/lib';
+import { cn } from '@windrun-huaiin/lib/utils';
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
 import { buildReadonlyAnswerOptions } from './question-answer-options';
 import { QuestionDetail } from './question-detail';
@@ -21,6 +23,8 @@ type RequestState<T> = {
   loading: boolean;
   error: string | null;
 };
+
+type TopPanelKey = 'status' | 'details' | 'stats';
 
 const DEFAULT_TARGET_TOTAL = 5;
 
@@ -78,47 +82,43 @@ function QuestionIdentityTags({
   onCopy: (key: string, value: string) => Promise<void>;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {items.map((item) => (
         <div
           key={`identity-${item.questionId}`}
-          className="rounded-2xl border border-black/10 p-3 dark:border-white/10"
+          className="grid gap-2 text-[11px] md:grid-cols-[minmax(0,9rem)_minmax(0,1fr)_minmax(0,1fr)] md:items-center"
         >
-          <div className="space-y-2">
-            <div className="flex flex-wrap gap-1.5">
-              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] text-slate-600 dark:bg-white/5 dark:text-slate-300">
-                {item.category}
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => void onCopy(`id-${item.questionId}`, item.questionId)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600 transition hover:bg-slate-100 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-                aria-label={`Copy question ID ${item.questionId}`}
-                title={`Copy question ID ${item.questionId}`}
-              >
-                <span className="font-medium text-slate-500 dark:text-slate-400">ID</span>
-                <span className="font-mono text-slate-800 dark:text-slate-100">{item.questionId}</span>
-                <span className="inline-flex h-4.5 w-4.5 items-center justify-center rounded-full text-slate-400 dark:text-slate-500">
-                  {copiedField === `id-${item.questionId}` ? <icons.X className="h-3 w-3" /> : <icons.Copy className="h-3 w-3" />}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => void onCopy(`uuid-${item.questionId}`, item.questionUuid)}
-                className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600 transition hover:bg-slate-100 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
-                aria-label={`Copy question UUID ${item.questionUuid}`}
-                title={`Copy question UUID ${item.questionUuid}`}
-              >
-                <span className="shrink-0 font-medium text-slate-500 dark:text-slate-400">UUID</span>
-                <span className="truncate font-mono text-[11px] text-slate-800 dark:text-slate-100">{item.questionUuid}</span>
-                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 dark:text-slate-500">
-                  {copiedField === `uuid-${item.questionId}` ? <icons.X className="h-3 w-3" /> : <icons.Copy className="h-3 w-3" />}
-                </span>
-              </button>
-            </div>
+          <div className="min-w-0">
+            <span className="inline-flex max-w-full rounded-full bg-slate-100 px-2.5 py-1 text-slate-600 dark:bg-white/5 dark:text-slate-300">
+              <span className="truncate">{item.category}</span>
+            </span>
           </div>
+          <button
+            type="button"
+            onClick={() => void onCopy(`id-${item.questionId}`, item.questionId)}
+            className="inline-flex min-w-0 items-center justify-between gap-2 rounded-full bg-slate-50 px-3 py-1 text-slate-600 transition hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+            aria-label={`Copy question ID ${item.questionId}`}
+            title={`Copy question ID ${item.questionId}`}
+          >
+            <span className="shrink-0 font-medium text-slate-500 dark:text-slate-400">ID</span>
+            <span className="truncate font-mono text-slate-800 dark:text-slate-100">{item.questionId}</span>
+            <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-slate-400 dark:text-slate-500">
+              {copiedField === `id-${item.questionId}` ? <icons.X className="h-3 w-3" /> : <icons.Copy className="h-3 w-3" />}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => void onCopy(`uuid-${item.questionId}`, item.questionUuid)}
+            className="inline-flex min-w-0 items-center justify-between gap-2 rounded-full bg-slate-50 px-3 py-1 text-[10px] text-slate-500 transition hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+            aria-label={`Copy question UUID ${item.questionUuid}`}
+            title={`Copy question UUID ${item.questionUuid}`}
+          >
+            <span className="shrink-0 font-medium text-slate-500 dark:text-slate-400">UUID</span>
+            <span className="truncate font-mono">{item.questionUuid}</span>
+            <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-slate-400 dark:text-slate-500">
+              {copiedField === `uuid-${item.questionId}` ? <icons.X className="h-3 w-3" /> : <icons.Copy className="h-3 w-3" />}
+            </span>
+          </button>
         </div>
       ))}
     </div>
@@ -142,16 +142,26 @@ function StatsPanel({
   const normalReady = stats.actualNormalCount === stats.targetNormalCount;
 
   return (
-    <div className="grid gap-2 text-sm">
-      <div className={totalReady ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}>
-        {`Total: ${stats.actualTotal} / ${stats.targetTotal}`}
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div className="rounded-2xl bg-white/70 p-4 dark:bg-slate-950/30">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Total</div>
+        <div className={`mt-2 text-2xl font-semibold ${totalReady ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}`}>
+          {`${stats.actualTotal} / ${stats.targetTotal}`}
+        </div>
       </div>
-      <div className={firstReady ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}>
-        {`First question: ${stats.actualFirstCount} / ${stats.targetFirstCount}`}
+      <div className="rounded-2xl bg-white/70 p-4 dark:bg-slate-950/30">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">First question</div>
+        <div className={`mt-2 text-2xl font-semibold ${firstReady ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}`}>
+          {`${stats.actualFirstCount} / ${stats.targetFirstCount}`}
+        </div>
       </div>
-      <div className={normalReady ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}>
-        {`Normal questions: ${stats.actualNormalCount} / ${stats.targetNormalCount}`}
+      <div className="rounded-2xl bg-white/70 p-4 dark:bg-slate-950/30">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Normal questions</div>
+        <div className={`mt-2 text-2xl font-semibold ${normalReady ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}`}>
+          {`${stats.actualNormalCount} / ${stats.targetNormalCount}`}
+        </div>
       </div>
+      <div className="hidden rounded-2xl bg-transparent p-4 sm:block" aria-hidden="true" />
     </div>
   );
 }
@@ -179,7 +189,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   const [previewIndex, setPreviewIndex] = useState(0);
   const [savedIndex, setSavedIndex] = useState(0);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const [activeTopPanel, setActiveTopPanel] = useState<TopPanelKey>('status');
   const [replaceConfirmOpen, setReplaceConfirmOpen] = useState(false);
   const copyResetTimerRef = useRef<number | null>(null);
   const generatedDateSet = useMemo(
@@ -224,16 +234,11 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
         cache: 'no-store',
       });
 
-      if (response.status === 404) {
-        setDetailState({ data: null, loading: false, error: null });
-        return;
-      }
-
       if (!response.ok) {
         throw new Error(`Request failed with status ${response.status}`);
       }
 
-      const data = (await response.json()) as RandomQuestionDetailResult;
+      const data = (await response.json()) as RandomQuestionDetailResult | null;
       setDetailState({ data, loading: false, error: null });
     } catch (error) {
       setDetailState({
@@ -252,19 +257,17 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
     setPreviewState({ data: null, loading: false, error: null });
     setPreviewIndex(0);
     setSavedIndex(0);
-    setDetailsExpanded(false);
+    setActiveTopPanel('status');
     setReplaceConfirmOpen(false);
     void loadDetail(selectedDate);
   }, [selectedDate]);
 
   useEffect(() => {
     setPreviewIndex(0);
-    setDetailsExpanded(false);
   }, [previewState.data?.showDate, previewState.data?.items.length]);
 
   useEffect(() => {
     setSavedIndex(0);
-    setDetailsExpanded(false);
   }, [detailState.data?.showDate, detailState.data?.items.length]);
 
   async function handlePreview() {
@@ -354,7 +357,6 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   function cancelPreview() {
     setPreviewState({ data: null, loading: false, error: null });
     setPreviewIndex(0);
-    setDetailsExpanded(false);
   }
 
   const activeStats = previewState.data?.stats ?? detailState.data?.stats ?? null;
@@ -375,230 +377,274 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   const hasSavedNavigation = savedItems.length > 1;
   const safeSavedIndex = savedItems.length > 0 ? Math.min(savedIndex, savedItems.length - 1) : 0;
   const activeSavedItem = savedItems[safeSavedIndex] ?? null;
+  const selectedStatusBadge = previewState.data
+    ? {
+        label: 'Preview',
+        className:
+          'border-red-200 bg-red-50 text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200',
+      }
+    : selectedHasSavedSet
+      ? {
+          label: 'Saved',
+          className:
+            'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-200',
+        }
+      : {
+          label: 'No sets',
+          className:
+            'border-red-200 bg-red-50 text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200',
+        };
+  const panelItems = [
+    { key: 'status' as const, label: 'Status' },
+    { key: 'details' as const, label: 'Details' },
+    { key: 'stats' as const, label: 'Analysis' },
+  ];
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[24rem_minmax(0,1fr)]">
-      <div className="space-y-4">
+    <div className="space-y-6">
+      <div className="grid gap-6 xl:items-start xl:grid-cols-[24rem_minmax(0,1fr)]">
         <div className="rounded-3xl border border-black/10 p-4 dark:border-white/10">
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() =>
-                setCalendarMonth(
-                  new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() - 1, 1))
-                )
-              }
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-              aria-label="Previous month"
-              title="Previous month"
-            >
-              <icons.ChevronLeft className="h-4 w-4" />
-            </button>
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">{getMonthTitle(calendarMonth)}</div>
-            <button
-              type="button"
-              onClick={() =>
-                setCalendarMonth(
-                  new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() + 1, 1))
-                )
-              }
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-              aria-label="Next month"
-              title="Next month"
-            >
-              <icons.ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((label) => (
-              <div key={label} className="py-1">
-                {label}
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-2 grid grid-cols-7 gap-1">
-            {monthDays.map((day) => {
-              const dayString = formatDateString(day);
-              const isCurrentMonth = day.getUTCMonth() === calendarMonth.getUTCMonth();
-              const isSelected = dayString === selectedDate;
-              const isGenerated = generatedDateSet.has(dayString);
-
-              return (
-                <button
-                  key={dayString}
-                  type="button"
-                  onClick={() => {
-                    setSelectedDate(dayString);
-                    setCalendarMonth(new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), 1)));
-                  }}
-                  className={`relative flex h-11 items-center justify-center rounded-2xl text-sm transition ${
-                    isSelected
-                      ? 'border border-black/20 bg-black text-white dark:border-white/20 dark:bg-white dark:text-slate-950'
-                      : isGenerated
-                        ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-200'
-                        : 'border border-black/10 text-slate-700 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5'
-                  } ${isCurrentMonth ? '' : 'opacity-45'}`}
-                  title={isGenerated ? `${dayString} has a saved set` : `Open ${dayString}`}
-                >
-                  <span>{day.getUTCDate()}</span>
-                  {isGenerated && !isSelected ? (
-                    <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-300" />
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="rounded-3xl border border-black/10 p-5 dark:border-white/10">
-          <div className="flex min-h-32 items-center justify-center text-center">
-            <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-5xl font-bold tracking-tight text-transparent sm:text-6xl">
-              {datesState.loading ? '--' : String(datesState.data?.totalGeneratedDates ?? 0)}
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  setCalendarMonth(
+                    new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() - 1, 1))
+                  )
+                }
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                aria-label="Previous month"
+                title="Previous month"
+              >
+                <icons.ChevronLeft className="h-4 w-4" />
+              </button>
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">{getMonthTitle(calendarMonth)}</div>
+              <button
+                type="button"
+                onClick={() =>
+                  setCalendarMonth(
+                    new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() + 1, 1))
+                  )
+                }
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                aria-label="Next month"
+                title="Next month"
+              >
+                <icons.ChevronRight className="h-4 w-4" />
+              </button>
             </div>
-          </div>
-        </div>
 
-        {activeMessages.length > 0 ? (
-          <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200">
-            <div className="font-semibold">Guidance</div>
-            <div className="mt-2 space-y-1">
-              {activeMessages.map((message) => (
-                <div key={message}>{message}</div>
+            <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((label) => (
+                <div key={label} className="py-1">
+                  {label}
+                </div>
               ))}
             </div>
-          </div>
-        ) : null}
 
-        {datesState.error ? (
-          <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
-            {`Failed to load generated dates: ${datesState.error}`}
-          </div>
-        ) : null}
-        {detailState.error ? (
-          <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
-            {`Failed to load saved set: ${detailState.error}`}
-          </div>
-        ) : null}
-        {previewState.error ? (
-          <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
-            {`Request failed: ${previewState.error}`}
-          </div>
-        ) : null}
-      </div>
+            <div className="mt-2 grid grid-cols-7 gap-1">
+              {monthDays.map((day) => {
+                const dayString = formatDateString(day);
+                const isCurrentMonth = day.getUTCMonth() === calendarMonth.getUTCMonth();
+                const isSelected = dayString === selectedDate;
+                const isGenerated = generatedDateSet.has(dayString);
 
-      <div className="space-y-6">
-        <div className="rounded-3xl border border-black/10 p-5 dark:border-white/10">
-          <div className="space-y-4">
+                return (
+                  <button
+                    key={dayString}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDate(dayString);
+                      setCalendarMonth(new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), 1)));
+                    }}
+                    className={`relative flex h-11 items-center justify-center rounded-2xl text-sm transition ${
+                      isSelected
+                        ? 'border border-black/20 bg-black text-white dark:border-white/20 dark:bg-white dark:text-slate-950'
+                        : isGenerated
+                          ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-200'
+                          : 'border border-black/10 text-slate-700 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5'
+                    } ${isCurrentMonth ? '' : 'opacity-45'}`}
+                    title={isGenerated ? `${dayString} has a saved set` : `Open ${dayString}`}
+                  >
+                    <span>{day.getUTCDate()}</span>
+                    {isGenerated && !isSelected ? (
+                      <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-300" />
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-black/10 p-5 dark:border-white/10 xl:self-stretch">
+          <div className="flex flex-col gap-4 xl:h-full">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
                 <div className="text-sm font-semibold text-slate-900 dark:text-white">{selectedDate}</div>
-                {previewState.data ? (
-                  <div className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
-                    Preview
-                  </div>
-                ) : null}
-                {selectedHasSavedSet && !previewState.data ? (
-                  <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-200">
-                    Saved
-                  </div>
-                ) : null}
-                {!selectedHasSavedSet && !previewState.data ? (
-                  <div className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
-                    No sets
-                  </div>
-                ) : null}
-              </div>
-            </div>
-              <div className="rounded-2xl border border-black/10 p-4 dark:border-white/10">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <div className="text-sm font-semibold text-slate-900 dark:text-white">Current status</div>
-                  </div>
-                <div className="flex flex-wrap gap-2">
-                  {previewState.data ? (
-                    <>
-                      {previewState.data.canCommit ? (
-                        <GradientButton
-                          onClick={async () => {
-                            if (selectedHasSavedSet) {
-                              setReplaceConfirmOpen(true);
-                              return;
-                            }
-
-                            await handleSavePreview(false);
-                          }}
-                          title="Save set"
-                          loadingText="Saving..."
-                          align="center"
-                          className="sm:w-auto"
-                          disabled={saving}
-                        />
-                      ) : null}
-                      <button
-                        type="button"
-                        onClick={cancelPreview}
-                        className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <GradientButton
-                      onClick={() => void handlePreview()}
-                      title="Generate preview"
-                      loadingText="Loading..."
-                      align="center"
-                      className="sm:w-auto"
-                      disabled={previewState.loading || detailState.loading}
-                    />
-                  )}
+                <div className={cn('rounded-full border px-3 py-1 text-xs font-semibold', selectedStatusBadge.className)}>
+                  {selectedStatusBadge.label}
                 </div>
               </div>
-              <div className="mt-4">
-                <StatsPanel stats={displayStats} />
-              </div>
-              {(previewItems.length > 0 || savedItems.length > 0) ? (
-                <div className="mt-4 border-t border-black/10 pt-4 dark:border-white/10">
+              <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-black/10 p-1 dark:border-white/10">
+                {panelItems.map((item) => (
                   <button
+                    key={item.key}
                     type="button"
-                    onClick={() => setDetailsExpanded((current) => !current)}
-                    className="flex w-full items-center justify-between gap-3 text-left"
-                    aria-expanded={detailsExpanded}
-                    title={detailsExpanded ? 'Hide supporting details' : 'Show supporting details'}
+                    onClick={() => setActiveTopPanel(item.key)}
+                    className={cn(
+                      'rounded-full px-5 py-2 text-sm transition',
+                      activeTopPanel === item.key
+                        ? cn('text-white rounded-full shadow-sm', themeButtonGradientClass, themeButtonGradientHoverClass)
+                        : 'text-gray-800 hover:text-gray-900 dark:text-gray-200 dark:hover:text-gray-100'
+                    )}
                   >
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900 dark:text-white">Supporting details</div>
-                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                        Categories, IDs, and UUIDs for this set
-                      </div>
-                    </div>
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5">
-                      {detailsExpanded ? <icons.ChevronUp className="h-4 w-4" /> : <icons.ChevronDown className="h-4 w-4" />}
-                    </span>
+                    {item.label}
                   </button>
-                  {detailsExpanded ? (
-                    <div className="mt-3">
-                      <QuestionIdentityTags
-                        items={
-                          (previewItems.length > 0 ? previewItems : savedItems).map((item) => ({
-                            questionId: item.questionId,
-                            questionUuid: item.questionUuid,
-                            category: item.category,
-                          }))
-                        }
-                        copiedField={copiedField}
-                        onCopy={copyText}
-                      />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex-1 rounded-2xl border border-black/10 p-4 dark:border-white/10">
+              {activeTopPanel === 'status' ? (
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white">Current status</div>
+                    <div className="flex flex-wrap gap-2">
+                      {previewState.data ? (
+                        <>
+                          {previewState.data.canCommit ? (
+                            <GradientButton
+                              onClick={async () => {
+                                if (selectedHasSavedSet) {
+                                  setReplaceConfirmOpen(true);
+                                  return;
+                                }
+
+                                await handleSavePreview(false);
+                              }}
+                              title="Save set"
+                              loadingText="Saving..."
+                              align="center"
+                              icon=<icons.BookCheck/>
+                              className="sm:w-auto"
+                              disabled={saving}
+                            />
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={cancelPreview}
+                            className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <GradientButton
+                          onClick={() => void handlePreview()}
+                          title="Generate preview"
+                          loadingText="Loading..."
+                          align="center"
+                          icon=<icons.CircleStop/>
+                          className="sm:w-auto"
+                          disabled={previewState.loading || detailState.loading}
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-slate-50/80 p-4 dark:bg-white/5">
+                    <StatsPanel stats={displayStats} />
+                  </div>
+
+                  {activeMessages.length > 0 ? (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200">
+                      <div className="font-semibold">Guidance</div>
+                      <div className="mt-2 space-y-1">
+                        {activeMessages.map((message) => (
+                          <div key={message}>{message}</div>
+                        ))}
+                      </div>
                     </div>
                   ) : null}
                 </div>
               ) : null}
+
+              {activeTopPanel === 'details' ? (
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white">Supporting details</div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Categories and IDs for this set
+                    </div>
+                  </div>
+                  {(previewItems.length > 0 || savedItems.length > 0) ? (
+                    <QuestionIdentityTags
+                      items={
+                        (previewItems.length > 0 ? previewItems : savedItems).map((item) => ({
+                          questionId: item.questionId,
+                          questionUuid: item.questionUuid,
+                          category: item.category,
+                        }))
+                      }
+                      copiedField={copiedField}
+                      onCopy={copyText}
+                    />
+                  ) : (
+                    <div className="rounded-2xl bg-slate-50/80 p-4 text-sm text-slate-500 dark:bg-white/5 dark:text-slate-400">
+                      No detail items available for the selected date.
+                    </div>
+                  )}
+                </div>
+              ) : null}
+
+              {activeTopPanel === 'stats' ? (
+                <div className="flex h-full flex-col items-center justify-center text-center">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white">Statistics</div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Overall generated days
+                    </div>
+                  </div>
+                  <div className="mt-6 bg-linear-to-r from-emerald-500 to-cyan-500 bg-clip-text text-7xl font-bold tracking-tight text-transparent sm:text-8xl">
+                    {datesState.loading ? '--' : String(datesState.data?.totalGeneratedDates ?? 0)}
+                  </div>
+                </div>
+              ) : null}
             </div>
+
+            {activeMessages.length > 0 && activeTopPanel !== 'status' ? (
+              <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200">
+                <div className="font-semibold">Guidance</div>
+                <div className="mt-2 space-y-1">
+                  {activeMessages.map((message) => (
+                    <div key={message}>{message}</div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {datesState.error ? (
+              <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
+                {`Failed to load generated dates: ${datesState.error}`}
+              </div>
+            ) : null}
+            {detailState.error ? (
+              <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
+                {`Failed to load saved set: ${detailState.error}`}
+              </div>
+            ) : null}
+            {previewState.error ? (
+              <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
+                {`Request failed: ${previewState.error}`}
+              </div>
+            ) : null}
           </div>
         </div>
+      </div>
 
+      <div className="space-y-6">
         {activePreviewItem?.question ? (
           <div className="space-y-4">
             <QuestionDetail
@@ -613,7 +659,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
               )}
             />
             <div className="rounded-[1.75rem] border border-black/10 bg-neutral-100 p-3 dark:border-white/10 dark:bg-neutral-900">
-              <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex min-w-0 items-center justify-center">
                 <div className="flex min-w-0 items-center gap-2">
                   {hasPreviewNavigation ? (
                     <button
@@ -668,7 +714,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
               )}
             />
             <div className="rounded-[1.75rem] border border-black/10 bg-neutral-100 p-3 dark:border-white/10 dark:bg-neutral-900">
-              <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex min-w-0 items-center justify-center">
                 <div className="flex min-w-0 items-center gap-2">
                   {hasSavedNavigation ? (
                     <button

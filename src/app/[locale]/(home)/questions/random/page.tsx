@@ -1,7 +1,7 @@
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
-import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 import { RandomQuestionBoardClient } from '@/components/random-question-board-client';
 import { QuestionPageShell } from '@/components/question-page-shell';
+import { getTranslations } from 'next-intl/server';
 
 export default async function RandomQuestionsPage({
   params,
@@ -9,6 +9,8 @@ export default async function RandomQuestionsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'faqPage.questionsList' });
+  const importT = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
 
   return (
     <QuestionPageShell
@@ -17,8 +19,19 @@ export default async function RandomQuestionsPage({
       actions={[
         {
           href: getAsNeededLocalizedUrl(locale, '/questions'),
-          label: 'Question List',
-          icon: <icons.BookCheck className="h-4 w-4" />,
+          label: 'Back to List',
+          icon: false
+        },
+        {
+          href: getAsNeededLocalizedUrl(locale, '/questions/new'),
+          label: t('actions.create'),
+          primary: true,
+          icon: false
+        },
+        {
+          href: getAsNeededLocalizedUrl(locale, '/questions/import'),
+          label: importT('title'),
+          icon: false
         },
       ]}
     >
