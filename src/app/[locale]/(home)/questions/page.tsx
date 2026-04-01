@@ -21,10 +21,12 @@ export default async function QuestionsPage({
           href: getAsNeededLocalizedUrl(locale, '/questions/new'),
           label: t('actions.create'),
           primary: true,
+          icon: false
         },
         {
           href: getAsNeededLocalizedUrl(locale, '/questions/import'),
           label: importT('title'),
+          icon: false
         },
       ]}
     >
@@ -50,6 +52,24 @@ export default async function QuestionsPage({
             summary: t.raw('pagination.summary'),
             previous: t('pagination.previous'),
             next: t('pagination.next'),
+          },
+          export: {
+            settingsLabel: t('export.settings'),
+            buttonLabel: t('export.button'),
+            loadingLabel: t('export.loading'),
+            dialogTitle: t('export.dialog.title'),
+            dialogDescription: t('export.dialog.description'),
+            confirm: t('export.dialog.confirm'),
+            cancel: t('export.dialog.cancel'),
+            requiredHint: t('export.dialog.requiredHint'),
+            failed: t('export.status.failed'),
+            columns: {
+              id: t('export.columns.id'),
+              questionUuid: t('export.columns.questionUuid'),
+              category: t('export.columns.category'),
+              subCategory: t('export.columns.subCategory'),
+              asFirst: t('export.columns.asFirst'),
+            },
           },
         }}
       />

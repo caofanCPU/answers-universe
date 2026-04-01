@@ -22,6 +22,7 @@ export default async function NewQuestionPage({
           href: getAsNeededLocalizedUrl(locale, '/questions/import'),
           label: importT('title'),
           primary: true,
+          icon: false
         },
       ]}
     >

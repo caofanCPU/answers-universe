@@ -448,6 +448,28 @@
           "summary": "{page}/{totalPages}, Total {total}",
           "previous": "Previous",
           "next": "Next"
+        },
+        "export": {
+          "settings": "Export column settings",
+          "button": "Export",
+          "loading": "Exporting...",
+          "columns": {
+            "id": "id",
+            "questionUuid": "question_uuid",
+            "category": "category",
+            "subCategory": "sub_category",
+            "asFirst": "as_first"
+          },
+          "dialog": {
+            "title": "Configure export columns",
+            "description": "The export runs against the current filters and returns all matching rows with only the selected columns.",
+            "confirm": "Confirm",
+            "cancel": "Cancel",
+            "requiredHint": "The following columns are required and will always be exported."
+          },
+          "status": {
+            "failed": "Export failed: "
+          }
         }
       },
       "questionsImport": {

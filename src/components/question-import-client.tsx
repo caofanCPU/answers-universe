@@ -484,6 +484,7 @@ export function QuestionImportClient({ locale }: { locale: string }) {
               title={isZh ? '确认批量入库' : 'Commit'}
               loadingText={isZh ? '入库中...' : 'Loading...'}
               align="center"
+              icon=<icons.CheckCheck/>
               className="sm:w-auto"
             />
             </div>

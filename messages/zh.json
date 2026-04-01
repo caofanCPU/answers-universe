@@ -432,6 +432,28 @@
           "summary": "{page}/{totalPages}, 共 {total} 题",
           "previous": "上一页",
           "next": "下一页"
+        },
+        "export": {
+          "settings": "导出列设置",
+          "button": "Export",
+          "loading": "导出中...",
+          "columns": {
+            "id": "id",
+            "questionUuid": "question_uuid",
+            "category": "category",
+            "subCategory": "sub_category",
+            "asFirst": "as_first"
+          },
+          "dialog": {
+            "title": "配置导出列",
+            "description": "导出会基于当前筛选条件全量查询，仅输出你勾选的列。",
+            "confirm": "确认",
+            "cancel": "取消",
+            "requiredHint": "以下字段为必选列，默认导出且不可取消。"
+          },
+          "status": {
+            "failed": "导出失败："
+          }
         }
       },
       "questionsImport": {

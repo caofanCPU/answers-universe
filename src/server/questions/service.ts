@@ -2,6 +2,7 @@ import { prisma } from '@windrun-huaiin/backend-core/prisma';
 import type { Prisma, Usb } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import type {
+  QuestionExportItemDto,
   QuestionImportCommitResult,
   QuestionImportValidationItem,
   QuestionImportValidationResult,
@@ -207,6 +208,18 @@ function buildQuestionMutationResult(record: Pick<Usb, 'id'>): QuestionMutationR
   };
 }
 
+function buildQuestionExportItemDto(
+  record: Pick<Usb, 'id' | 'questionUuid' | 'category' | 'subCategory' | 'asFirst'>
+): QuestionExportItemDto {
+  return {
+    id: record.id.toString(),
+    questionUuid: record.questionUuid,
+    category: record.category,
+    subCategory: record.subCategory,
+    asFirst: record.asFirst,
+  };
+}
+
 function buildQuestionWhereInput(params: QuestionListParams): Prisma.UsbWhereInput {
   const id = params.id;
   const uuid = params.uuid;
@@ -384,6 +397,35 @@ export async function getQuestionList(params: Partial<QuestionListParams>): Prom
       totalPages: Math.ceil(total / pageSize),
     },
   };
+}
+
+export async function getQuestionExportList(params: Partial<QuestionListParams>): Promise<QuestionExportItemDto[]> {
+  const where = buildQuestionWhereInput({
+    page: DEFAULT_PAGE,
+    pageSize: DEFAULT_PAGE_SIZE,
+    id: params.id,
+    uuid: params.uuid,
+    asFirst: params.asFirst,
+    category: params.category,
+    subCategory: params.subCategory,
+    difficulty: params.difficulty,
+  });
+
+  const records = await prisma.usb.findMany({
+    where,
+    select: {
+      id: true,
+      questionUuid: true,
+      category: true,
+      subCategory: true,
+      asFirst: true,
+    },
+    orderBy: {
+      updatedAt: 'desc',
+    },
+  });
+
+  return records.map(buildQuestionExportItemDto);
 }
 
 export async function createQuestion(input: QuestionUpsertInput, userId: string): Promise<QuestionMutationResult> {

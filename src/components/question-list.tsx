@@ -118,7 +118,8 @@ export function QuestionList({ locale, items }: QuestionListProps) {
                   openInNewTab={false}
                   title={isZh ? '编辑' : 'Edit'}
                   align="center"
-                  className="min-h-8 px-3 py-1.5 text-xs sm:w-auto"
+                  icon={false}
+                  className="min-h-8 px-3 py-1.5 text-xs min-w-20"
                 />
               </span>
             </div>

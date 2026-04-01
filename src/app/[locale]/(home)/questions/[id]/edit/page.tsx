@@ -22,11 +22,13 @@ export default async function EditQuestionPage({
         {
           href: getAsNeededLocalizedUrl(locale, '/questions/new'),
           label: listT('title'),
+          icon: false
         },
         {
           href: getAsNeededLocalizedUrl(locale, '/questions/import'),
           label: importT('title'),
           primary: true,
+          icon: false
         },
       ]}
     >

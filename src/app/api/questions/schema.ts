@@ -31,6 +31,7 @@ const optionalEnumLikeString = <T extends readonly [string, ...string[]]>(values
     (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
     z.enum(values).optional().nullable()
   );
+const QUESTION_EXPORT_COLUMNS = ['id', 'question_uuid', 'category', 'sub_category', 'as_first'] as const;
 
 export const questionUpsertSchema = z.object({
   question: z.string().trim().min(1, 'question is required'),
@@ -57,6 +58,24 @@ export const questionListQuerySchema = z.object({
   category: z.enum(QUESTION_CATEGORIES).optional(),
   subCategory: z.enum(QUESTION_SUB_CATEGORIES).optional(),
   difficulty: z.enum(QUESTION_DIFFICULTIES).optional(),
+});
+
+export const questionExportQuerySchema = questionListQuerySchema.omit({
+  page: true,
+  pageSize: true,
+}).extend({
+  columns: z
+    .string()
+    .trim()
+    .transform((value) =>
+      value
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+    )
+    .pipe(z.array(z.enum(QUESTION_EXPORT_COLUMNS)).min(1))
+    .optional()
+    .default(['id', 'question_uuid', 'category', 'sub_category', 'as_first']),
 });
 
 export const questionIdParamSchema = z.object({

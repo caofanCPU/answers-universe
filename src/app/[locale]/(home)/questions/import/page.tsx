@@ -20,11 +20,13 @@ export default async function QuestionImportPage({
         {
           href: getAsNeededLocalizedUrl(locale, '/questions'),
           label: t('actions.backToList'),
+          icon: false
         },
         {
           href: getAsNeededLocalizedUrl(locale, '/questions/new'),
           label: createT('title'),
           primary: true,
+          icon: false
         },
       ]}
     >

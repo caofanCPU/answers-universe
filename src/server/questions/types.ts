@@ -43,6 +43,16 @@ export type QuestionListParams = {
   difficulty?: string;
 };
 
+export type QuestionExportColumn = 'id' | 'question_uuid' | 'category' | 'sub_category' | 'as_first';
+
+export type QuestionExportItemDto = {
+  id: string;
+  questionUuid: string;
+  category: string;
+  subCategory: string | null;
+  asFirst: number;
+};
+
 export type QuestionListResult = {
   items: QuestionListItemDto[];
   pagination: {

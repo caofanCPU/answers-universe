@@ -23,11 +23,13 @@ export default async function QuestionDetailPage({
         {
           href: getAsNeededLocalizedUrl(locale, '/questions/new'),
           label: createT('title'),
+          icon: false
         },
         {
           href: getAsNeededLocalizedUrl(locale, '/questions/import'),
           label: importT('title'),
           primary: true,
+          icon: false
         },
       ]}
     >

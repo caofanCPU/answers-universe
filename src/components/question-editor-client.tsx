@@ -454,7 +454,7 @@ export function QuestionEditorClient({
             <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex min-w-0 items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                 <SiteEyeOffIcon className="h-4 w-4 shrink-0" />
-                <span className="min-w-0 break-words">{isZh ? '草稿态，修改需先预览确认后提交。' : 'Draft state. Review in preview before submit.'}</span>
+                <span className="min-w-0 wrap-break-word">{isZh ? '草稿态，修改需先预览确认后提交。' : 'Draft state. Review in preview before submit.'}</span>
               </div>
               <div className="flex min-w-0 items-center justify-end gap-2">
                 <div
@@ -530,6 +530,7 @@ export function QuestionEditorClient({
                   disabled={saving || loading}
                   title={submitLabel}
                   align="center"
+                  icon=<icons.BookCheck/>
                   className="min-w-0 sm:w-auto"
                 />
               </div>

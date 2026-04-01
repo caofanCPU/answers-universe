@@ -329,7 +329,7 @@ export function QuestionAnswerOptions({
                         </span>
                         <span
                           className={cn(
-                            'min-w-0 break-words',
+                            'min-w-0 wrap-break-word',
                             option.isCorrect && showCorrectState && themeIconColor
                           )}
                         >

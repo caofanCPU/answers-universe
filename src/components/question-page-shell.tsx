@@ -4,6 +4,7 @@ import { InfoTooltip } from './info-tooltip';
 type ShellAction = {
   href: string;
   label: string;
+  icon?: React.ReactNode;
   primary?: boolean;
 };
 
@@ -38,6 +39,7 @@ export function QuestionPageShell({
                 key={`${action.href}-${action.label}`}
                 href={action.href}
                 title={action.label}
+                icon={action.icon}
                 openInNewTab={false}
                 align="center"
                 className="w-full sm:w-auto"
