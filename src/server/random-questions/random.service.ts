@@ -2,6 +2,7 @@ import { prisma } from '@windrun-huaiin/backend-core/prisma';
 import type { Prisma, Usb } from '@prisma/client';
 import { buildQuestionDetailDto } from '@/server/questions/service';
 import type {
+  RandomQuestionAnalysisResult,
   RandomQuestionCommitResult,
   RandomQuestionDateListResult,
   RandomQuestionDateSummary,
@@ -130,7 +131,7 @@ async function getUsedQuestionIds(excludeShowDate?: string): Promise<bigint[]> {
     },
   });
 
-  return records.map((record) => record.questionId);
+  return [...new Set(records.map((record) => record.questionId.toString()))].map((value) => BigInt(value));
 }
 
 async function getFirstQuestion(usedQuestionIds: bigint[], showDate: string): Promise<Pick<Usb, 'id' | 'questionUuid' | 'asFirst' | 'category'> | null> {
@@ -377,6 +378,56 @@ export async function listRandomQuestionDates(): Promise<RandomQuestionDateListR
   return {
     totalGeneratedDates: dates.length,
     dates,
+  };
+}
+
+export async function getRandomQuestionAnalysis(): Promise<RandomQuestionAnalysisResult> {
+  const [dateList, usedQuestionIds, totalQuestions] = await Promise.all([
+    listRandomQuestionDates(),
+    getUsedQuestionIds(),
+    prisma.usb.count({
+      where: {
+        deleted: 0,
+      },
+    }),
+  ]);
+
+  const remainingWhere: Prisma.UsbWhereInput = {
+    deleted: 0,
+    ...(usedQuestionIds.length > 0
+      ? {
+          id: {
+            notIn: usedQuestionIds,
+          },
+        }
+      : {}),
+  };
+
+  const [remainingQuestions, availableFirstQuestions] = await Promise.all([
+    prisma.usb.count({
+      where: remainingWhere,
+    }),
+    prisma.usb.count({
+      where: {
+        ...remainingWhere,
+        asFirst: 1,
+      },
+    }),
+  ]);
+
+  const targetCount = getRandomQuestionTargetCount();
+  const estimatedNewDays = Math.min(
+    availableFirstQuestions,
+    Math.floor(remainingQuestions / Math.max(targetCount, 1))
+  );
+
+  return {
+    ...dateList,
+    totalQuestions,
+    usedQuestions: usedQuestionIds.length,
+    remainingQuestions,
+    availableFirstQuestions,
+    estimatedNewDays,
   };
 }
 

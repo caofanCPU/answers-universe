@@ -8,7 +8,7 @@ import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
 import { buildReadonlyAnswerOptions } from './question-answer-options';
 import { QuestionDetail } from './question-detail';
 import type {
-  RandomQuestionDateListResult,
+  RandomQuestionAnalysisResult,
   RandomQuestionDetailResult,
   RandomQuestionDraftItem,
   RandomQuestionPreviewResult,
@@ -166,11 +166,84 @@ function StatsPanel({
   );
 }
 
+function AnalysisPanel({
+  analysis,
+  loading,
+}: {
+  analysis: RandomQuestionAnalysisResult | null;
+  loading: boolean;
+}) {
+  const metrics = [
+    {
+      label: 'GeneDays',
+      value: analysis?.totalGeneratedDates ?? 0,
+      valueClassName: 'text-emerald-600 dark:text-emerald-300',
+      toneClassName: 'bg-emerald-50/90 dark:bg-emerald-500/10',
+    },
+    {
+      label: 'ATF',
+      value: analysis?.availableFirstQuestions ?? 0,
+      valueClassName: 'text-sky-600 dark:text-sky-300',
+      toneClassName: 'bg-sky-50/90 dark:bg-sky-500/10',
+    },
+    {
+      label: 'New Days',
+      value: analysis?.estimatedNewDays ?? 0,
+      valueClassName: 'text-violet-600 dark:text-violet-300',
+      toneClassName: 'bg-violet-50/90 dark:bg-violet-500/10',
+    },
+    {
+      label: 'Question Total',
+      value: analysis?.totalQuestions ?? 0,
+      valueClassName: 'text-slate-700 dark:text-slate-100',
+      toneClassName: 'bg-slate-50/90 dark:bg-white/5',
+    },
+    {
+      label: 'Used Total',
+      value: analysis?.usedQuestions ?? 0,
+      valueClassName: 'text-amber-600 dark:text-amber-300',
+      toneClassName: 'bg-amber-50/90 dark:bg-amber-500/10',
+    },
+    {
+      label: 'Remain Total',
+      value: analysis?.remainingQuestions ?? 0,
+      valueClassName: 'text-cyan-600 dark:text-cyan-300',
+      toneClassName: 'bg-cyan-50/90 dark:bg-cyan-500/10',
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="text-center">
+        <div className="text-sm font-semibold text-slate-900 dark:text-white">Analysis</div>
+        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Generated coverage and remaining capacity
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {metrics.map((metric) => (
+          <div
+            key={metric.label}
+            className={cn('rounded-2xl p-4 text-center', metric.toneClassName)}
+          >
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {metric.label}
+            </div>
+            <div className={cn('mt-2 text-3xl font-bold tracking-tight sm:text-4xl', metric.valueClassName)}>
+              {loading ? '--' : String(metric.value)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientProps) {
   const today = useMemo(() => getTodayString(), []);
   const [selectedDate, setSelectedDate] = useState(today);
   const [calendarMonth, setCalendarMonth] = useState(() => parseDateString(`${today.slice(0, 7)}-01`));
-  const [datesState, setDatesState] = useState<RequestState<RandomQuestionDateListResult>>({
+  const [analysisState, setAnalysisState] = useState<RequestState<RandomQuestionAnalysisResult>>({
     data: null,
     loading: true,
     error: null,
@@ -191,19 +264,21 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [activeTopPanel, setActiveTopPanel] = useState<TopPanelKey>('status');
   const [replaceConfirmOpen, setReplaceConfirmOpen] = useState(false);
+  const [guidanceDismissed, setGuidanceDismissed] = useState(false);
   const copyResetTimerRef = useRef<number | null>(null);
   const generatedDateSet = useMemo(
-    () => new Set(datesState.data?.dates.map((item) => item.showDate) ?? []),
-    [datesState.data]
+    () => new Set(analysisState.data?.dates.map((item) => item.showDate) ?? []),
+    [analysisState.data]
   );
   const monthDays = useMemo(() => buildMonthDays(calendarMonth), [calendarMonth]);
   const selectedHasSavedSet = generatedDateSet.has(selectedDate);
+  const guidanceResetKey = previewState.data?.messages.join('|') ?? '';
 
-  async function loadDates() {
-    setDatesState((current) => ({ ...current, loading: true, error: null }));
+  async function loadAnalysis() {
+    setAnalysisState((current) => ({ ...current, loading: true, error: null }));
 
     try {
-      const response = await fetch('/api/random-questions/dates', {
+      const response = await fetch('/api/random-questions/analysis', {
         method: 'GET',
         credentials: 'include',
         cache: 'no-store',
@@ -213,10 +288,10 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
         throw new Error(`Request failed with status ${response.status}`);
       }
 
-      const data = (await response.json()) as RandomQuestionDateListResult;
-      setDatesState({ data, loading: false, error: null });
+      const data = (await response.json()) as RandomQuestionAnalysisResult;
+      setAnalysisState({ data, loading: false, error: null });
     } catch (error) {
-      setDatesState({
+      setAnalysisState({
         data: null,
         loading: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -250,7 +325,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   }
 
   useEffect(() => {
-    void loadDates();
+    void loadAnalysis();
   }, []);
 
   useEffect(() => {
@@ -259,12 +334,17 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
     setSavedIndex(0);
     setActiveTopPanel('status');
     setReplaceConfirmOpen(false);
+    setGuidanceDismissed(false);
     void loadDetail(selectedDate);
   }, [selectedDate]);
 
   useEffect(() => {
     setPreviewIndex(0);
   }, [previewState.data?.showDate, previewState.data?.items.length]);
+
+  useEffect(() => {
+    setGuidanceDismissed(false);
+  }, [previewState.data?.showDate, guidanceResetKey]);
 
   useEffect(() => {
     setSavedIndex(0);
@@ -327,7 +407,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
         throw new Error(`Request failed with status ${response.status}`);
       }
 
-      await loadDates();
+      await loadAnalysis();
       await loadDetail(selectedDate);
       setPreviewState({ data: null, loading: false, error: null });
     } catch (error) {
@@ -558,16 +638,6 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                     <StatsPanel stats={displayStats} />
                   </div>
 
-                  {activeMessages.length > 0 ? (
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200">
-                      <div className="font-semibold">Guidance</div>
-                      <div className="mt-2 space-y-1">
-                        {activeMessages.map((message) => (
-                          <div key={message}>{message}</div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
                 </div>
               ) : null}
 
@@ -600,34 +670,13 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
               ) : null}
 
               {activeTopPanel === 'stats' ? (
-                <div className="flex h-full flex-col items-center justify-center text-center">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900 dark:text-white">Statistics</div>
-                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      Overall generated days
-                    </div>
-                  </div>
-                  <div className="mt-6 bg-linear-to-r from-emerald-500 to-cyan-500 bg-clip-text text-7xl font-bold tracking-tight text-transparent sm:text-8xl">
-                    {datesState.loading ? '--' : String(datesState.data?.totalGeneratedDates ?? 0)}
-                  </div>
-                </div>
+                <AnalysisPanel analysis={analysisState.data} loading={analysisState.loading} />
               ) : null}
             </div>
 
-            {activeMessages.length > 0 && activeTopPanel !== 'status' ? (
-              <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200">
-                <div className="font-semibold">Guidance</div>
-                <div className="mt-2 space-y-1">
-                  {activeMessages.map((message) => (
-                    <div key={message}>{message}</div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {datesState.error ? (
+            {analysisState.error ? (
               <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
-                {`Failed to load generated dates: ${datesState.error}`}
+                {`Failed to load analysis data: ${analysisState.error}`}
               </div>
             ) : null}
             {detailState.error ? (
@@ -645,6 +694,30 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
       </div>
 
       <div className="space-y-6">
+        {activeMessages.length > 0 && !guidanceDismissed ? (
+          <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="font-semibold">Guidance</div>
+                <div className="mt-2 space-y-1">
+                  {activeMessages.map((message) => (
+                    <div key={message}>{message}</div>
+                  ))}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGuidanceDismissed(true)}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-amber-700 transition hover:bg-amber-100 hover:text-amber-800 dark:text-amber-200 dark:hover:bg-amber-400/10 dark:hover:text-amber-100"
+                aria-label="Close guidance"
+                title="Close guidance"
+              >
+                <icons.X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         {activePreviewItem?.question ? (
           <div className="space-y-4">
             <QuestionDetail

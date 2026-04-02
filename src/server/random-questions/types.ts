@@ -60,6 +60,14 @@ export type RandomQuestionDateListResult = {
   dates: RandomQuestionDateSummary[];
 };
 
+export type RandomQuestionAnalysisResult = RandomQuestionDateListResult & {
+  totalQuestions: number;
+  usedQuestions: number;
+  remainingQuestions: number;
+  availableFirstQuestions: number;
+  estimatedNewDays: number;
+};
+
 export type RandomQuestionCommitResult = {
   saved: boolean;
   showDate: string;

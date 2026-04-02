@@ -11,12 +11,15 @@ import type { QuestionListItemDto } from '@/server/questions/types';
 type QuestionListProps = {
   locale: string;
   items: QuestionListItemDto[];
+  onDeleted: () => void;
 };
 
-export function QuestionList({ locale, items }: QuestionListProps) {
+export function QuestionList({ locale, items, onDeleted }: QuestionListProps) {
   const isZh = locale === 'zh';
   const groupIds = items.map((item) => item.id);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const copyResetTimerRef = useRef<number | null>(null);
 
   async function copyText(key: string, value: string) {
@@ -31,6 +34,27 @@ export function QuestionList({ locale, items }: QuestionListProps) {
       setCopiedField(null);
       copyResetTimerRef.current = null;
     }, 1400);
+  }
+
+  async function handleDelete(id: string) {
+    setDeletingId(id);
+
+    try {
+      const response = await fetch(`/api/questions/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      setConfirmingId(null);
+      onDeleted();
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   if (items.length === 0) {
@@ -93,6 +117,10 @@ export function QuestionList({ locale, items }: QuestionListProps) {
               >
                 {item.question}
               </h2>
+              <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                <icons.Handshake className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                <span>{item.correctAnswer}</span>
+              </div>
               <div className="flex flex-wrap gap-1.5">
                 {item.tags.map((tag) => (
                   <span
@@ -105,10 +133,18 @@ export function QuestionList({ locale, items }: QuestionListProps) {
               </div>
             </div>
             <div className="flex justify-end gap-2 md:shrink-0">
+              <button
+                type="button"
+                onClick={() => setConfirmingId(item.id)}
+                disabled={deletingId === item.id}
+                className="inline-flex min-h-8 min-w-20 items-center justify-center rounded-full border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-red-400/20 dark:text-red-300 dark:hover:bg-red-500/10"
+              >
+                {deletingId === item.id ? (isZh ? '删除中...' : 'Deleting...') : isZh ? '删除' : 'Delete'}
+              </button>
               <Link
                 href={getAsNeededLocalizedUrl(locale, `/questions/${item.id}`)}
                 onClick={() => saveQuestionGroupContext({ groupIds })}
-                className="inline-flex items-center justify-center rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                className="inline-flex min-h-8 min-w-20 items-center justify-center rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
               >
                 {isZh ? '查看' : 'View'}
               </Link>
@@ -124,6 +160,34 @@ export function QuestionList({ locale, items }: QuestionListProps) {
               </span>
             </div>
           </div>
+          {confirmingId === item.id ? (
+            <div className="mt-4 rounded-2xl border border-red-200 bg-red-50/80 p-4 dark:border-red-400/20 dark:bg-red-500/10">
+              <div className="text-sm font-semibold text-red-700 dark:text-red-200">
+                {isZh ? '确认删除这道题目？' : 'Confirm delete this question?'}
+              </div>
+              <div className="mt-1 text-xs text-red-600 dark:text-red-300">
+                {isZh ? '这是软删除，删除后题目将不再出现在列表中。' : 'This is a soft delete. The question will be hidden from the list.'}
+              </div>
+              <div className="mt-3 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setConfirmingId(null)}
+                  disabled={deletingId === item.id}
+                  className="inline-flex items-center justify-center rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                >
+                  {isZh ? '取消' : 'Cancel'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleDelete(item.id)}
+                  disabled={deletingId === item.id}
+                  className="inline-flex items-center justify-center rounded-full border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-red-400/20 dark:text-red-300 dark:hover:bg-red-500/20"
+                >
+                  {deletingId === item.id ? (isZh ? '删除中...' : 'Deleting...') : isZh ? '确认删除' : 'Confirm Delete'}
+                </button>
+              </div>
+            </div>
+          ) : null}
         </article>
       ))}
     </div>

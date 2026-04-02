@@ -138,6 +138,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [pageInput, setPageInput] = useState('1');
+  const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState<ListState>({
     items: [],
     pagination: {
@@ -202,6 +203,20 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
     setSelectedExportColumns((current) =>
       current.includes(column) ? current.filter((item) => item !== column) : [...current, column]
     );
+  }
+
+  function clearAllFilters() {
+    setQuestion('');
+    setCorrectAnswer('');
+    setCreatedAtFrom('');
+    setCreatedAtTo('');
+    setId('');
+    setUuid('');
+    setAsFirst(false);
+    setCategory('');
+    setSubCategory('');
+    setDifficulty('');
+    setPage(1);
   }
 
   async function handleExport() {
@@ -384,7 +399,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
     void run();
 
     return () => controller.abort();
-  }, [hasInvalidId, hasInvalidUuid, queryString]);
+  }, [hasInvalidId, hasInvalidUuid, queryString, reloadKey]);
 
   return (
     <div className="space-y-4">
@@ -413,6 +428,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
           onCategoryChange={setCategory}
           onSubCategoryChange={setSubCategory}
           onDifficultyChange={setDifficulty}
+          onClearAll={clearAllFilters}
         />
       </div>
 
@@ -429,7 +445,13 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
         </div>
       ) : null}
 
-      {!state.loading && !state.error ? <QuestionList locale={locale} items={state.items} /> : null}
+      {!state.loading && !state.error ? (
+        <QuestionList
+          locale={locale}
+          items={state.items}
+          onDeleted={() => setReloadKey((current) => current + 1)}
+        />
+      ) : null}
 
       {!state.loading && !state.error ? (
         <div className="space-y-3">

@@ -170,6 +170,7 @@ export function buildQuestionListItemDto(record: Usb): QuestionListItemDto {
     id: record.id.toString(),
     uuid: record.questionUuid,
     question: record.question,
+    correctAnswer: record.correctAnswer,
     category: record.category as QuestionCategory,
     subCategory: record.subCategory,
     difficulty: record.difficulty as QuestionDifficulty,
@@ -585,6 +586,30 @@ export async function updateQuestion(
   const record = await prisma.usb.update({
     where: { id },
     data: buildQuestionUpdateInput(input, userId),
+    select: {
+      id: true,
+    },
+  });
+
+  return buildQuestionMutationResult(record);
+}
+
+export async function deleteQuestion(id: bigint, userId: string): Promise<QuestionMutationResult | null> {
+  const exists = await prisma.usb.findUnique({
+    where: { id },
+    select: { id: true, deleted: true },
+  });
+
+  if (!exists || exists.deleted !== 0) {
+    return null;
+  }
+
+  const record = await prisma.usb.update({
+    where: { id },
+    data: {
+      deleted: 1,
+      updateUserId: userId,
+    },
     select: {
       id: true,
     },

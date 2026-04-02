@@ -2,6 +2,7 @@ export type QuestionListItemDto = {
   id: string;
   uuid: string;
   question: string;
+  correctAnswer: string;
   category: string;
   subCategory: string | null;
   difficulty: string;

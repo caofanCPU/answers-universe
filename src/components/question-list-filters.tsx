@@ -52,6 +52,7 @@ type QuestionListFiltersProps = {
   onCategoryChange: (value: string) => void;
   onSubCategoryChange: (value: string) => void;
   onDifficultyChange: (value: string) => void;
+  onClearAll: () => void;
 };
 
 export function QuestionListFilters(props: QuestionListFiltersProps) {
@@ -79,12 +80,23 @@ export function QuestionListFilters(props: QuestionListFiltersProps) {
     onCategoryChange,
     onSubCategoryChange,
     onDifficultyChange,
+    onClearAll,
   } = props;
 
   const categoryOptions = QUESTION_CATEGORIES.map((option) => ({ label: option, value: option }));
   const subCategoryOptions = QUESTION_SUB_CATEGORIES.map((option) => ({ label: option, value: option }));
   const difficultyOptions = QUESTION_DIFFICULTIES.map((option) => ({ label: option, value: option }));
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const activeAdvancedFilterCount = [
+    question.trim(),
+    correctAnswer.trim(),
+    difficulty.trim(),
+    createdAtFrom.trim(),
+    createdAtTo.trim(),
+    id.trim(),
+    uuid.trim(),
+  ].filter(Boolean).length;
+  const hasActiveAdvancedFilters = activeAdvancedFilterCount > 0;
 
   return (
     <div className="space-y-3 rounded-3xl border border-black/10 p-3.5 dark:border-white/10 lg:space-y-4 lg:p-4">
@@ -104,14 +116,25 @@ export function QuestionListFilters(props: QuestionListFiltersProps) {
           allLabel={copy.subCategoryAll}
         />
         <label className="flex min-h-9 items-end lg:justify-start">
-          <span className="flex min-h-9 w-full items-center gap-2 px-1 py-1.5 text-xs text-slate-700 dark:text-slate-200">
-            <input
-              type="checkbox"
-              checked={asFirst}
-              onChange={(event) => onAsFirstChange(event.target.checked)}
-              className="h-4 w-4 rounded border-black/10"
-            />
-            <span className="truncate">{copy.firstLabel}</span>
+          <span className="flex min-h-9 w-full items-center justify-between gap-3 px-1 py-1.5 text-xs text-slate-700 dark:text-slate-200">
+            <span className="flex min-h-9 items-center gap-2">
+              <input
+                type="checkbox"
+                checked={asFirst}
+                onChange={(event) => onAsFirstChange(event.target.checked)}
+                className="h-4 w-4 rounded border-black/10"
+              />
+              <span className="truncate">{copy.firstLabel}</span>
+            </span>
+            <button
+              type="button"
+              onClick={onClearAll}
+              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-black/5 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/5 dark:hover:text-slate-200"
+              aria-label="Clear all filters"
+              title="Clear all filters"
+            >
+              <icons.X className="h-4 w-4" />
+            </button>
           </span>
         </label>
       </div>
@@ -120,12 +143,21 @@ export function QuestionListFilters(props: QuestionListFiltersProps) {
         <button
           type="button"
           onClick={() => setAdvancedOpen((current) => !current)}
-          className="flex w-full items-center gap-2 rounded-2xl px-1 py-1 text-left text-xs font-medium text-slate-700 transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
+          className={`flex w-full items-center gap-2 rounded-2xl px-1 py-1 text-left text-xs font-medium transition ${
+            !advancedOpen && hasActiveAdvancedFilters
+              ? 'text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200'
+              : 'text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white'
+          }`}
         >
           <icons.ChevronDown
             className={`h-4 w-4 transition ${advancedOpen ? 'rotate-180' : ''}`}
           />
           <span>{copy.advancedToggle}</span>
+          {!advancedOpen && hasActiveAdvancedFilters ? (
+            <span className="inline-flex min-w-6 items-center justify-center rounded-full border border-amber-300/80 bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-amber-800 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-200">
+              +{activeAdvancedFilterCount}
+            </span>
+          ) : null}
         </button>
 
         {advancedOpen ? (
