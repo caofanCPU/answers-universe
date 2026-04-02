@@ -118,7 +118,7 @@ export function QuestionList({ locale, items, onDeleted }: QuestionListProps) {
                 {item.question}
               </h2>
               <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                <icons.Handshake className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                <icons.CheckLine className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
                 <span>{item.correctAnswer}</span>
               </div>
               <div className="flex flex-wrap gap-1.5">

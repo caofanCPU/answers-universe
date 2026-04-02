@@ -1,5 +1,4 @@
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
-import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 import { getTranslations } from 'next-intl/server';
 import { QuestionListClient } from '@/components/question-list-client';
 import { QuestionPageShell } from '@/components/question-page-shell';
@@ -32,7 +31,7 @@ export default async function QuestionsPage({
         {
           href: getAsNeededLocalizedUrl(locale, '/questions/random'),
           label: 'Random Sets',
-          icon: <icons.BookOpen className="h-4 w-4" />
+          icon: false
         },
       ]}
     >
