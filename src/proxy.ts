@@ -53,7 +53,8 @@ const publicApiRoutes = createRouteMatcher([
   '/api/legal',
   '/api/docs',
   '/api/search',
-  '/api/blog'
+  '/api/blog',
+  '/api/outer'
 ]);
 
 // v6 官方推荐写法：直接 export default clerkMiddleware(handler, options)

@@ -53,10 +53,14 @@ export async function GET(req: NextRequest) {
       pageSize: req.nextUrl.searchParams.get('pageSize') ?? undefined,
       id: req.nextUrl.searchParams.get('id') ?? undefined,
       uuid: req.nextUrl.searchParams.get('uuid') ?? undefined,
+      question: req.nextUrl.searchParams.get('question') ?? undefined,
+      correctAnswer: req.nextUrl.searchParams.get('correctAnswer') ?? undefined,
       asFirst: req.nextUrl.searchParams.get('asFirst') ?? undefined,
       category: req.nextUrl.searchParams.get('category') ?? undefined,
       subCategory: req.nextUrl.searchParams.get('subCategory') ?? undefined,
       difficulty: req.nextUrl.searchParams.get('difficulty') ?? undefined,
+      createdAtFrom: req.nextUrl.searchParams.get('createdAtFrom') ?? undefined,
+      createdAtTo: req.nextUrl.searchParams.get('createdAtTo') ?? undefined,
     });
 
     const result = await getQuestionList(query);

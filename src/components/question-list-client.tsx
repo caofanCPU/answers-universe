@@ -17,6 +17,13 @@ type QuestionListClientProps = {
       subCategoryAll: string;
       difficultyLabel: string;
       difficultyAll: string;
+      questionLabel: string;
+      questionPlaceholder: string;
+      correctAnswerLabel: string;
+      correctAnswerPlaceholder: string;
+      createdAtFromLabel: string;
+      createdAtToLabel: string;
+      advancedToggle: string;
       idLabel: string;
       idPlaceholder: string;
       uuidLabel: string;
@@ -63,6 +70,10 @@ function isValidUuid(value: string): boolean {
 }
 
 function buildQuery(params: {
+  question: string;
+  correctAnswer: string;
+  createdAtFrom: string;
+  createdAtTo: string;
   id: string;
   uuid: string;
   asFirst: boolean;
@@ -71,6 +82,10 @@ function buildQuery(params: {
   difficulty: string;
 }) {
   const searchParams = new URLSearchParams();
+  if (params.question.trim()) searchParams.set('question', params.question.trim());
+  if (params.correctAnswer.trim()) searchParams.set('correctAnswer', params.correctAnswer.trim());
+  if (params.createdAtFrom.trim()) searchParams.set('createdAtFrom', params.createdAtFrom.trim());
+  if (params.createdAtTo.trim()) searchParams.set('createdAtTo', params.createdAtTo.trim());
   if (params.id.trim()) searchParams.set('id', params.id.trim());
   if (params.uuid.trim()) searchParams.set('uuid', params.uuid.trim());
   if (params.asFirst) searchParams.set('asFirst', 'true');
@@ -82,6 +97,10 @@ function buildQuery(params: {
 
 function buildListQuery(params: {
   page: number;
+  question: string;
+  correctAnswer: string;
+  createdAtFrom: string;
+  createdAtTo: string;
   id: string;
   uuid: string;
   asFirst: boolean;
@@ -103,6 +122,10 @@ type ExportColumn = (typeof DEFAULT_EXPORT_COLUMNS)[number];
 const REQUIRED_EXPORT_COLUMN_SET = new Set<ExportColumn>(REQUIRED_EXPORT_COLUMNS);
 
 export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
+  const [question, setQuestion] = useState('');
+  const [correctAnswer, setCorrectAnswer] = useState('');
+  const [createdAtFrom, setCreatedAtFrom] = useState('');
+  const [createdAtTo, setCreatedAtTo] = useState('');
   const [id, setId] = useState('');
   const [uuid, setUuid] = useState('');
   const [asFirst, setAsFirst] = useState(false);
@@ -128,9 +151,29 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
   });
 
   const queryString = useMemo(
-    () => buildListQuery({ page, id, uuid, asFirst, category, subCategory, difficulty }),
-    [page, id, uuid, asFirst, category, subCategory, difficulty]
+    () => buildListQuery({
+      page,
+      question,
+      correctAnswer,
+      createdAtFrom,
+      createdAtTo,
+      id,
+      uuid,
+      asFirst,
+      category,
+      subCategory,
+      difficulty,
+    }),
+    [page, question, correctAnswer, createdAtFrom, createdAtTo, id, uuid, asFirst, category, subCategory, difficulty]
   );
+  const normalizedIdInput = id.trim();
+  const normalizedIdValue =
+    normalizedIdInput.length > 0 && /^\d+$/.test(normalizedIdInput)
+      ? Number(normalizedIdInput.replace(/^0+/, '') || '0')
+      : null;
+  const hasInvalidId =
+    normalizedIdInput.length > 0 &&
+    (normalizedIdValue === null || !Number.isInteger(normalizedIdValue) || normalizedIdValue < 10000);
   const normalizedUuid = uuid.trim().toLowerCase();
   const hasInvalidUuid = normalizedUuid.length > 0 && !isValidUuid(normalizedUuid);
   const maxPage = Math.max(state.pagination.totalPages, 1);
@@ -141,7 +184,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
 
   useEffect(() => {
     setPage(1);
-  }, [id, uuid, asFirst, category, subCategory, difficulty]);
+  }, [question, correctAnswer, createdAtFrom, createdAtTo, id, uuid, asFirst, category, subCategory, difficulty]);
 
   useEffect(() => {
     setPageInput(String(page));
@@ -149,7 +192,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
 
   useEffect(() => {
     setExportError(null);
-  }, [id, uuid, asFirst, category, subCategory, difficulty, selectedExportColumns]);
+  }, [question, correctAnswer, createdAtFrom, createdAtTo, id, uuid, asFirst, category, subCategory, difficulty, selectedExportColumns]);
 
   function toggleExportColumn(column: ExportColumn) {
     if (REQUIRED_EXPORT_COLUMN_SET.has(column)) {
@@ -162,7 +205,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
   }
 
   async function handleExport() {
-    if (hasInvalidUuid || exporting) {
+    if (hasInvalidId || hasInvalidUuid || exporting) {
       return;
     }
 
@@ -170,7 +213,18 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
     setExportError(null);
 
     try {
-      const searchParams = buildQuery({ id, uuid, asFirst, category, subCategory, difficulty });
+      const searchParams = buildQuery({
+        question,
+        correctAnswer,
+        createdAtFrom,
+        createdAtTo,
+        id,
+        uuid,
+        asFirst,
+        category,
+        subCategory,
+        difficulty,
+      });
       searchParams.set('columns', selectedExportColumns.join(','));
 
       const response = await fetch(`/api/questions/export?${searchParams.toString()}`, {
@@ -250,7 +304,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
   ];
 
   useEffect(() => {
-    if (hasInvalidUuid) {
+    if (hasInvalidId || hasInvalidUuid) {
       setState({
         items: [],
         pagination: {
@@ -330,13 +384,18 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
     void run();
 
     return () => controller.abort();
-  }, [hasInvalidUuid, queryString]);
+  }, [hasInvalidId, hasInvalidUuid, queryString]);
 
   return (
     <div className="space-y-4">
       <div className="mb-4 sm:mb-5">
         <QuestionListFilters
+          question={question}
+          correctAnswer={correctAnswer}
+          createdAtFrom={createdAtFrom}
+          createdAtTo={createdAtTo}
           id={id}
+          idInvalid={hasInvalidId}
           uuid={uuid}
           uuidInvalid={hasInvalidUuid}
           asFirst={asFirst}
@@ -344,6 +403,10 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
           subCategory={subCategory}
           difficulty={difficulty}
           copy={copy.filters}
+          onQuestionChange={setQuestion}
+          onCorrectAnswerChange={setCorrectAnswer}
+          onCreatedAtFromChange={setCreatedAtFrom}
+          onCreatedAtToChange={setCreatedAtTo}
           onIdChange={setId}
           onUuidChange={setUuid}
           onAsFirstChange={setAsFirst}
@@ -435,7 +498,8 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
               <button
                 type="button"
                 onClick={() => setDialogOpen(true)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                disabled={hasInvalidId || hasInvalidUuid}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
                 aria-label="Configure export columns"
                 title="Configure export columns"
               >
@@ -443,7 +507,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
               </button>
               <GradientButton
                 onClick={() => void handleExport()}
-                disabled={hasInvalidUuid || exporting}
+                disabled={hasInvalidId || hasInvalidUuid || exporting}
                 title={copy.export.buttonLabel}
                 loadingText={copy.export.loadingLabel}
                 align="center"

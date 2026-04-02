@@ -412,6 +412,19 @@
             "label": "难度",
             "all": "全部难度"
           },
+          "question": {
+            "label": "题目",
+            "placeholder": "按题目前缀搜索"
+          },
+          "correctAnswer": {
+            "label": "答案",
+            "placeholder": "按答案前缀搜索"
+          },
+          "createdAt": {
+            "fromLabel": "创建时间起",
+            "toLabel": "创建时间止"
+          },
+          "advancedToggle": "更多筛选",
           "id": {
             "label": "题目 ID",
             "placeholder": "输入题目 ID"

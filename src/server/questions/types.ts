@@ -36,11 +36,19 @@ export type QuestionListParams = {
   page: number;
   pageSize: number;
   id?: bigint;
+  ids?: bigint[];
   uuid?: string;
+  uuids?: string[];
+  question?: string;
+  correctAnswer?: string;
   asFirst?: boolean;
   category?: string;
   subCategory?: string;
   difficulty?: string;
+  createdAtFrom?: Date;
+  createdAtTo?: Date;
+  updatedAtFrom?: Date;
+  updatedAtTo?: Date;
 };
 
 export type QuestionExportColumn = 'id' | 'question_uuid' | 'category' | 'sub_category' | 'as_first';
@@ -55,6 +63,43 @@ export type QuestionExportItemDto = {
 
 export type QuestionListResult = {
   items: QuestionListItemDto[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+};
+
+export type OuterQuestionBaseQueryParams = {
+  page: number;
+  pageSize: number;
+  ids?: bigint[];
+  uuids?: string[];
+  asFirst?: boolean;
+  category?: string;
+  subCategory?: string;
+  difficulty?: string;
+  createdAtFrom?: Date;
+  createdAtTo?: Date;
+  updatedAtFrom?: Date;
+  updatedAtTo?: Date;
+};
+
+export type OuterQuestionBaseItemDto = {
+  id: string;
+  uuid: string;
+  question: string;
+  category: string;
+  subCategory: string | null;
+  difficulty: string;
+  asFirst: boolean;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type OuterQuestionBaseResult = {
+  items: OuterQuestionBaseItemDto[];
   pagination: {
     page: number;
     pageSize: number;

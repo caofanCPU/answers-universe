@@ -2,6 +2,9 @@ import { prisma } from '@windrun-huaiin/backend-core/prisma';
 import type { Prisma, Usb } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import type {
+  OuterQuestionBaseItemDto,
+  OuterQuestionBaseQueryParams,
+  OuterQuestionBaseResult,
   QuestionExportItemDto,
   QuestionImportCommitResult,
   QuestionImportValidationItem,
@@ -177,6 +180,20 @@ export function buildQuestionListItemDto(record: Usb): QuestionListItemDto {
   };
 }
 
+function buildOuterQuestionBaseItemDto(record: Usb): OuterQuestionBaseItemDto {
+  return {
+    id: record.id.toString(),
+    uuid: record.questionUuid,
+    question: record.question,
+    category: record.category as QuestionCategory,
+    subCategory: record.subCategory,
+    difficulty: record.difficulty as QuestionDifficulty,
+    asFirst: record.asFirst === 1,
+    createdAt: toIsoString(record.createdAt ?? null),
+    updatedAt: toIsoString(record.updatedAt ?? null),
+  };
+}
+
 export function buildQuestionDetailDto(record: Usb): QuestionDetailDto {
   const incorrectAnswers = parseIncorrectAnswers(record.incorrectAnswers);
 
@@ -222,17 +239,33 @@ function buildQuestionExportItemDto(
 
 function buildQuestionWhereInput(params: QuestionListParams): Prisma.UsbWhereInput {
   const id = params.id;
+  const ids = params.ids;
   const uuid = params.uuid;
+  const uuids = params.uuids;
+  const question = params.question;
+  const correctAnswer = params.correctAnswer;
   const asFirst = params.asFirst;
   const category = params.category;
   const subCategory = params.subCategory;
   const difficulty = params.difficulty;
+  const createdAtFrom = params.createdAtFrom;
+  const createdAtTo = params.createdAtTo;
+  const updatedAtFrom = params.updatedAtFrom;
+  const updatedAtTo = params.updatedAtTo;
 
   const andConditions: Prisma.UsbWhereInput[] = [];
 
   if (id) {
     andConditions.push({
       id,
+    });
+  }
+
+  if (ids && ids.length > 0) {
+    andConditions.push({
+      id: {
+        in: ids,
+      },
     });
   }
 
@@ -244,35 +277,70 @@ function buildQuestionWhereInput(params: QuestionListParams): Prisma.UsbWhereInp
     });
   }
 
-  if (asFirst) {
+  if (uuids && uuids.length > 0) {
     andConditions.push({
-      asFirst: 1,
+      questionUuid: {
+        in: uuids,
+      },
+    });
+  }
+
+  if (question) {
+    andConditions.push({
+      question: {
+        startsWith: question,
+        mode: 'insensitive',
+      },
+    });
+  }
+
+  if (correctAnswer) {
+    andConditions.push({
+      correctAnswer: {
+        startsWith: correctAnswer,
+        mode: 'insensitive',
+      },
+    });
+  }
+
+  if (typeof asFirst === 'boolean') {
+    andConditions.push({
+      asFirst: asFirst ? 1 : 0,
     });
   }
 
   if (category) {
     andConditions.push({
-      category: {
-        equals: category,
-        mode: 'insensitive',
-      },
+      category,
     });
   }
 
   if (subCategory) {
     andConditions.push({
-      subCategory: {
-        equals: subCategory,
-        mode: 'insensitive',
-      },
+      subCategory,
     });
   }
 
   if (difficulty) {
     andConditions.push({
-      difficulty: {
-        equals: difficulty,
-        mode: 'insensitive',
+      difficulty,
+    });
+  }
+
+  if (createdAtFrom || createdAtTo) {
+    andConditions.push({
+      createdAt: {
+        gte: createdAtFrom,
+        lte: createdAtTo,
+      },
+    });
+  }
+
+  if (updatedAtFrom || updatedAtTo) {
+    andConditions.push({
+      updatedAt: {
+        gte: updatedAtFrom,
+        lte: updatedAtTo,
       },
     });
   }
@@ -367,11 +435,19 @@ export async function getQuestionList(params: Partial<QuestionListParams>): Prom
     page,
     pageSize,
     id: params.id,
+    ids: params.ids,
     uuid: params.uuid,
+    uuids: params.uuids,
+    question: params.question,
+    correctAnswer: params.correctAnswer,
     asFirst: params.asFirst,
     category: params.category,
     subCategory: params.subCategory,
     difficulty: params.difficulty,
+    createdAtFrom: params.createdAtFrom,
+    createdAtTo: params.createdAtTo,
+    updatedAtFrom: params.updatedAtFrom,
+    updatedAtTo: params.updatedAtTo,
   });
 
   const skip = (page - 1) * pageSize;
@@ -404,11 +480,19 @@ export async function getQuestionExportList(params: Partial<QuestionListParams>)
     page: DEFAULT_PAGE,
     pageSize: DEFAULT_PAGE_SIZE,
     id: params.id,
+    ids: params.ids,
     uuid: params.uuid,
+    uuids: params.uuids,
+    question: params.question,
+    correctAnswer: params.correctAnswer,
     asFirst: params.asFirst,
     category: params.category,
     subCategory: params.subCategory,
     difficulty: params.difficulty,
+    createdAtFrom: params.createdAtFrom,
+    createdAtTo: params.createdAtTo,
+    updatedAtFrom: params.updatedAtFrom,
+    updatedAtTo: params.updatedAtTo,
   });
 
   const records = await prisma.usb.findMany({
@@ -426,6 +510,51 @@ export async function getQuestionExportList(params: Partial<QuestionListParams>)
   });
 
   return records.map(buildQuestionExportItemDto);
+}
+
+export async function getOuterQuestionBaseList(
+  params: Partial<OuterQuestionBaseQueryParams>
+): Promise<OuterQuestionBaseResult> {
+  const page = normalizePage(params.page);
+  const pageSize = normalizePageSize(params.pageSize);
+  const where = buildQuestionWhereInput({
+    page,
+    pageSize,
+    ids: params.ids,
+    uuids: params.uuids,
+    asFirst: params.asFirst,
+    category: params.category,
+    subCategory: params.subCategory,
+    difficulty: params.difficulty,
+    createdAtFrom: params.createdAtFrom,
+    createdAtTo: params.createdAtTo,
+    updatedAtFrom: params.updatedAtFrom,
+    updatedAtTo: params.updatedAtTo,
+  });
+
+  const skip = (page - 1) * pageSize;
+
+  const [records, total] = await Promise.all([
+    prisma.usb.findMany({
+      where,
+      skip,
+      take: pageSize,
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    }),
+    prisma.usb.count({ where }),
+  ]);
+
+  return {
+    items: records.map(buildOuterQuestionBaseItemDto),
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
 }
 
 export async function createQuestion(input: QuestionUpsertInput, userId: string): Promise<QuestionMutationResult> {

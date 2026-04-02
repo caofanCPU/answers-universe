@@ -428,6 +428,19 @@
             "label": "Difficulty",
             "all": "All difficulties"
           },
+          "question": {
+            "label": "Question",
+            "placeholder": "Prefix match for question"
+          },
+          "correctAnswer": {
+            "label": "Answer",
+            "placeholder": "Prefix match for answer"
+          },
+          "createdAt": {
+            "fromLabel": "Created From",
+            "toLabel": "Created To"
+          },
+          "advancedToggle": "More filters",
           "id": {
             "label": "ID",
             "placeholder": "Enter question ID"

@@ -1,6 +1,18 @@
 import { z } from 'zod';
 import { QUESTION_CATEGORIES, QUESTION_DIFFICULTIES, QUESTION_SUB_CATEGORIES } from '@/server/questions/constants';
 
+function normalizeDayBoundary(value: Date, boundary: 'start' | 'end'): Date {
+  const normalized = new Date(value);
+
+  if (boundary === 'start') {
+    normalized.setUTCHours(0, 0, 0, 0);
+    return normalized;
+  }
+
+  normalized.setUTCHours(23, 59, 59, 999);
+  return normalized;
+}
+
 const optionalString = z.string().trim().optional().nullable();
 const optionalStringArray = z.array(z.string().trim().min(1)).optional().default([]);
 const optionalTrimmedString = z.preprocess(
@@ -31,6 +43,11 @@ const optionalEnumLikeString = <T extends readonly [string, ...string[]]>(values
     (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
     z.enum(values).optional().nullable()
   );
+const createOptionalDateLike = (boundary: 'start' | 'end') =>
+  z.preprocess(
+    (value) => (value === '' || value === null || value === undefined ? undefined : value),
+    z.coerce.date().transform((value) => normalizeDayBoundary(value, boundary)).optional()
+  );
 const QUESTION_EXPORT_COLUMNS = ['id', 'question_uuid', 'category', 'sub_category', 'as_first'] as const;
 
 export const questionUpsertSchema = z.object({
@@ -49,18 +66,32 @@ export const questionUpsertSchema = z.object({
   keywords: optionalStringArray,
 });
 
-export const questionListQuerySchema = z.object({
+const questionListQuerySchemaBase = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
   pageSize: z.coerce.number().int().min(1).max(100).optional().default(20),
   id: optionalPositiveBigInt,
   uuid: optionalTrimmedString,
+  question: optionalTrimmedString,
+  correctAnswer: optionalTrimmedString,
   asFirst: optionalBooleanLike,
   category: z.enum(QUESTION_CATEGORIES).optional(),
   subCategory: z.enum(QUESTION_SUB_CATEGORIES).optional(),
   difficulty: z.enum(QUESTION_DIFFICULTIES).optional(),
+  createdAtFrom: createOptionalDateLike('start'),
+  createdAtTo: createOptionalDateLike('end'),
 });
 
-export const questionExportQuerySchema = questionListQuerySchema.omit({
+export const questionListQuerySchema = questionListQuerySchemaBase.superRefine((value, ctx) => {
+  if (value.createdAtFrom && value.createdAtTo && value.createdAtFrom > value.createdAtTo) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'createdAtFrom must be less than or equal to createdAtTo',
+      path: ['createdAtFrom'],
+    });
+  }
+});
+
+export const questionExportQuerySchema = questionListQuerySchemaBase.omit({
   page: true,
   pageSize: true,
 }).extend({
@@ -76,6 +107,14 @@ export const questionExportQuerySchema = questionListQuerySchema.omit({
     .pipe(z.array(z.enum(QUESTION_EXPORT_COLUMNS)).min(1))
     .optional()
     .default(['id', 'question_uuid', 'category', 'sub_category', 'as_first']),
+}).superRefine((value, ctx) => {
+  if (value.createdAtFrom && value.createdAtTo && value.createdAtFrom > value.createdAtTo) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'createdAtFrom must be less than or equal to createdAtTo',
+      path: ['createdAtFrom'],
+    });
+  }
 });
 
 export const questionIdParamSchema = z.object({
