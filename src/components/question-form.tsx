@@ -8,7 +8,7 @@ import {
   QUESTION_DIFFICULTIES,
   QUESTION_SUB_CATEGORIES,
 } from '@/server/questions/constants';
-import { XFormPills, XTokenInput } from '@/components/pill-select';
+import { XFormPills, XTokenInput } from '@windrun-huaiin/third-ui/main/pill-select';
 import { InfoTooltip } from './info-tooltip';
 
 type QuestionFormProps = {

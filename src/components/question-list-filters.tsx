@@ -7,7 +7,7 @@ import {
   QUESTION_DIFFICULTIES,
   QUESTION_SUB_CATEGORIES,
 } from '@/server/questions/constants';
-import { XFilterPills } from '@/components/pill-select';
+import { XFilterPills } from '@windrun-huaiin/third-ui/main/pill-select';
 
 type QuestionListFiltersProps = {
   question: string;

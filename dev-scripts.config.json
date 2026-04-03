@@ -21,5 +21,8 @@
   },
   "architectureConfig": {
     ".": "Diaomao Project"
-  }
+  },
+  "architectureExclude": [
+    "server"
+  ]
 }

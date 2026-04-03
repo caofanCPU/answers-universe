@@ -40,7 +40,7 @@ export function QuestionDetail({
             </span>
           ) : null}
         </div>
-        <h2 className="min-w-0 break-words text-2xl font-semibold text-slate-900 dark:text-white">{question.question}</h2>
+        <h2 className="min-w-0 wrap-break-word text-2xl font-semibold text-slate-900 dark:text-white">{question.question}</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {isZh ? '这是当前题目的完整预览。' : 'This is the full preview for the current question.'}
         </p>
@@ -69,7 +69,7 @@ export function QuestionDetail({
               </span>
                 <span
                   className={cn(
-                    'min-w-0 flex-1 break-words',
+                    'min-w-0 flex-1 wrap-break-word',
                     !previewAsPlayer && option.isCorrect && themeIconColor
                   )}
                 >
@@ -86,7 +86,7 @@ export function QuestionDetail({
           <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
             {isZh ? '题目说明' : 'Explanation'}
           </div>
-          <div className="min-w-0 break-words rounded-2xl border border-black/10 px-4 py-4 text-sm leading-7 text-slate-700 dark:border-white/10 dark:text-slate-200">
+          <div className="min-w-0 wrap-break-word rounded-2xl border border-black/10 px-4 py-4 text-sm leading-7 text-slate-700 dark:border-white/10 dark:text-slate-200">
             {question.explanation}
           </div>
         </div>
@@ -96,7 +96,7 @@ export function QuestionDetail({
         <div
           className={cn(
             'overflow-hidden rounded-3xl border border-black/10 dark:border-white/10',
-            previewAsPlayer ? 'mx-auto max-h-60 max-w-xs' : 'mx-auto max-h-[28rem] max-w-xl'
+            previewAsPlayer ? 'mx-auto max-h-60 max-w-xs' : 'mx-auto max-h-112 max-w-xl'
           )}
         >
           <Image
@@ -106,7 +106,7 @@ export function QuestionDetail({
             height={236}
             className={cn(
               'mx-auto',
-              previewAsPlayer ? 'h-60 w-auto object-contain' : 'max-h-[28rem] w-auto object-contain'
+              previewAsPlayer ? 'h-60 w-auto object-contain' : 'max-h-112 w-auto object-contain'
             )}
             sizes={previewAsPlayer ? '(max-width: 768px) 240px, 240px' : '(max-width: 1024px) 70vw, 420px'}
           />
