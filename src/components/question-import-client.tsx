@@ -1,6 +1,7 @@
 'use client';
 
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
+import { XButton } from '@windrun-huaiin/third-ui/main';
 import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 import { useMemo, useRef, useState } from 'react';
 import type {
@@ -441,43 +442,50 @@ export function QuestionImportClient({ locale }: { locale: string }) {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-            >
-              {isZh ? '上传 JSON' : 'Upload JSON'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSource(sampleJson);
-                setSubmitted(false);
-                setServerValidation(null);
-                setCommitResult(null);
-                setServerError(null);
-                setLastValidatedSource(null);
-                setLastCommittedSource(null);
-                setDuplicateNotice(null);
+            <XButton
+              type="single"
+              variant="subtle"
+              minWidth="min-w-0"
+              className="px-4 py-2.5"
+              button={{
+                icon: false,
+                text: isZh ? '上传 JSON' : 'Upload JSON',
+                onClick: () => fileInputRef.current?.click(),
               }}
-              className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-            >
-              {isZh ? '重置' : 'Reset'}
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleValidate()}
-              disabled={validating}
-              className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-            >
-              {validating
-                ? isZh
-                  ? '校验中...'
-                  : 'Loading...'
-                : isZh
-                  ? '校验'
-                  : 'Validate'}
-            </button>
+            />
+            <XButton
+              type="single"
+              variant="subtle"
+              minWidth="min-w-0"
+              className="px-4 py-2.5"
+              button={{
+                icon: false,
+                text: isZh ? '重置' : 'Reset',
+                onClick: () => {
+                  setSource(sampleJson);
+                  setSubmitted(false);
+                  setServerValidation(null);
+                  setCommitResult(null);
+                  setServerError(null);
+                  setLastValidatedSource(null);
+                  setLastCommittedSource(null);
+                  setDuplicateNotice(null);
+                },
+              }}
+            />
+            <XButton
+              type="single"
+              variant="subtle"
+              minWidth="min-w-0"
+              className="px-4 py-2.5"
+              loadingText={isZh ? '校验中...' : 'Loading...'}
+              button={{
+                icon: false,
+                text: isZh ? '校验' : 'Validate',
+                onClick: () => void handleValidate(),
+                disabled: validating,
+              }}
+            />
             <GradientButton
               onClick={() => void handleCommit()}
               disabled={!commitEnabled}

@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
-import { themeButtonGradientClass, themeButtonGradientHoverClass } from '@windrun-huaiin/base-ui/lib';
 import { cn } from '@windrun-huaiin/lib/utils';
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
+import { XButton, XToggleButton } from '@windrun-huaiin/third-ui/main';
 import { buildReadonlyAnswerOptions } from './question-answer-options';
 import { QuestionDetail } from './question-detail';
 import type {
@@ -567,23 +567,21 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                   {selectedStatusBadge.label}
                 </div>
               </div>
-              <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-black/10 p-1 dark:border-white/10">
-                {panelItems.map((item) => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => setActiveTopPanel(item.key)}
-                    className={cn(
-                      'rounded-full px-5 py-2 text-sm transition',
-                      activeTopPanel === item.key
-                        ? cn('text-white rounded-full shadow-sm', themeButtonGradientClass, themeButtonGradientHoverClass)
-                        : 'text-gray-800 hover:text-gray-900 dark:text-gray-200 dark:hover:text-gray-100'
-                    )}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
+              <XToggleButton
+                ariaLabel="Top panel toggle"
+                value={activeTopPanel}
+                onChange={(value) => setActiveTopPanel(value as TopPanelKey)}
+                options={panelItems.map((item) => ({
+                  value: item.key,
+                  label: item.label,
+                }))}
+                size="compact"
+                className="max-w-full border-black/10 dark:border-white/10"
+                minItemWidthClassName="min-w-[64px] sm:min-w-[88px]"
+                itemPaddingClassName="px-4 py-2"
+                itemTextClassName="text-sm"
+                inactiveItemClassName="text-gray-800 hover:text-gray-900 dark:text-gray-200 dark:hover:text-gray-100"
+              />
             </div>
 
             <div className="flex-1 rounded-2xl border border-black/10 p-4 dark:border-white/10">
@@ -612,13 +610,17 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                               disabled={saving}
                             />
                           ) : null}
-                          <button
-                            type="button"
-                            onClick={cancelPreview}
-                            className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-                          >
-                            Cancel
-                          </button>
+                          <XButton
+                            type="single"
+                            variant="subtle"
+                            minWidth="min-w-0"
+                            className="px-4 py-2"
+                            button={{
+                              icon: false,
+                              text: 'Cancel',
+                              onClick: cancelPreview,
+                            }}
+                          />
                         </>
                       ) : (
                         <GradientButton
@@ -865,13 +867,17 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
               </button>
             </div>
             <div className="mt-5 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setReplaceConfirmOpen(false)}
-                className="inline-flex items-center justify-center rounded-full border border-black/10 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-              >
-                Cancel
-              </button>
+              <XButton
+                type="single"
+                variant="subtle"
+                minWidth="min-w-0"
+                className="px-4 py-2"
+                button={{
+                  icon: false,
+                  text: 'Cancel',
+                  onClick: () => setReplaceConfirmOpen(false),
+                }}
+              />
               <GradientButton
                 onClick={async () => {
                   setReplaceConfirmOpen(false);

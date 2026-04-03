@@ -1,10 +1,10 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import Link from 'next/link';
 import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
+import { XButton } from '@windrun-huaiin/third-ui/main';
 import { saveQuestionGroupContext } from './question-group-context';
 import type { QuestionListItemDto } from '@/server/questions/types';
 
@@ -133,21 +133,30 @@ export function QuestionList({ locale, items, onDeleted }: QuestionListProps) {
               </div>
             </div>
             <div className="flex justify-end gap-2 md:shrink-0">
-              <button
-                type="button"
-                onClick={() => setConfirmingId(item.id)}
-                disabled={deletingId === item.id}
-                className="inline-flex min-h-8 min-w-20 items-center justify-center rounded-full border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-red-400/20 dark:text-red-300 dark:hover:bg-red-500/10"
-              >
-                {deletingId === item.id ? (isZh ? '删除中...' : 'Deleting...') : isZh ? '删除' : 'Delete'}
-              </button>
-              <Link
-                href={getAsNeededLocalizedUrl(locale, `/questions/${item.id}`)}
-                onClick={() => saveQuestionGroupContext({ groupIds })}
-                className="inline-flex min-h-8 min-w-20 items-center justify-center rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-              >
-                {isZh ? '查看' : 'View'}
-              </Link>
+              <XButton
+                type="single"
+                variant="subtle"
+                minWidth="min-w-20"
+                className="px-3 py-1.5 text-xs text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50 dark:text-red-300 dark:border-red-400/20 dark:hover:bg-red-500/10"
+                loadingText={isZh ? '删除中...' : 'Deleting...'}
+                button={{
+                  icon: false,
+                  text: isZh ? '删除' : 'Delete',
+                  onClick: () => setConfirmingId(item.id),
+                  disabled: deletingId === item.id,
+                }}
+              />
+              <span onClickCapture={() => saveQuestionGroupContext({ groupIds })}>
+                <GradientButton
+                  href={getAsNeededLocalizedUrl(locale, `/questions/${item.id}`)}
+                  openInNewTab={false}
+                  title={isZh ? '查看' : 'View'}
+                  align="center"
+                  variant="subtle"
+                  icon={false}
+                  className="min-h-8 min-w-20 px-3 py-1.5 text-xs font-semibold shadow-none hover:shadow-none"
+                />
+              </span>
               <span onClickCapture={() => saveQuestionGroupContext({ groupIds })}>
                 <GradientButton
                   href={getAsNeededLocalizedUrl(locale, `/questions/${item.id}/edit`)}
@@ -169,22 +178,31 @@ export function QuestionList({ locale, items, onDeleted }: QuestionListProps) {
                 {isZh ? '这是软删除，删除后题目将不再出现在列表中。' : 'This is a soft delete. The question will be hidden from the list.'}
               </div>
               <div className="mt-3 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setConfirmingId(null)}
-                  disabled={deletingId === item.id}
-                  className="inline-flex items-center justify-center rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-                >
-                  {isZh ? '取消' : 'Cancel'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleDelete(item.id)}
-                  disabled={deletingId === item.id}
-                  className="inline-flex items-center justify-center rounded-full border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-red-400/20 dark:text-red-300 dark:hover:bg-red-500/20"
-                >
-                  {deletingId === item.id ? (isZh ? '删除中...' : 'Deleting...') : isZh ? '确认删除' : 'Confirm Delete'}
-                </button>
+                <XButton
+                  type="single"
+                  variant="subtle"
+                  minWidth="min-w-0"
+                  className="px-3 py-1.5 text-xs"
+                  button={{
+                    icon: false,
+                    text: isZh ? '取消' : 'Cancel',
+                    onClick: () => setConfirmingId(null),
+                    disabled: deletingId === item.id,
+                  }}
+                />
+                <XButton
+                  type="single"
+                  variant="subtle"
+                  minWidth="min-w-0"
+                  className="px-3 py-1.5 text-xs text-red-700 border-red-200 hover:border-red-300 hover:bg-red-100 dark:text-red-300 dark:border-red-400/20 dark:hover:bg-red-500/20"
+                  loadingText={isZh ? '删除中...' : 'Deleting...'}
+                  button={{
+                    icon: false,
+                    text: isZh ? '确认删除' : 'Confirm Delete',
+                    onClick: () => void handleDelete(item.id),
+                    disabled: deletingId === item.id,
+                  }}
+                />
               </div>
             </div>
           ) : null}

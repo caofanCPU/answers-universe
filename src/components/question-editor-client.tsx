@@ -4,10 +4,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
-import { themeButtonGradientClass, themeButtonGradientHoverClass } from '@windrun-huaiin/base-ui/lib';
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
+import { XButton, XToggleButton } from '@windrun-huaiin/third-ui/main';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
-import { cn } from '@windrun-huaiin/lib/utils';
 import { SiteEyeIcon, SiteEyeOffIcon } from '@/lib/site-config';
 import { loadQuestionGroupContext } from './question-group-context';
 import {
@@ -390,32 +389,28 @@ export function QuestionEditorClient({
             </div>
 
             <div className="flex min-w-0 justify-center">
-              <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-black/10 p-1 dark:border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setActiveView('edit')}
-                  className={cn(
-                    'rounded-full px-5 py-2 text-sm transition',
-                    activeView === 'edit'
-                      ? cn('text-white rounded-full shadow-sm', themeButtonGradientClass, themeButtonGradientHoverClass)
-                      : 'text-gray-800 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100'
-                  )}
-                >
-                  {isZh ? '编辑' : 'Edit'}
-                </button>
-                <button
-                  type="button"
-                  onClick={openPreview}
-                  className={cn(
-                    'rounded-full px-5 py-2 text-sm transition',
-                    activeView === 'preview'
-                      ? cn('text-white rounded-full shadow-sm', themeButtonGradientClass, themeButtonGradientHoverClass)
-                      : 'text-gray-800 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100'
-                  )}
-                >
-                  {isZh ? '预览' : 'Preview'}
-                </button>
-              </div>
+              <XToggleButton
+                ariaLabel={isZh ? '编辑与预览切换' : 'Edit and preview toggle'}
+                value={activeView}
+                onChange={(value) => {
+                  if (value === 'preview') {
+                    openPreview();
+                    return;
+                  }
+
+                  setActiveView('edit');
+                }}
+                options={[
+                  { value: 'edit', label: isZh ? '编辑' : 'Edit' },
+                  { value: 'preview', label: isZh ? '预览' : 'Preview' },
+                ]}
+                size="compact"
+                className="max-w-full border-black/10 dark:border-white/10"
+                minItemWidthClassName="min-w-[72px] sm:min-w-[88px]"
+                itemPaddingClassName="px-5 py-2"
+                itemTextClassName="text-sm"
+                inactiveItemClassName="text-gray-800 hover:text-gray-900 dark:text-gray-200 dark:hover:text-gray-100"
+              />
             </div>
           </div>
         </div>
@@ -465,16 +460,17 @@ export function QuestionEditorClient({
                   <SiteEyeOffIcon className="h-4 w-4" />
                   <span className="truncate">{activeStatusText}</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={openPreview}
-                  className="inline-flex items-center justify-center gap-2 self-end rounded-full border border-black/10 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5 sm:px-5 sm:py-3"
-                >
-                  <SiteEyeIcon className="h-4 w-4" />
-                  <span className="sm:hidden">{isZh ? '预览' : 'Review'}</span>
-                  <span className="hidden sm:inline">{isZh ? '去预览确认' : 'Review in Preview'}</span>
-                  <icons.ChevronRight className="hidden h-4 w-4 sm:block" />
-                </button>
+                <XButton
+                  type="single"
+                  variant="subtle"
+                  minWidth="min-w-0"
+                  className="self-end px-4 py-2.5 sm:px-5 sm:py-3"
+                  button={{
+                    icon: <SiteEyeIcon className="h-4 w-4" />,
+                    text: isZh ? '去预览确认' : 'Review in Preview',
+                    onClick: openPreview,
+                  }}
+                />
               </div>
             </div>
           ) : (

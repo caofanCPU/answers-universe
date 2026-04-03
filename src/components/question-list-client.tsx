@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
+import { XButton } from '@windrun-huaiin/third-ui/main';
 import { QuestionList } from './question-list';
 import { QuestionListFilters } from './question-list-filters';
 import type { QuestionListItemDto, QuestionListResult } from '@/server/questions/types';
@@ -464,15 +465,18 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
           <div className="grid gap-3 rounded-3xl border border-black/10 px-3 py-3 text-xs text-slate-600 dark:border-white/10 dark:text-slate-300 sm:px-4 sm:text-sm lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center">
             <div className="hidden lg:block" />
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-              <button
-                type="button"
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-                disabled={state.pagination.page <= 1}
-                className="inline-flex items-center justify-center rounded-full border border-black/10 px-3 py-1.5 font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-                title="Previous page"
-              >
-                {copy.pagination.previous}
-              </button>
+              <XButton
+                type="single"
+                variant="subtle"
+                minWidth="min-w-0"
+                className="px-3 py-1.5"
+                button={{
+                  icon: false,
+                  text: copy.pagination.previous,
+                  onClick: () => setPage((current) => Math.max(1, current - 1)),
+                  disabled: state.pagination.page <= 1,
+                }}
+              />
               <div className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-300">
                 <input
                   type="text"
@@ -506,15 +510,18 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
                   Total {state.pagination.total}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() => setPage((current) => Math.min(state.pagination.totalPages || 1, current + 1))}
-                disabled={state.pagination.totalPages <= 1 || state.pagination.page >= state.pagination.totalPages}
-                className="inline-flex items-center justify-center rounded-full border border-black/10 px-3 py-1.5 font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-                title="Next page"
-              >
-                {copy.pagination.next}
-              </button>
+              <XButton
+                type="single"
+                variant="subtle"
+                minWidth="min-w-0"
+                className="px-3 py-1.5"
+                button={{
+                  icon: false,
+                  text: copy.pagination.next,
+                  onClick: () => setPage((current) => Math.min(state.pagination.totalPages || 1, current + 1)),
+                  disabled: state.pagination.totalPages <= 1 || state.pagination.page >= state.pagination.totalPages,
+                }}
+              />
             </div>
             <div className="flex items-center justify-center gap-2 lg:justify-end">
               <button
