@@ -29,7 +29,7 @@ export function QuestionPageShell({
             <h1 className="min-w-0 text-3xl font-bold tracking-tight text-slate-900 dark:text-white md:text-4xl">
               {title}
             </h1>
-            <InfoTooltip content={description} contentClassName="left-0 right-auto top-full mt-2 ml-0 w-[min(22rem,calc(100vw-2rem))] translate-y-0" />
+            <InfoTooltip content={description} align="start" desktopSide="bottom" />
           </div>
         </div>
         {actions.length > 0 ? (
