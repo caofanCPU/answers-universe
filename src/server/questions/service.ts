@@ -668,9 +668,16 @@ function normalizeImportItemAliases(item: Record<string, unknown>): Record<strin
 
 export function validateQuestionImportItem(item: Record<string, unknown>, index: number): QuestionImportValidationItem {
   const normalizedItem = normalizeImportItemAliases(item);
-  const errors: string[] = [];
+  const fieldErrors: QuestionImportValidationItem['fieldErrors'] = {};
+  const globalErrors: string[] = [];
+  const importId =
+    typeof normalizedItem.importId === 'string' && normalizedItem.importId.trim().length > 0
+      ? normalizedItem.importId.trim()
+      : `import-${index + 1}`;
 
   const question = isNonEmptyString(normalizedItem.question) ? normalizedItem.question.trim() : '';
+  const cdnImagePrefix = typeof normalizedItem.cdnImagePrefix === 'string' ? normalizedItem.cdnImagePrefix.trim() : '';
+  const questionImage = typeof normalizedItem.questionImage === 'string' ? normalizedItem.questionImage.trim() : '';
   const category = isNonEmptyString(normalizedItem.category) ? normalizeCategory(normalizedItem.category) : null;
   const subCategory = isNonEmptyString(normalizedItem.subCategory) ? normalizeSubCategory(normalizedItem.subCategory) : null;
   const difficulty = isNonEmptyString(normalizedItem.difficulty) ? normalizeDifficulty(normalizedItem.difficulty) : null;
@@ -680,23 +687,29 @@ export function validateQuestionImportItem(item: Record<string, unknown>, index:
   const incorrectAnswers = toStringArray(normalizedItem.incorrectAnswers);
   const tags = toStringArray(normalizedItem.tags);
   const keywords = toStringArray(normalizedItem.keywords);
+  const asFirst = Boolean(normalizedItem.asFirst);
 
-  if (!question) errors.push('question is required');
-  if (!category) errors.push(`category must be one of: ${QUESTION_CATEGORIES.join(', ')}`);
-  if (!difficulty) errors.push(`difficulty must be one of: ${QUESTION_DIFFICULTIES.join(', ')}`);
-  if (!correctAnswer) errors.push('correctAnswer is required');
-  if (normalizedItem.correctAnswerIndex !== undefined && correctAnswerIndex === null) {
-    errors.push('correctAnswerIndex must be an integer');
+  if (!question) fieldErrors.question = 'question is required';
+  if (!category) fieldErrors.category = `category must be one of: ${QUESTION_CATEGORIES.join(', ')}`;
+  if (isNonEmptyString(normalizedItem.subCategory) && !subCategory) {
+    fieldErrors.subCategory = `subCategory must be one of: ${QUESTION_SUB_CATEGORIES.join(', ')}`;
   }
-  if (!explanation) errors.push('explanation is required');
-  if (incorrectAnswers.length === 0) errors.push('incorrectAnswers must contain at least one answer');
+  if (!difficulty) fieldErrors.difficulty = `difficulty must be one of: ${QUESTION_DIFFICULTIES.join(', ')}`;
+  if (!correctAnswer) fieldErrors.correctAnswer = 'correctAnswer is required';
+  if (normalizedItem.correctAnswerIndex !== undefined && correctAnswerIndex === null) {
+    fieldErrors.correctAnswerIndex = 'correctAnswerIndex must be an integer';
+  }
+  if (!explanation) fieldErrors.explanation = 'explanation is required';
+  if (incorrectAnswers.length === 0) fieldErrors.incorrectAnswers = 'incorrectAnswers must contain at least one answer';
+
+  const hasFieldErrors = Object.keys(fieldErrors).length > 0;
 
   const payload: QuestionUpsertInput | null =
-    errors.length === 0 && category && difficulty
+    !hasFieldErrors && category && difficulty
       ? {
           question,
-          cdnImagePrefix: normalizeNullableString(typeof normalizedItem.cdnImagePrefix === 'string' ? normalizedItem.cdnImagePrefix : null),
-          questionImage: normalizeNullableString(typeof normalizedItem.questionImage === 'string' ? normalizedItem.questionImage : null),
+          cdnImagePrefix: normalizeNullableString(cdnImagePrefix),
+          questionImage: normalizeNullableString(questionImage),
           correctAnswer,
           correctAnswerIndex: correctAnswerIndex ?? 0,
           incorrectAnswers,
@@ -706,20 +719,29 @@ export function validateQuestionImportItem(item: Record<string, unknown>, index:
           subCategory,
           tags,
           keywords,
-          asFirst: Boolean(normalizedItem.asFirst),
+          asFirst,
         }
       : null;
 
   return {
+    importId,
     index,
-    valid: errors.length === 0,
-    errors,
+    valid: !hasFieldErrors,
+    fieldErrors,
+    globalErrors,
     question,
+    cdnImagePrefix,
+    questionImage,
+    correctAnswer,
+    correctAnswerIndex,
+    incorrectAnswers,
+    explanation,
+    difficulty: difficulty ?? '',
     category: category ?? '',
     subCategory,
-    difficulty: difficulty ?? '',
     tags,
     keywords,
+    asFirst,
     payload,
   };
 }
@@ -749,6 +771,7 @@ export async function importQuestions(
     subCategory: string | null;
     asFirst: boolean;
   }> = [];
+  const importedImportIds: string[] = [];
 
   for (const item of validation.items) {
     if (!item.payload) {
@@ -767,13 +790,15 @@ export async function importQuestions(
       subCategory: item.payload.subCategory ?? null,
       asFirst: Boolean(item.payload.asFirst),
     });
+    importedImportIds.push(item.importId);
   }
 
   return {
     total: validation.total,
     successCount: sqlRows.length,
     failedCount: validation.total - sqlRows.length,
+    importedImportIds,
     displayFields: buildQuestionImportDisplayFields(sqlRows),
-    items: validation.items.map(({ payload: _payload, ...rest }) => rest),
+    items: validation.items.map(({ payload: _payload, ...rest }) => ({ ...rest, payload: null })),
   };
 }

@@ -129,19 +129,45 @@ export type QuestionMutationResult = {
   id: string;
 };
 
-export type QuestionImportPreviewDto = {
+export type QuestionImportFieldKey =
+  | 'question'
+  | 'cdnImagePrefix'
+  | 'questionImage'
+  | 'correctAnswer'
+  | 'correctAnswerIndex'
+  | 'incorrectAnswers'
+  | 'explanation'
+  | 'difficulty'
+  | 'category'
+  | 'subCategory'
+  | 'tags'
+  | 'keywords'
+  | 'asFirst';
+
+export type QuestionImportFieldErrors = Partial<Record<QuestionImportFieldKey, string>>;
+
+export type QuestionImportDraftDto = {
+  importId: string;
   index: number;
-  valid: boolean;
-  errors: string[];
   question: string;
+  cdnImagePrefix: string;
+  questionImage: string;
+  correctAnswer: string;
+  correctAnswerIndex: number | null;
+  incorrectAnswers: string[];
+  explanation: string;
+  difficulty: string;
   category: string;
   subCategory: string | null;
-  difficulty: string;
   tags: string[];
   keywords: string[];
+  asFirst: boolean;
 };
 
-export type QuestionImportValidationItem = QuestionImportPreviewDto & {
+export type QuestionImportValidationItem = QuestionImportDraftDto & {
+  valid: boolean;
+  fieldErrors: QuestionImportFieldErrors;
+  globalErrors: string[];
   payload: QuestionUpsertInput | null;
 };
 
@@ -163,6 +189,7 @@ export type QuestionImportCommitResult = {
   total: number;
   successCount: number;
   failedCount: number;
+  importedImportIds: string[];
   displayFields: QuestionImportDisplayField[];
-  items: QuestionImportPreviewDto[];
+  items: QuestionImportValidationItem[];
 };
