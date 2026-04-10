@@ -1,5 +1,6 @@
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
 import { getTranslations } from 'next-intl/server';
+import { buildQuestionListItemCopy } from '@/components/question-copy';
 import { QuestionListClient } from '@/components/question-list-client';
 import { QuestionPageShell } from '@/components/question-page-shell';
 
@@ -11,6 +12,7 @@ export default async function QuestionsPage({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'faqPage.questionsList' });
   const importT = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
+  const itemCopy = buildQuestionListItemCopy(t);
 
   return (
     <QuestionPageShell
@@ -64,6 +66,10 @@ export default async function QuestionsPage({
             summary: t.raw('pagination.summary'),
             previous: t('pagination.previous'),
             next: t('pagination.next'),
+            enterPage: t('pagination.enterPage'),
+            enterPageHint: t('pagination.enterPageHint'),
+            jumpToLast: t('pagination.jumpToLast'),
+            total: t.raw('pagination.total'),
           },
           export: {
             settingsLabel: t('export.settings'),
@@ -71,6 +77,8 @@ export default async function QuestionsPage({
             loadingLabel: t('export.loading'),
             dialogTitle: t('export.dialog.title'),
             dialogDescription: t('export.dialog.description'),
+            settingsAriaLabel: t('export.dialog.settingsAriaLabel'),
+            closeAriaLabel: t('export.dialog.closeAriaLabel'),
             confirm: t('export.dialog.confirm'),
             cancel: t('export.dialog.cancel'),
             requiredHint: t('export.dialog.requiredHint'),
@@ -83,6 +91,7 @@ export default async function QuestionsPage({
               asFirst: t('export.columns.asFirst'),
             },
           },
+          item: itemCopy,
         }}
       />
     </QuestionPageShell>

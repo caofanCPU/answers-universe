@@ -1,13 +1,15 @@
 import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 import { SiteEyeIcon, SiteEyeOffIcon } from '@/lib/site-config';
+import type { QuestionPreviewCopy } from './question-copy';
 import { QuestionDetail } from './question-detail';
 import type { QuestionAnswerOptionDraft } from './question-answer-options';
 import type { QuestionViewModel } from './question-ui-types';
 
 type QuestionPreviewProps = {
-  locale: string;
+  locale?: string;
   question: QuestionViewModel;
   answerOptions: QuestionAnswerOptionDraft[];
+  copy?: QuestionPreviewCopy;
   previewAsPlayer: boolean;
   submitLabel: string;
   submitDisabled: boolean;
@@ -17,9 +19,19 @@ type QuestionPreviewProps = {
 };
 
 export function QuestionPreview({
-  locale,
+  locale: _locale,
   question,
   answerOptions,
+  copy = {
+    firstBadge: 'First',
+    previewDescription: 'This is the full preview for the current question.',
+    options: 'Options',
+    explanation: 'Explanation',
+    tags: 'Tags',
+    showFullPreview: 'Show full preview',
+    switchToPlayerView: 'Switch to player view',
+    openPreview: 'Open preview',
+  },
   previewAsPlayer,
   submitLabel,
   submitDisabled,
@@ -27,14 +39,12 @@ export function QuestionPreview({
   onOpenDialog,
   onTogglePreviewMode,
 }: QuestionPreviewProps) {
-  const isZh = locale === 'zh';
-
   return (
     <div className="grid gap-6">
       <QuestionDetail
-        locale={locale}
         question={question}
         answerOptions={answerOptions}
+        copy={copy}
         previewAsPlayer={previewAsPlayer}
       />
       <div className="flex justify-end gap-3">
@@ -43,7 +53,7 @@ export function QuestionPreview({
           onClick={onTogglePreviewMode}
           className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-black/10 text-slate-400 transition hover:bg-black/5 hover:text-slate-700 dark:border-white/10 dark:hover:bg-white/5 dark:hover:text-white"
           aria-pressed={previewAsPlayer}
-          aria-label={previewAsPlayer ? (isZh ? '显示完整预览' : 'Show full preview') : isZh ? '切换答题视角' : 'Switch to player view'}
+          aria-label={previewAsPlayer ? copy.showFullPreview : copy.switchToPlayerView}
         >
           {previewAsPlayer ? <SiteEyeOffIcon className="h-4 w-4" /> : <SiteEyeIcon className="h-4 w-4" />}
         </button>
@@ -51,7 +61,7 @@ export function QuestionPreview({
           type="button"
           onClick={onOpenDialog}
           className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-black/10 text-slate-400 transition hover:bg-black/5 hover:text-slate-700 dark:border-white/10 dark:hover:bg-white/5 dark:hover:text-white"
-          aria-label={isZh ? '放大预览' : 'Open preview'}
+          aria-label={copy.openPreview}
         >
           <icons.QrCode className="h-4 w-4" />
         </button>

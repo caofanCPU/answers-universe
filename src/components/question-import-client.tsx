@@ -6,11 +6,11 @@ import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
 import { XButton } from '@windrun-huaiin/third-ui/main';
 import type {
   QuestionImportCommitResult,
-  QuestionImportDisplayFieldKey,
   QuestionImportValidationItem,
   QuestionImportValidationResult,
 } from '@/server/questions/types';
 import { splitAnswerOptionDrafts, type QuestionAnswerOptionDraft } from './question-answer-options';
+import type { QuestionImportCopy } from './question-copy';
 import { QuestionImportToFix } from './question-import-to-fix';
 import {
   ensureImportIds,
@@ -37,11 +37,6 @@ const sampleJson = `[
   }
 ]`;
 
-
-function getDisplayFieldLabel(key: QuestionImportDisplayFieldKey, isZh: boolean): string {
-  return key === 'fullInsertSql' ? (isZh ? '完整 SQL' : 'Full SQL') : isZh ? '完整 UUID SQL' : 'Full UUID SQL';
-}
-
 function renderCountBadge(count: number, tone: 'neutral' | 'success' | 'danger') {
   const toneClassName =
     tone === 'success'
@@ -52,12 +47,8 @@ function renderCountBadge(count: number, tone: 'neutral' | 'success' | 'danger')
 
   return <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${toneClassName}`}>{count}</span>;
 }
-
-
-export function QuestionImportClient({ locale }: { locale: string }) {
-  const isZh = locale === 'zh';
+export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const copyResetTimerRef = useRef<number | null>(null);
   const toFixRef = useRef<HTMLDivElement | null>(null);
   const [source, setSource] = useState(sampleJson);
   const [validating, setValidating] = useState(false);
@@ -68,7 +59,6 @@ export function QuestionImportClient({ locale }: { locale: string }) {
   const [hasValidated, setHasValidated] = useState(false);
   const [currentInvalidIndex, setCurrentInvalidIndex] = useState(0);
   const [commitResult, setCommitResult] = useState<QuestionImportCommitResult | null>(null);
-  const [copiedField, setCopiedField] = useState<QuestionImportDisplayFieldKey | null>(null);
 
   const result = useMemo(() => parseImportText(source), [source]);
   const invalidItems = useMemo(() => validatedItems.filter((item) => !item.valid), [validatedItems]);
@@ -299,7 +289,7 @@ export function QuestionImportClient({ locale }: { locale: string }) {
     }
 
     if (!file.name.trim().toLowerCase().endsWith('.json')) {
-      setServerError(isZh ? '仅支持上传 JSON 文件。' : 'Only JSON files are supported.');
+      setServerError(copy.errors.jsonOnly);
       return;
     }
 
@@ -310,24 +300,6 @@ export function QuestionImportClient({ locale }: { locale: string }) {
     } catch (error) {
       setServerError(error instanceof Error ? error.message : 'Failed to read file');
     }
-  }
-
-  async function copyText(field: QuestionImportDisplayFieldKey, value: string) {
-    if (!value) {
-      return;
-    }
-
-    await navigator.clipboard.writeText(value);
-    setCopiedField(field);
-
-    if (copyResetTimerRef.current) {
-      window.clearTimeout(copyResetTimerRef.current);
-    }
-
-    copyResetTimerRef.current = window.setTimeout(() => {
-      setCopiedField(null);
-      copyResetTimerRef.current = null;
-    }, 1400);
   }
 
   return (
@@ -373,7 +345,7 @@ export function QuestionImportClient({ locale }: { locale: string }) {
               className="px-4 py-2.5"
               button={{
                 icon: false,
-                text: isZh ? '上传 JSON' : 'Upload JSON',
+                text: copy.toolbar.uploadJson,
                 onClick: () => fileInputRef.current?.click(),
               }}
             />
@@ -384,7 +356,7 @@ export function QuestionImportClient({ locale }: { locale: string }) {
               className="px-4 py-2.5"
               button={{
                 icon: false,
-                text: isZh ? '载入示例' : 'Load Sample',
+                text: copy.toolbar.loadSample,
                 onClick: () => {
                   setSource(sampleJson);
                   resetValidationState();
@@ -396,10 +368,10 @@ export function QuestionImportClient({ locale }: { locale: string }) {
               variant="subtle"
               minWidth="min-w-0"
               className="px-4 py-2.5"
-              loadingText={isZh ? '校验中...' : 'Loading...'}
+              loadingText={copy.toolbar.validating}
               button={{
                 icon: false,
-                text: isZh ? '校验全部' : 'Validate All',
+                text: copy.toolbar.validateAll,
                 onClick: () => void handleValidate(),
                 disabled: validating,
               }}
@@ -408,8 +380,8 @@ export function QuestionImportClient({ locale }: { locale: string }) {
               <GradientButton
                 onClick={() => void handleCommit()}
                 disabled={committing || !commitEnabled}
-                title={isZh ? '导入' : 'Import'}
-                loadingText={isZh ? '导入中...' : 'Loading...'}
+                title={copy.toolbar.import}
+                loadingText={copy.toolbar.importing}
                 align="center"
                 icon=<icons.CheckCheck/>
                 className="sm:w-auto"
@@ -445,11 +417,12 @@ export function QuestionImportClient({ locale }: { locale: string }) {
       {hasValidated && invalidCount > 0 && currentInvalidItem ? (
         <div ref={toFixRef}>
           <QuestionImportToFix
-            locale={locale}
             item={currentInvalidItem}
             index={currentInvalidIndex}
             total={invalidCount}
             revalidating={revalidatingItemId === currentInvalidItem.importId}
+            copy={copy.workbench}
+            formCopy={copy.form}
             onPrevious={() => setCurrentInvalidIndex((index) => Math.max(index - 1, 0))}
             onNext={() => setCurrentInvalidIndex((index) => Math.min(index + 1, invalidCount - 1))}
             onRemove={handleRemoveCurrent}
@@ -464,40 +437,15 @@ export function QuestionImportClient({ locale }: { locale: string }) {
       {commitResult ? (
         <div className="rounded-3xl border border-black/10 p-6 dark:border-white/10">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {isZh ? '导入结果' : 'Import Result'}
+            {copy.result.title}
           </h2>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-white/5 dark:text-slate-300">
-              {isZh ? `总计 ${commitResult.total}` : `Total ${commitResult.total}`}
+              {copy.result.total.replace('{count}', String(commitResult.total))}
             </span>
             <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-              {isZh ? `成功 ${commitResult.successCount}` : `Success ${commitResult.successCount}`}
+              {copy.result.success.replace('{count}', String(commitResult.successCount))}
             </span>
-          </div>
-          <div className="mt-4 space-y-4">
-            {commitResult.displayFields.map((field) => (
-              <div key={field.key} className="space-y-2">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                    {getDisplayFieldLabel(field.key, isZh)}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => void copyText(field.key, field.value)}
-                    className="inline-flex min-w-[84px] items-center justify-center gap-1.5 rounded-full border border-black/10 px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:border-black/20 hover:bg-black/5 hover:text-slate-800 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
-                  >
-                    {copiedField === field.key ? <icons.X className="h-3.5 w-3.5" /> : <icons.Copy className="h-3.5 w-3.5" />}
-                    <span>{copiedField === field.key ? 'Copied' : isZh ? '复制' : 'Copy'}</span>
-                  </button>
-                </div>
-                <textarea
-                  readOnly
-                  value={field.value}
-                  rows={field.key === 'fullInsertSql' ? 6 : 4}
-                  className="w-full resize-none rounded-2xl border border-black/10 bg-slate-50 px-4 py-3 font-mono text-sm text-slate-700 outline-none dark:border-white/10 dark:bg-slate-900 dark:text-slate-200"
-                />
-              </div>
-            ))}
           </div>
         </div>
       ) : null}

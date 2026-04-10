@@ -16,6 +16,7 @@ import {
 } from './question-answer-options';
 import { QuestionDetail } from './question-detail';
 import { QuestionForm } from './question-form';
+import type { QuestionEditorCopy } from './question-copy';
 import type { QuestionDetailDto, QuestionMutationResult, QuestionUpsertInput } from '@/server/questions/types';
 import type { QuestionFormValues, QuestionViewModel } from './question-ui-types';
 
@@ -29,38 +30,7 @@ type QuestionEditorClientProps = {
   initialPreviewOpen?: boolean;
   backHref: string;
   backLabel: string;
-  usb: {
-    noticeCreate: string;
-    noticeEdit: string;
-    loading: string;
-    submitFailed: string;
-    saving: string;
-    createButton: string;
-    updateButton: string;
-    form: {
-      question: string;
-      answersLabel: string;
-      answersPlaceholder: string;
-      answersEmpty: string;
-      answersExpand: string;
-      answersCollapse: string;
-      answersCorrectPrefix: string;
-      answersNoCorrect: string;
-      categoryLabel: string;
-      categoryEmpty: string;
-      subCategoryLabel: string;
-      subCategoryEmpty: string;
-      difficultyLabel: string;
-      difficultyEmpty: string;
-      tagsLabel: string;
-      tagsPlaceholder: string;
-      tagsEmpty: string;
-      explanation: string;
-      cdnImagePrefix: string;
-      questionImage: string;
-      asFirst: string;
-    };
-  };
+  usb: QuestionEditorCopy;
 };
 
 function normalizeQuestionImagePath(value: string): string {
@@ -194,7 +164,6 @@ export function QuestionEditorClient({
   backLabel,
   usb,
 }: QuestionEditorClientProps) {
-  const isZh = locale === 'zh';
   const router = useRouter();
   const pathname = usePathname();
   const [values, setValues] = useState<QuestionFormValues>(emptyFormValues());
@@ -349,27 +318,13 @@ export function QuestionEditorClient({
     }
   }
 
-  const submitLabel = submitSucceeded
-    ? isZh
-      ? '已提交'
-      : 'Saved'
-    : saving
-      ? usb.saving
-      : mode === 'create'
-        ? usb.createButton
-        : usb.updateButton;
+  const submitLabel = submitSucceeded ? usb.saved : saving ? usb.saving : mode === 'create' ? usb.createButton : usb.updateButton;
   const activeStatusText =
     activeView === 'edit'
-      ? isZh
-        ? '草稿态'
-        : 'Draft'
-      : isZh
-        ? hasGroupNavigation
-          ? `${currentGroupIndex + 1}/${groupIds.length}`
-          : '预览态'
-        : hasGroupNavigation
-          ? `${currentGroupIndex + 1}/${groupIds.length}`
-          : 'Preview';
+      ? usb.preview.edit
+      : hasGroupNavigation
+        ? `${currentGroupIndex + 1}/${groupIds.length}`
+        : usb.preview.preview;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl min-w-0 flex-col gap-4 pb-32">
@@ -390,7 +345,7 @@ export function QuestionEditorClient({
 
             <div className="flex min-w-0 justify-center">
               <XToggleButton
-                ariaLabel={isZh ? '编辑与预览切换' : 'Edit and preview toggle'}
+                ariaLabel={usb.preview.toggleAriaLabel}
                 value={activeView}
                 onChange={(value) => {
                   if (value === 'preview') {
@@ -401,8 +356,8 @@ export function QuestionEditorClient({
                   setActiveView('edit');
                 }}
                 options={[
-                  { value: 'edit', label: isZh ? '编辑' : 'Edit' },
-                  { value: 'preview', label: isZh ? '预览' : 'Preview' },
+                  { value: 'edit', label: usb.preview.edit },
+                  { value: 'preview', label: usb.preview.preview },
                 ]}
                 size="compact"
                 className="max-w-full border-black/10 dark:border-white/10"
@@ -440,6 +395,7 @@ export function QuestionEditorClient({
           locale={locale}
           question={previewQuestion}
           answerOptions={answerOptions}
+          copy={usb.detail}
           previewAsPlayer={previewAsPlayer}
         />
       )}
@@ -449,7 +405,7 @@ export function QuestionEditorClient({
             <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex min-w-0 items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                 <SiteEyeOffIcon className="h-4 w-4 shrink-0" />
-                <span className="min-w-0 wrap-break-word">{isZh ? '草稿态，修改需先预览确认后提交。' : 'Draft state. Review in preview before submit.'}</span>
+                <span className="min-w-0 wrap-break-word">{usb.preview.draftHint}</span>
               </div>
               <div className="flex min-w-0 items-center justify-end gap-2">
                 <div
@@ -467,7 +423,7 @@ export function QuestionEditorClient({
                   className="self-end px-4 py-2.5 sm:px-5 sm:py-3"
                   button={{
                     icon: <SiteEyeIcon className="h-4 w-4" />,
-                    text: isZh ? '去预览确认' : 'Review in Preview',
+                    text: usb.preview.reviewButton,
                     onClick: openPreview,
                   }}
                 />
@@ -482,24 +438,24 @@ export function QuestionEditorClient({
                     onClick={() => handleQuestionNavigation(previousQuestionId)}
                     disabled={!previousQuestionId}
                     className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-                    aria-label={isZh ? '上一题' : 'Previous'}
-                    title={isZh ? '上一题' : 'Previous'}
+                    aria-label={usb.preview.previous}
+                    title={usb.preview.previous}
                   >
                     <icons.ChevronLeft className="h-4 w-4" />
                   </button>
                 ) : null}
                 <div
                   className="inline-flex min-w-0 items-center rounded-full border border-black/10 bg-slate-50/90 p-1 dark:border-white/10 dark:bg-white/5"
-                  aria-label={hasGroupNavigation ? `${isZh ? '当前进度' : 'Progress'} ${activeStatusText}` : activeStatusText}
-                  title={hasGroupNavigation ? `${isZh ? '当前进度' : 'Progress'} ${activeStatusText}` : activeStatusText}
+                  aria-label={hasGroupNavigation ? `${usb.preview.progress} ${activeStatusText}` : activeStatusText}
+                  title={hasGroupNavigation ? `${usb.preview.progress} ${activeStatusText}` : activeStatusText}
                 >
                   <button
                     type="button"
                     onClick={() => setPreviewAsPlayer((value) => !value)}
                     className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-black/5 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                     aria-pressed={previewAsPlayer}
-                    aria-label={previewAsPlayer ? (isZh ? '显示完整预览' : 'Show full preview') : isZh ? '切换答题视角' : 'Switch to player view'}
-                    title={previewAsPlayer ? (isZh ? '显示完整预览' : 'Show full preview') : isZh ? '切换答题视角' : 'Switch to player view'}
+                    aria-label={previewAsPlayer ? usb.preview.showFullPreview : usb.preview.switchToPlayerView}
+                    title={previewAsPlayer ? usb.preview.showFullPreview : usb.preview.switchToPlayerView}
                   >
                     {previewAsPlayer ? <SiteEyeOffIcon className="h-4 w-4" /> : <SiteEyeIcon className="h-4 w-4" />}
                   </button>
@@ -513,8 +469,8 @@ export function QuestionEditorClient({
                     onClick={() => handleQuestionNavigation(nextQuestionId)}
                     disabled={!nextQuestionId}
                     className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-                    aria-label={isZh ? '下一题' : 'Next'}
-                    title={isZh ? '下一题' : 'Next'}
+                    aria-label={usb.preview.next}
+                    title={usb.preview.next}
                   >
                     <icons.ChevronRight className="h-4 w-4" />
                   </button>

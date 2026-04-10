@@ -1,5 +1,6 @@
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
 import { getTranslations } from 'next-intl/server';
+import { buildQuestionEditorCopy, buildQuestionFormCopy, buildQuestionPreviewCopy } from '@/components/question-copy';
 import { QuestionEditorClient } from '@/components/question-editor-client';
 import { QuestionPageShell } from '@/components/question-page-shell';
 
@@ -14,6 +15,10 @@ export default async function QuestionDetailPage({
   const editT = await getTranslations({ locale, namespace: 'faqPage.questionEdit' });
   const createT = await getTranslations({ locale, namespace: 'faqPage.questionCreate' });
   const importT = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
+  const previewT = await getTranslations({ locale, namespace: 'faqPage.questionPreview' });
+  const formCopy = buildQuestionFormCopy(formT);
+  const previewCopy = buildQuestionPreviewCopy(previewT);
+  const editorCopy = buildQuestionEditorCopy(editT, formCopy, previewCopy);
 
   return (
     <QuestionPageShell
@@ -40,38 +45,7 @@ export default async function QuestionDetailPage({
         initialPreviewOpen
         backHref={getAsNeededLocalizedUrl(locale, '/questions')}
         backLabel={t('actions.backToList')}
-        usb={{
-          noticeCreate: editT('notice'),
-          noticeEdit: editT('notice'),
-          loading: editT('status.loading'),
-          submitFailed: editT('status.submitFailed'),
-          saving: editT('status.saving'),
-          createButton: editT('actions.submit'),
-          updateButton: editT('actions.submit'),
-          form: {
-            question: formT('question'),
-            answersLabel: formT('answers.label'),
-            answersPlaceholder: formT('answers.placeholder'),
-            answersEmpty: formT('answers.empty'),
-            answersExpand: formT('answers.expand'),
-            answersCollapse: formT('answers.collapse'),
-            answersCorrectPrefix: formT('answers.correctPrefix'),
-            answersNoCorrect: formT('answers.noCorrect'),
-            categoryLabel: formT('category.label'),
-            categoryEmpty: formT('category.empty'),
-            subCategoryLabel: formT('subCategory.label'),
-            subCategoryEmpty: formT('subCategory.empty'),
-            difficultyLabel: formT('difficulty.label'),
-            difficultyEmpty: formT('difficulty.empty'),
-            tagsLabel: formT('tags.label'),
-            tagsPlaceholder: formT('tags.placeholder'),
-            tagsEmpty: formT('tags.empty'),
-            explanation: formT('explanation'),
-            cdnImagePrefix: formT('cdnImagePrefix'),
-            questionImage: formT('questionImage'),
-            asFirst: formT('asFirst'),
-          },
-        }}
+        usb={editorCopy}
       />
     </QuestionPageShell>
   );

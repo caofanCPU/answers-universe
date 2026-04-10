@@ -11,6 +11,7 @@ import {
 import { XFormPills, XTokenInput } from '@windrun-huaiin/third-ui/main/pill-select';
 import { InfoTooltip } from './info-tooltip';
 import type { QuestionImportFieldErrors, QuestionImportFieldKey } from '@/server/questions/types';
+import type { QuestionFormCopy } from './question-copy';
 
 type QuestionFormProps = {
   values: QuestionFormValues;
@@ -19,29 +20,7 @@ type QuestionFormProps = {
   onChange: (next: QuestionFormValues) => void;
   questionNotice?: string;
   fieldErrors?: QuestionImportFieldErrors;
-  usb: {
-    question: string;
-    answersLabel: string;
-    answersPlaceholder: string;
-    answersEmpty: string;
-    answersExpand: string;
-    answersCollapse: string;
-    answersCorrectPrefix: string;
-    answersNoCorrect: string;
-    categoryLabel: string;
-    categoryEmpty: string;
-    subCategoryLabel: string;
-    subCategoryEmpty: string;
-    difficultyLabel: string;
-    difficultyEmpty: string;
-    tagsLabel: string;
-    tagsPlaceholder: string;
-    tagsEmpty: string;
-    explanation: string;
-    cdnImagePrefix: string;
-    questionImage: string;
-    asFirst: string;
-  };
+  usb: QuestionFormCopy;
 };
 
 const questionFormFieldToImportField: Partial<Record<keyof QuestionFormValues, QuestionImportFieldKey>> = {

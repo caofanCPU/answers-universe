@@ -178,18 +178,10 @@ export type QuestionImportValidationResult = {
   items: QuestionImportValidationItem[];
 };
 
-export type QuestionImportDisplayFieldKey = 'fullInsertSql' | 'fullUuidSql';
-
-export type QuestionImportDisplayField = {
-  key: QuestionImportDisplayFieldKey;
-  value: string;
-};
-
 export type QuestionImportCommitResult = {
   total: number;
   successCount: number;
   failedCount: number;
   importedImportIds: string[];
-  displayFields: QuestionImportDisplayField[];
   items: QuestionImportValidationItem[];
 };

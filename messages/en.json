@@ -409,7 +409,7 @@
     "editOnGithub": "Edit this page on GitHub"
   },
   "faqPage": {
-      "questionsList": {
+    "questionsList": {
         "title": "Questions",
         "description": "",
         "actions": {
@@ -457,12 +457,16 @@
           "loading": "Loading questions...",
           "loadFailed": "Failed to load questions: "
         },
-        "pagination": {
-          "summary": "{page}/{totalPages}, Total {total}",
-          "previous": "Previous",
-          "next": "Next"
-        },
-        "export": {
+      "pagination": {
+        "summary": "{page}/{totalPages}, Total {total}",
+        "previous": "Previous",
+        "next": "Next",
+        "enterPage": "Enter page number",
+        "enterPageHint": "Enter a page number, then press Enter or blur to jump",
+        "jumpToLast": "Jump to the last page",
+        "total": "Total {total}"
+      },
+      "export": {
           "settings": "Export column settings",
           "button": "Export",
           "loading": "Exporting...",
@@ -473,33 +477,87 @@
             "subCategory": "sub_category",
             "asFirst": "as_first"
           },
-          "dialog": {
-            "title": "Configure export columns",
-            "description": "The export runs against the current filters and returns all matching rows with only the selected columns.",
-            "confirm": "Confirm",
-            "cancel": "Cancel",
-            "requiredHint": "The following columns are required and will always be exported."
+        "dialog": {
+          "title": "Configure export columns",
+          "description": "The export runs against the current filters and returns all matching rows with only the selected columns.",
+          "settingsAriaLabel": "Configure export columns",
+          "closeAriaLabel": "Close export settings",
+          "confirm": "Confirm",
+          "cancel": "Cancel",
+          "requiredHint": "The following columns are required and will always be exported."
           },
-          "status": {
-            "failed": "Export failed: "
-          }
+        "status": {
+          "failed": "Export failed: "
         }
       },
+      "item": {
+        "empty": "No questions match the current filters.",
+        "copyId": "Copy question ID",
+        "copyUuid": "Copy question UUID",
+        "firstBadge": "First",
+        "deleteLoading": "Deleting...",
+        "delete": "Delete",
+        "view": "View",
+        "edit": "Edit",
+        "confirmDeleteTitle": "Confirm delete this question?",
+        "confirmDeleteDescription": "This is a soft delete. The question will be hidden from the list.",
+        "cancel": "Cancel",
+        "confirmDelete": "Confirm Delete"
+      }
+    },
       "questionsImport": {
         "title": "Import",
         "description": "",
         "actions": {
           "backToList": "Back to List"
+        },
+        "toolbar": {
+          "uploadJson": "Upload JSON",
+          "loadSample": "Load Sample",
+          "validateAll": "Validate All",
+          "validating": "Validating...",
+          "import": "Import",
+          "importing": "Importing..."
+        },
+        "errors": {
+          "jsonOnly": "Only JSON files are supported."
+        },
+        "workbench": {
+          "title": "To Fix",
+          "itemProgress": "{current} / {total}",
+          "removeCurrent": "Remove Current",
+          "validateCurrent": "Validate Current",
+          "validating": "Validating..."
+        },
+        "result": {
+          "title": "Import Result",
+          "total": "Total {count}",
+          "success": "Success {count}"
         }
       },
-      "questionDetail": {
-        "title": "Question Detail #{id}",
-        "description": "",
-        "actions": {
-          "backToList": "Back to List",
-          "edit": "Edit"
-        }
+    "questionDetail": {
+      "title": "Question Detail #{id}",
+      "description": "",
+      "actions": {
+        "backToList": "Back to List",
+        "edit": "Edit"
       },
+      "status": {
+        "loading": "Loading question detail...",
+        "notFound": "Question not found.",
+        "loadFailed": "Failed to load question detail: "
+      }
+    },
+    "questionPreview": {
+      "firstBadge": "First",
+      "previewDescription": "This is the full preview for the current question.",
+      "options": "Options",
+      "explanation": "Explanation",
+      "tags": "Tags",
+      "showFullPreview": "Show full preview",
+      "switchToPlayerView": "Switch to player view",
+      "openPreview": "Open preview"
+    },
       "questionCreate": {
         "title": "Create",
         "description": "",
@@ -511,7 +569,20 @@
         "status": {
           "loading": "Loading question data...",
           "submitFailed": "Submit failed: ",
-          "saving": "Saving..."
+          "saving": "Saving...",
+          "saved": "Saved"
+        },
+        "preview": {
+          "toggleAriaLabel": "Edit and preview toggle",
+          "edit": "Edit",
+          "preview": "Preview",
+          "draftHint": "Draft state. Review in preview before submit.",
+          "reviewButton": "Review in Preview",
+          "previous": "Previous",
+          "next": "Next",
+          "progress": "Progress",
+          "showFullPreview": "Show full preview",
+          "switchToPlayerView": "Switch to player view"
         }
       },
       "questionEdit": {
@@ -525,7 +596,20 @@
         "status": {
           "loading": "Loading question data...",
           "submitFailed": "Submit failed: ",
-          "saving": "Saving..."
+          "saving": "Saving...",
+          "saved": "Saved"
+        },
+        "preview": {
+          "toggleAriaLabel": "Edit and preview toggle",
+          "edit": "Edit",
+          "preview": "Preview",
+          "draftHint": "Draft state. Review in preview before submit.",
+          "reviewButton": "Review in Preview",
+          "previous": "Previous",
+          "next": "Next",
+          "progress": "Progress",
+          "showFullPreview": "Show full preview",
+          "switchToPlayerView": "Switch to player view"
         }
       },
       "questionForm": {

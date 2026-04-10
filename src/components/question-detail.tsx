@@ -3,22 +3,35 @@ import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/s
 import { themeBgColor, themeBorderColor, themeIconColor } from '@windrun-huaiin/base-ui/lib';
 import { cn } from '@windrun-huaiin/lib/utils';
 import type { QuestionAnswerOptionDraft } from './question-answer-options';
+import type { QuestionPreviewCopy } from './question-copy';
 import type { QuestionViewModel } from './question-ui-types';
 
 type QuestionDetailProps = {
-  locale: string;
+  locale?: string;
   question: QuestionViewModel;
   answerOptions: QuestionAnswerOptionDraft[];
+  copy?: QuestionPreviewCopy;
   previewAsPlayer?: boolean;
 };
 
+const DEFAULT_PREVIEW_COPY: QuestionPreviewCopy = {
+  firstBadge: 'First',
+  previewDescription: 'This is the full preview for the current question.',
+  options: 'Options',
+  explanation: 'Explanation',
+  tags: 'Tags',
+  showFullPreview: 'Show full preview',
+  switchToPlayerView: 'Switch to player view',
+  openPreview: 'Open preview',
+};
+
 export function QuestionDetail({
-  locale,
+  locale: _locale,
   question,
   answerOptions,
+  copy = DEFAULT_PREVIEW_COPY,
   previewAsPlayer = false,
 }: QuestionDetailProps) {
-  const isZh = locale === 'zh';
   const options = answerOptions.filter((option) => option.text.trim());
   const metaPillClassName =
     cn(
@@ -36,19 +49,19 @@ export function QuestionDetail({
           {question.difficulty ? <span className={metaPillClassName}>{question.difficulty}</span> : null}
           {question.asFirst ? (
             <span className="inline-flex max-w-full items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 transition dark:bg-amber-500/10 dark:text-amber-300">
-              {isZh ? '首发' : 'First'}
+              {copy.firstBadge}
             </span>
           ) : null}
         </div>
         <h2 className="min-w-0 wrap-break-word text-2xl font-semibold text-slate-900 dark:text-white">{question.question}</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isZh ? '这是当前题目的完整预览。' : 'This is the full preview for the current question.'}
+          {copy.previewDescription}
         </p>
       </div>
 
       <div className="space-y-3">
         <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-          {isZh ? '选项' : 'Options'}
+          {copy.options}
         </div>
         <div className="grid gap-3">
           {options.map((option, index) => (
@@ -84,7 +97,7 @@ export function QuestionDetail({
       {!previewAsPlayer ? (
         <div className="space-y-3">
           <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            {isZh ? '题目说明' : 'Explanation'}
+            {copy.explanation}
           </div>
           <div className="min-w-0 wrap-break-word rounded-2xl border border-black/10 px-4 py-4 text-sm leading-7 text-slate-700 dark:border-white/10 dark:text-slate-200">
             {question.explanation}
@@ -116,7 +129,7 @@ export function QuestionDetail({
       {!previewAsPlayer && question.tags.length > 0 ? (
         <div className="space-y-3">
           <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            {isZh ? '标签' : 'Tags'}
+            {copy.tags}
           </div>
           <div className="flex flex-wrap gap-2">
             {question.tags.map((tag) => (

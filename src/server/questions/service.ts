@@ -24,7 +24,6 @@ import {
   type QuestionDifficulty,
   type QuestionSubCategory,
 } from './constants';
-import { buildQuestionImportDisplayFields } from './import-result-format';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;
@@ -823,13 +822,6 @@ export async function importQuestions(
   userId: string
 ): Promise<QuestionImportCommitResult> {
   const validation = validateQuestionImportItems(items);
-  const sqlRows: Array<{
-    questionId: string;
-    questionUuid: string;
-    category: string;
-    subCategory: string | null;
-    asFirst: boolean;
-  }> = [];
   const importedImportIds: string[] = [];
 
   for (const item of validation.items) {
@@ -842,22 +834,14 @@ export async function importQuestions(
       select: { id: true, questionUuid: true },
     });
 
-    sqlRows.push({
-      questionId: created.id.toString(),
-      questionUuid: created.questionUuid,
-      category: item.payload.category,
-      subCategory: item.payload.subCategory ?? null,
-      asFirst: Boolean(item.payload.asFirst),
-    });
     importedImportIds.push(item.importId);
   }
 
   return {
     total: validation.total,
-    successCount: sqlRows.length,
-    failedCount: validation.total - sqlRows.length,
+    successCount: importedImportIds.length,
+    failedCount: validation.total - importedImportIds.length,
     importedImportIds,
-    displayFields: buildQuestionImportDisplayFields(sqlRows),
     items: validation.items.map(({ payload: _payload, ...rest }) => ({ ...rest, payload: null })),
   };
 }

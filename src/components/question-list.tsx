@@ -5,17 +5,18 @@ import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/s
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
 import { XButton } from '@windrun-huaiin/third-ui/main';
+import type { QuestionListItemCopy } from './question-copy';
 import { saveQuestionGroupContext } from './question-group-context';
 import type { QuestionListItemDto } from '@/server/questions/types';
 
 type QuestionListProps = {
   locale: string;
   items: QuestionListItemDto[];
+  copy: QuestionListItemCopy;
   onDeleted: () => void;
 };
 
-export function QuestionList({ locale, items, onDeleted }: QuestionListProps) {
-  const isZh = locale === 'zh';
+export function QuestionList({ locale, items, copy, onDeleted }: QuestionListProps) {
   const groupIds = items.map((item) => item.id);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -59,8 +60,8 @@ export function QuestionList({ locale, items, onDeleted }: QuestionListProps) {
 
   if (items.length === 0) {
     return (
-      <div className="rounded-3xl border border-dashed border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
-        {isZh ? '当前筛选条件下暂无题目。' : 'No questions match the current filters.'}
+        <div className="rounded-3xl border border-dashed border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
+        {copy.empty}
       </div>
     );
   }
@@ -76,8 +77,8 @@ export function QuestionList({ locale, items, onDeleted }: QuestionListProps) {
             type="button"
             onClick={() => void copyText(`id-${item.id}`, item.id)}
             className="absolute left-1/2 top-0 inline-flex max-w-[72%] -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-black/10 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600 shadow-sm transition hover:bg-slate-100 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-            aria-label={isZh ? '复制题目 ID' : 'Copy question ID'}
-            title={isZh ? '复制题目 ID' : 'Copy question ID'}
+            aria-label={copy.copyId}
+            title={copy.copyId}
           >
             <span className="shrink-0 font-medium text-slate-500 dark:text-slate-400">ID</span>
             <span className="truncate font-mono text-[11px] text-slate-800 dark:text-slate-100">{item.id}</span>
@@ -92,8 +93,8 @@ export function QuestionList({ locale, items, onDeleted }: QuestionListProps) {
                   type="button"
                   onClick={() => void copyText(`uuid-${item.id}`, item.uuid)}
                   className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600 transition hover:bg-slate-100 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
-                  aria-label={isZh ? '复制题目 UUID' : 'Copy question UUID'}
-                  title={isZh ? '复制题目 UUID' : 'Copy question UUID'}
+                  aria-label={copy.copyUuid}
+                  title={copy.copyUuid}
                 >
                   <span className="shrink-0 font-medium text-slate-500 dark:text-slate-400">UUID</span>
                   <span className="truncate font-mono text-[11px] text-slate-800 dark:text-slate-100">{item.uuid}</span>
@@ -108,7 +109,7 @@ export function QuestionList({ locale, items, onDeleted }: QuestionListProps) {
                 <span className="rounded-full bg-slate-100 px-2.5 py-0.5 dark:bg-white/5">{item.difficulty}</span>
                 {item.asFirst ? (
                   <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                    {isZh ? '首发' : 'First'}
+                    {copy.firstBadge}
                   </span>
                 ) : null}
               </div>
@@ -138,10 +139,10 @@ export function QuestionList({ locale, items, onDeleted }: QuestionListProps) {
                 variant="subtle"
                 minWidth="min-w-20"
                 className="px-3 py-1.5 text-xs text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50 dark:text-red-300 dark:border-red-400/20 dark:hover:bg-red-500/10"
-                loadingText={isZh ? '删除中...' : 'Deleting...'}
+                loadingText={copy.deleteLoading}
                 button={{
                   icon: false,
-                  text: isZh ? '删除' : 'Delete',
+                  text: copy.delete,
                   onClick: () => setConfirmingId(item.id),
                   disabled: deletingId === item.id,
                 }}
@@ -150,7 +151,7 @@ export function QuestionList({ locale, items, onDeleted }: QuestionListProps) {
                 <GradientButton
                   href={getAsNeededLocalizedUrl(locale, `/questions/${item.id}`)}
                   openInNewTab={false}
-                  title={isZh ? '查看' : 'View'}
+                  title={copy.view}
                   align="center"
                   variant="subtle"
                   icon={false}
@@ -161,7 +162,7 @@ export function QuestionList({ locale, items, onDeleted }: QuestionListProps) {
                 <GradientButton
                   href={getAsNeededLocalizedUrl(locale, `/questions/${item.id}/edit`)}
                   openInNewTab={false}
-                  title={isZh ? '编辑' : 'Edit'}
+                  title={copy.edit}
                   align="center"
                   icon={false}
                   className="min-h-8 px-3 py-1.5 text-xs min-w-20"
@@ -172,10 +173,10 @@ export function QuestionList({ locale, items, onDeleted }: QuestionListProps) {
           {confirmingId === item.id ? (
             <div className="mt-4 rounded-2xl border border-red-200 bg-red-50/80 p-4 dark:border-red-400/20 dark:bg-red-500/10">
               <div className="text-sm font-semibold text-red-700 dark:text-red-200">
-                {isZh ? '确认删除这道题目？' : 'Confirm delete this question?'}
+                {copy.confirmDeleteTitle}
               </div>
               <div className="mt-1 text-xs text-red-600 dark:text-red-300">
-                {isZh ? '这是软删除，删除后题目将不再出现在列表中。' : 'This is a soft delete. The question will be hidden from the list.'}
+                {copy.confirmDeleteDescription}
               </div>
               <div className="mt-3 flex justify-end gap-2">
                 <XButton
@@ -185,7 +186,7 @@ export function QuestionList({ locale, items, onDeleted }: QuestionListProps) {
                   className="px-3 py-1.5 text-xs"
                   button={{
                     icon: false,
-                    text: isZh ? '取消' : 'Cancel',
+                    text: copy.cancel,
                     onClick: () => setConfirmingId(null),
                     disabled: deletingId === item.id,
                   }}
@@ -195,10 +196,10 @@ export function QuestionList({ locale, items, onDeleted }: QuestionListProps) {
                   variant="subtle"
                   minWidth="min-w-0"
                   className="px-3 py-1.5 text-xs text-red-700 border-red-200 hover:border-red-300 hover:bg-red-100 dark:text-red-300 dark:border-red-400/20 dark:hover:bg-red-500/20"
-                  loadingText={isZh ? '删除中...' : 'Deleting...'}
+                  loadingText={copy.deleteLoading}
                   button={{
                     icon: false,
-                    text: isZh ? '确认删除' : 'Confirm Delete',
+                    text: copy.confirmDelete,
                     onClick: () => void handleDelete(item.id),
                     disabled: deletingId === item.id,
                   }}

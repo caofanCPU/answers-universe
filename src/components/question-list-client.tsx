@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
 import { XButton } from '@windrun-huaiin/third-ui/main';
+import type { QuestionListItemCopy } from './question-copy';
 import { QuestionList } from './question-list';
 import { QuestionListFilters } from './question-list-filters';
 import type { QuestionListItemDto, QuestionListResult } from '@/server/questions/types';
@@ -37,6 +38,10 @@ type QuestionListClientProps = {
       summary: string;
       previous: string;
       next: string;
+      enterPage: string;
+      enterPageHint: string;
+      jumpToLast: string;
+      total: string;
     };
     export: {
       settingsLabel: string;
@@ -44,6 +49,8 @@ type QuestionListClientProps = {
       loadingLabel: string;
       dialogTitle: string;
       dialogDescription: string;
+      settingsAriaLabel: string;
+      closeAriaLabel: string;
       confirm: string;
       cancel: string;
       requiredHint: string;
@@ -56,6 +63,7 @@ type QuestionListClientProps = {
         asFirst: string;
       };
     };
+    item: QuestionListItemCopy;
   };
 };
 
@@ -450,6 +458,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
         <QuestionList
           locale={locale}
           items={state.items}
+          copy={copy.item}
           onDeleted={() => setReloadKey((current) => current + 1)}
         />
       ) : null}
@@ -489,8 +498,8 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
                       normalizePageInput();
                     }
                   }}
-                  aria-label="Enter page number"
-                  title="Enter a page number, then press Enter or blur to jump"
+                  aria-label={copy.pagination.enterPage}
+                  title={copy.pagination.enterPageHint}
                   className={`h-8 w-14 rounded-lg bg-transparent px-2 text-center text-sm outline-none transition ${
                     hasInvalidPageInput
                       ? 'border border-red-300 focus:border-red-400 hover:border-red-400 dark:border-red-400/60 dark:hover:border-red-400 dark:focus:border-red-400'
@@ -502,12 +511,12 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
                   type="button"
                   onClick={() => setPage(maxPage)}
                   className="rounded-md px-1.5 py-0.5 text-sm transition hover:bg-black/5 hover:text-slate-900 dark:hover:bg-white/5 dark:hover:text-white"
-                  title="Jump to the last page"
+                  title={copy.pagination.jumpToLast}
                 >
                   {maxPage}
                 </button>
                 <span className="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
-                  Total {state.pagination.total}
+                  {copy.pagination.total.replace('{total}', String(state.pagination.total))}
                 </span>
               </div>
               <XButton
@@ -529,8 +538,8 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
                 onClick={() => setDialogOpen(true)}
                 disabled={hasInvalidId || hasInvalidUuid}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-                aria-label="Configure export columns"
-                title="Configure export columns"
+                aria-label={copy.export.settingsAriaLabel}
+                title={copy.export.settingsAriaLabel}
               >
                 <icons.Settings className="h-4 w-4" />
               </button>
@@ -567,8 +576,8 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
                 type="button"
                 onClick={() => setDialogOpen(false)}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-black/5 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
-                aria-label="Close export settings"
-                title="Close export settings"
+                aria-label={copy.export.closeAriaLabel}
+                title={copy.export.closeAriaLabel}
               >
                 <icons.X className="h-4 w-4" />
               </button>

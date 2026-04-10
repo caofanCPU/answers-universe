@@ -1,5 +1,6 @@
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
 import { getTranslations } from 'next-intl/server';
+import { buildQuestionFormCopy, buildQuestionImportCopy } from '@/components/question-copy';
 import { QuestionImportClient } from '@/components/question-import-client';
 import { QuestionPageShell } from '@/components/question-page-shell';
 
@@ -11,6 +12,9 @@ export default async function QuestionImportPage({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
   const createT = await getTranslations({ locale, namespace: 'faqPage.questionCreate' });
+  const formT = await getTranslations({ locale, namespace: 'faqPage.questionForm' });
+  const formCopy = buildQuestionFormCopy(formT);
+  const copy = buildQuestionImportCopy(t, t.raw, formCopy);
 
   return (
     <QuestionPageShell
@@ -30,7 +34,7 @@ export default async function QuestionImportPage({
         },
       ]}
     >
-      <QuestionImportClient locale={locale} />
+      <QuestionImportClient copy={copy} />
     </QuestionPageShell>
   );
 }
