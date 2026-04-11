@@ -7,7 +7,6 @@ import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/s
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
 import { XButton, XToggleButton } from '@windrun-huaiin/third-ui/main';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
-import { SiteEyeIcon, SiteEyeOffIcon } from '@/lib/site-config';
 import { QUESTION_DEFAULT_DIFFICULTY } from '@/server/questions/constants';
 import { loadQuestionGroupContext } from './question-group-context';
 import {
@@ -405,7 +404,7 @@ export function QuestionEditorClient({
           {activeView === 'edit' ? (
             <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex min-w-0 items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                <SiteEyeOffIcon className="h-4 w-4 shrink-0" />
+                <icons.EyeOff className="h-4 w-4 shrink-0" />
                 <span className="min-w-0 wrap-break-word">{usb.preview.draftHint}</span>
               </div>
               <div className="flex min-w-0 items-center justify-end gap-2">
@@ -414,7 +413,7 @@ export function QuestionEditorClient({
                   aria-label={activeStatusText}
                   title={activeStatusText}
                 >
-                  <SiteEyeOffIcon className="h-4 w-4" />
+                  <icons.EyeOff className="h-4 w-4" />
                   <span className="truncate">{activeStatusText}</span>
                 </div>
                 <XButton
@@ -423,7 +422,7 @@ export function QuestionEditorClient({
                   minWidth="min-w-0"
                   className="self-end px-4 py-2.5 sm:px-5 sm:py-3"
                   button={{
-                    icon: <SiteEyeIcon className="h-4 w-4" />,
+                    icon: <icons.Eye className="h-4 w-4" />,
                     text: usb.preview.reviewButton,
                     onClick: openPreview,
                   }}
@@ -458,7 +457,7 @@ export function QuestionEditorClient({
                     aria-label={previewAsPlayer ? usb.preview.showFullPreview : usb.preview.switchToPlayerView}
                     title={previewAsPlayer ? usb.preview.showFullPreview : usb.preview.switchToPlayerView}
                   >
-                    {previewAsPlayer ? <SiteEyeOffIcon className="h-4 w-4" /> : <SiteEyeIcon className="h-4 w-4" />}
+                    {previewAsPlayer ? <icons.EyeOff className="h-4 w-4" /> : <icons.Eye className="h-4 w-4" />}
                   </button>
                   <div className="min-w-0 px-2 text-center text-xs font-medium text-slate-600 dark:text-slate-300 sm:px-3">
                     <span className="truncate">{activeStatusText}</span>

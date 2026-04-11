@@ -21,8 +21,6 @@ import {
 } from './question-import-shared';
 import type { QuestionFormValues } from './question-ui-types';
 
-import { SiteStacked, SiteBookmarkCheck, SiteBookmarkX, SiteDatabaseZap, SiteRotateCcw, SiteScanSearch } from '@/lib/site-config';
-
 const sampleJson = `[
   {
     "question": "Which USB connector is reversible and commonly used by modern laptops and phones?",
@@ -324,11 +322,11 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
           <div className="-mx-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex min-w-max items-center justify-center gap-1.5">
               <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[84px] md:gap-2 md:px-3 md:py-1.5">
-                <SiteStacked className="h-3.5 w-3.5 shrink-0 text-slate-600 dark:text-slate-300 md:h-4 md:w-4" aria-hidden="true" />
+                <icons.ChartColumnStacked className="h-3.5 w-3.5 shrink-0 text-slate-600 dark:text-slate-300 md:h-4 md:w-4" aria-hidden="true" />
                 {renderCountBadge(totalCount, 'neutral')}
               </div>
               <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[84px] md:gap-2 md:px-3 md:py-1.5">
-                <SiteBookmarkCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300 md:h-4 md:w-4" aria-hidden="true" />
+                <icons.BookmarkCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300 md:h-4 md:w-4" aria-hidden="true" />
                 {renderCountBadge(validCount, 'success')}
               </div>
               <button
@@ -340,11 +338,11 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
                 }}
                 className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[84px] md:gap-2 md:px-3 md:py-1.5"
               >
-                <SiteBookmarkX className="h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-300 md:h-4 md:w-4" aria-hidden="true" />
+                <icons.BookmarkX className="h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-300 md:h-4 md:w-4" aria-hidden="true" />
                 {renderCountBadge(invalidCount, 'danger')}
               </button>
               <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[84px] md:gap-2 md:px-3 md:py-1.5">
-                <SiteDatabaseZap className="h-3.5 w-3.5 shrink-0 text-cyan-600 dark:text-cyan-300 md:h-4 md:w-4" aria-hidden="true" />
+                <icons.DatabaseZap className="h-3.5 w-3.5 shrink-0 text-cyan-600 dark:text-cyan-300 md:h-4 md:w-4" aria-hidden="true" />
                 {renderCountBadge(importedCount, importedCount > 0 ? 'success' : 'neutral')}
               </div>
             </div>
@@ -368,7 +366,7 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
                 align="center"
                 variant="subtle"
                 className="w-full md:min-w-[120px] md:w-auto"
-                icon=<SiteRotateCcw className="h-4 w-4"/>
+                icon=<icons.RotateCcw className="h-4 w-4"/>
               />
             </div>
 
@@ -383,7 +381,7 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
                   loadingText={copy.toolbar.validating}
                   align="center"
                   className="w-full md:min-w-[120px] md:w-auto"
-                  icon=<SiteScanSearch className="h-4 w-4"/>
+                  icon=<icons.ScanSearch className="h-4 w-4"/>
                 />
               </div>
               <div className="flex w-full md:w-auto">

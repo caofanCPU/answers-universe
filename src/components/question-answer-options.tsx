@@ -4,7 +4,6 @@ import { useRef, useState } from 'react';
 import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 import { themeBorderColor, themeIconColor } from '@windrun-huaiin/base-ui/lib';
 import { cn } from '@windrun-huaiin/lib/utils';
-import { SiteEyeIcon, SiteEyeOffIcon } from '@/lib/site-config';
 
 export type QuestionAnswerOptionDraft = {
   id: string;
@@ -230,7 +229,7 @@ export function QuestionAnswerOptions({
               className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-black/5 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
               aria-label={collapsed ? copy.expand : copy.collapse}
             >
-              {collapsed ? <SiteEyeIcon className="h-4 w-4" /> : <SiteEyeOffIcon className="h-4 w-4" />}
+              {collapsed ? <icons.Eye className="h-4 w-4" /> : <icons.EyeOff className="h-4 w-4" />}
             </button>
           </div>
         ) : null}
