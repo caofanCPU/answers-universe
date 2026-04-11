@@ -3,7 +3,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
-import { XButton } from '@windrun-huaiin/third-ui/main';
 import type {
   QuestionImportCommitResult,
   QuestionImportValidationItem,
@@ -21,6 +20,8 @@ import {
   type RawImportItem,
 } from './question-import-shared';
 import type { QuestionFormValues } from './question-ui-types';
+
+import { SiteStacked, SiteBookmarkCheck, SiteBookmarkX, SiteDatabaseZap, SiteRotateCcw, SiteScanSearch } from '@/lib/site-config';
 
 const sampleJson = `[
   {
@@ -54,7 +55,9 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
   const [validating, setValidating] = useState(false);
   const [committing, setCommitting] = useState(false);
   const [revalidatingItemId, setRevalidatingItemId] = useState<string | null>(null);
-  const [serverError, setServerError] = useState<string | null>(null);
+  const [errorDialogMessage, setErrorDialogMessage] = useState<string | null>(null);
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [importCompleted, setImportCompleted] = useState(false);
   const [validatedItems, setValidatedItems] = useState<QuestionImportValidationItem[]>([]);
   const [hasValidated, setHasValidated] = useState(false);
   const [currentInvalidIndex, setCurrentInvalidIndex] = useState(0);
@@ -67,6 +70,7 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
   const totalCount = hasValidated ? validatedItems.length : result.rawItems.length;
   const validCount = hasValidated ? validatedItems.filter((item) => item.valid).length : 0;
   const invalidCount = hasValidated ? invalidItems.length : 0;
+  const importedCount = commitResult?.successCount ?? 0;
   const commitEnabled = hasValidated && totalCount > 0 && invalidCount === 0;
 
   function resetValidationState() {
@@ -74,7 +78,9 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
     setHasValidated(false);
     setCurrentInvalidIndex(0);
     setCommitResult(null);
-    setServerError(null);
+    setErrorDialogMessage(null);
+    setSuccessDialogOpen(false);
+    setImportCompleted(false);
   }
 
   function replaceSourceItems(items: RawImportItem[]) {
@@ -191,7 +197,7 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
       const data = (await response.json()) as QuestionImportValidationResult;
       syncValidatedItems(data.items);
     } catch (error) {
-      setServerError(error instanceof Error ? error.message : 'Unknown error');
+      setErrorDialogMessage(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setValidating(false);
     }
@@ -203,7 +209,7 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
     }
 
     setCommitting(true);
-    setServerError(null);
+    setErrorDialogMessage(null);
     setCommitResult(null);
 
     try {
@@ -222,8 +228,10 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
 
       const data = (await response.json()) as QuestionImportCommitResult;
       setCommitResult(data);
+      setImportCompleted(true);
+      setSuccessDialogOpen(true);
     } catch (error) {
-      setServerError(error instanceof Error ? error.message : 'Unknown error');
+      setErrorDialogMessage(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setCommitting(false);
     }
@@ -235,7 +243,7 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
     }
 
     setRevalidatingItemId(currentInvalidItem.importId);
-    setServerError(null);
+    setErrorDialogMessage(null);
 
     try {
       const response = await fetch('/api/questions/import/validate', {
@@ -257,7 +265,7 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
       setValidatedItems((items) => items.map((item) => (item.importId === nextItem.importId ? nextItem : item)));
       setCurrentInvalidIndex((index) => Math.min(index, Math.max(invalidItems.length - (nextItem.valid ? 2 : 1), 0)));
     } catch (error) {
-      setServerError(error instanceof Error ? error.message : 'Unknown error');
+      setErrorDialogMessage(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setRevalidatingItemId(null);
     }
@@ -289,7 +297,7 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
     }
 
     if (!file.name.trim().toLowerCase().endsWith('.json')) {
-      setServerError(copy.errors.jsonOnly);
+      setErrorDialogMessage(copy.errors.jsonOnly);
       return;
     }
 
@@ -298,7 +306,7 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
       setSource(text);
       resetValidationState();
     } catch (error) {
-      setServerError(error instanceof Error ? error.message : 'Failed to read file');
+      setErrorDialogMessage(error instanceof Error ? error.message : 'Failed to read file');
     }
   }
 
@@ -314,13 +322,13 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
         />
         <div className="space-y-3 border-b border-black/10 pb-4 dark:border-white/10">
           <div className="-mx-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max items-center justify-center gap-1.5 md:justify-start">
+            <div className="flex min-w-max items-center justify-center gap-1.5">
               <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5">
-                <span className="text-xs" aria-hidden="true">📊</span>
+                <SiteStacked className="h-3.5 w-3.5 shrink-0 text-slate-600 dark:text-slate-300" aria-hidden="true" />
                 {renderCountBadge(totalCount, 'neutral')}
               </div>
               <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5">
-                <span className="text-xs" aria-hidden="true">✅</span>
+                <SiteBookmarkCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
                 {renderCountBadge(validCount, 'success')}
               </div>
               <button
@@ -332,60 +340,63 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
                 }}
                 className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5"
               >
-                <span className="text-xs" aria-hidden="true">❌</span>
+                <SiteBookmarkX className="h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-300" aria-hidden="true" />
                 {renderCountBadge(invalidCount, 'danger')}
               </button>
+              <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5">
+                <SiteDatabaseZap className="h-3.5 w-3.5 shrink-0 text-cyan-600 dark:text-cyan-300" aria-hidden="true" />
+                {renderCountBadge(importedCount, importedCount > 0 ? 'success' : 'neutral')}
+              </div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
-            <XButton
-              type="single"
-              variant="subtle"
-              minWidth="min-w-0"
-              className="px-4 py-2.5"
-              button={{
-                icon: false,
-                text: copy.toolbar.uploadJson,
-                onClick: () => fileInputRef.current?.click(),
-              }}
-            />
-            <XButton
-              type="single"
-              variant="subtle"
-              minWidth="min-w-0"
-              className="px-4 py-2.5"
-              button={{
-                icon: false,
-                text: copy.toolbar.loadSample,
-                onClick: () => {
+          <div className="flex flex-col items-center gap-3 md:flex-row md:flex-wrap md:justify-center">
+            <div className="grid w-full grid-cols-2 gap-2 md:w-auto md:flex md:flex-wrap md:items-center">
+              <GradientButton
+                onClick={() => fileInputRef.current?.click()}
+                title={copy.toolbar.uploadJson}
+                align="center"
+                variant="subtle"
+                className="w-full md:min-w-[120px] md:w-auto"
+                icon=<icons.Json className="h-4 w-4"/>
+              />
+              <GradientButton
+                onClick={() => {
                   setSource(sampleJson);
                   resetValidationState();
-                },
-              }}
-            />
-            <XButton
-              type="single"
-              variant="subtle"
-              minWidth="min-w-0"
-              className="px-4 py-2.5"
-              loadingText={copy.toolbar.validating}
-              button={{
-                icon: false,
-                text: copy.toolbar.validateAll,
-                onClick: () => void handleValidate(),
-                disabled: validating,
-              }}
-            />
-            <div className="flex w-full justify-center md:w-auto md:justify-start">
-              <GradientButton
-                onClick={() => void handleCommit()}
-                disabled={committing || !commitEnabled}
-                title={copy.toolbar.import}
-                loadingText={copy.toolbar.importing}
+                }}
+                title={copy.toolbar.loadSample}
                 align="center"
-                icon=<icons.CheckCheck/>
-                className="sm:w-auto"
+                variant="subtle"
+                className="w-full md:min-w-[120px] md:w-auto"
+                icon=<SiteRotateCcw className="h-4 w-4"/>
               />
+            </div>
+
+            <div className="hidden h-9 w-px shrink-0 bg-black/10 dark:bg-white/10 md:block" />
+
+            <div className="grid w-full grid-cols-2 gap-2 md:w-auto md:flex md:flex-wrap md:items-center md:justify-center">
+              <div className="flex w-full md:w-auto">
+                <GradientButton
+                  onClick={() => void handleValidate()}
+                  disabled={validating || importCompleted}
+                  title={copy.toolbar.validateAll}
+                  loadingText={copy.toolbar.validating}
+                  align="center"
+                  className="w-full md:min-w-[120px] md:w-auto"
+                  icon=<SiteScanSearch className="h-4 w-4"/>
+                />
+              </div>
+              <div className="flex w-full md:w-auto">
+                <GradientButton
+                  onClick={() => void handleCommit()}
+                  disabled={committing || !commitEnabled || importCompleted}
+                  title={copy.toolbar.import}
+                  loadingText={copy.toolbar.importing}
+                  align="center"
+                  className="w-full md:min-w-[120px] md:w-auto"
+                  icon=<icons.CheckCheck className="h-4 w-4"/>
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -405,11 +416,6 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
         {result.parseError ? (
           <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
             {result.parseError}
-          </div>
-        ) : null}
-        {serverError ? (
-          <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
-            {serverError}
           </div>
         ) : null}
       </div>
@@ -433,19 +439,61 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
         </div>
       ) : null}
 
+      {errorDialogMessage ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm"
+          onClick={() => setErrorDialogMessage(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl border border-black/10 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-slate-950"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{copy.errors.dialogTitle}</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-300">{errorDialogMessage}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorDialogMessage(null)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-black/5 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+                aria-label={copy.errors.closeAriaLabel}
+                title={copy.errors.closeAriaLabel}
+              >
+                <icons.X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
-      {commitResult ? (
-        <div className="rounded-3xl border border-black/10 p-6 dark:border-white/10">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {copy.result.title}
-          </h2>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-white/5 dark:text-slate-300">
-              {copy.result.total.replace('{count}', String(commitResult.total))}
-            </span>
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-              {copy.result.success.replace('{count}', String(commitResult.successCount))}
-            </span>
+      {successDialogOpen && commitResult ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm"
+          onClick={() => setSuccessDialogOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl border border-black/10 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-slate-950"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{copy.result.dialogTitle}</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  {copy.result.success.replace('{count}', String(commitResult.successCount))}
+                </p>
+                <p className="text-sm text-slate-600 dark:text-slate-300">{copy.result.dialogDescription}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSuccessDialogOpen(false)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-black/5 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+                aria-label={copy.errors.closeAriaLabel}
+                title={copy.errors.closeAriaLabel}
+              >
+                <icons.X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

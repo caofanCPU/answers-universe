@@ -103,15 +103,17 @@
           "backToList": "Back to List"
         },
         "toolbar": {
-          "uploadJson": "Upload JSON",
-          "loadSample": "Load Sample",
-          "validateAll": "Validate All",
-          "validating": "Validating...",
+          "uploadJson": "Upload",
+          "loadSample": "Reset",
+          "validateAll": "Check",
+          "validating": "Checking...",
           "import": "Import",
           "importing": "Importing..."
         },
         "errors": {
-          "jsonOnly": "Only JSON files are supported."
+          "jsonOnly": "Only JSON files are supported.",
+          "dialogTitle": "Import request failed",
+          "closeAriaLabel": "Close import error dialog"
         },
         "workbench": {
           "title": "To Fix",
@@ -123,7 +125,9 @@
         "result": {
           "title": "Import Result",
           "total": "Total {count}",
-          "success": "Success {count}"
+          "success": "Success {count}",
+          "dialogTitle": "Import completed",
+          "dialogDescription": "This batch has been imported. Upload a new JSON file or reset to start another batch."
         }
       },
     "questionDetail": {

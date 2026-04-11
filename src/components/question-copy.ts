@@ -58,11 +58,15 @@ export type QuestionImportCopy = {
   };
   errors: {
     jsonOnly: string;
+    dialogTitle: string;
+    closeAriaLabel: string;
   };
   result: {
     title: string;
     total: string;
     success: string;
+    dialogTitle: string;
+    dialogDescription: string;
   };
   workbench: {
     title: string;
@@ -182,11 +186,15 @@ export function buildQuestionImportCopy(
     },
     errors: {
       jsonOnly: t('errors.jsonOnly'),
+      dialogTitle: t('errors.dialogTitle'),
+      closeAriaLabel: t('errors.closeAriaLabel'),
     },
     result: {
       title: t('result.title'),
       total: raw('result.total'),
       success: raw('result.success'),
+      dialogTitle: t('result.dialogTitle'),
+      dialogDescription: t('result.dialogDescription'),
     },
     workbench: {
       title: t('workbench.title'),
