@@ -20,9 +20,6 @@ const DEFAULT_PREVIEW_COPY: QuestionPreviewCopy = {
   options: 'Options',
   explanation: 'Explanation',
   tags: 'Tags',
-  showFullPreview: 'Show full preview',
-  switchToPlayerView: 'Switch to player view',
-  openPreview: 'Open preview',
 };
 
 export function QuestionDetail({

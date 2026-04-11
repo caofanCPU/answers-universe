@@ -1,6 +1,5 @@
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
-import { getTranslations } from 'next-intl/server';
-import { buildQuestionFormCopy, buildQuestionImportCopy } from '@/components/question-copy';
+import { getQuestionImportPageCopy } from '@/components/question-copy';
 import { QuestionImportClient } from '@/components/question-import-client';
 import { QuestionPageShell } from '@/components/question-page-shell';
 
@@ -10,31 +9,27 @@ export default async function QuestionImportPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
-  const createT = await getTranslations({ locale, namespace: 'faqPage.questionCreate' });
-  const formT = await getTranslations({ locale, namespace: 'faqPage.questionForm' });
-  const formCopy = buildQuestionFormCopy(formT);
-  const copy = buildQuestionImportCopy(t, t.raw, formCopy);
+  const copy = await getQuestionImportPageCopy(locale);
 
   return (
     <QuestionPageShell
-      title={t('title')}
-      description={t('description')}
+      title={copy.title}
+      description={copy.description}
       actions={[
         {
           href: getAsNeededLocalizedUrl(locale, '/questions'),
-          label: t('actions.backToList'),
+          label: copy.actions.backToList,
           icon: false
         },
         {
           href: getAsNeededLocalizedUrl(locale, '/questions/new'),
-          label: createT('title'),
+          label: copy.actions.create,
           primary: true,
           icon: false
         },
       ]}
     >
-      <QuestionImportClient copy={copy} />
+      <QuestionImportClient copy={copy.client} />
     </QuestionPageShell>
   );
 }

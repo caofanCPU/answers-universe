@@ -1,3 +1,5 @@
+import { getTranslations } from 'next-intl/server';
+
 export type QuestionFormCopy = {
   question: string;
   answersLabel: string;
@@ -99,148 +101,411 @@ export type QuestionPreviewCopy = {
   options: string;
   explanation: string;
   tags: string;
-  showFullPreview: string;
-  switchToPlayerView: string;
-  openPreview: string;
 };
 
-export type QuestionDetailClientCopy = {
-  loading: string;
-  notFound: string;
-  loadFailed: string;
+export type QuestionsListPageCopy = {
+  title: string;
+  description: string;
+  actions: {
+    create: string;
+    import: string;
+    randomSets: string;
+  };
+  client: {
+    filters: {
+      categoryLabel: string;
+      categoryAll: string;
+      subCategoryLabel: string;
+      subCategoryAll: string;
+      difficultyLabel: string;
+      difficultyAll: string;
+      questionLabel: string;
+      questionPlaceholder: string;
+      correctAnswerLabel: string;
+      correctAnswerPlaceholder: string;
+      createdAtFromLabel: string;
+      createdAtToLabel: string;
+      advancedToggle: string;
+      idLabel: string;
+      idPlaceholder: string;
+      uuidLabel: string;
+      uuidPlaceholder: string;
+      firstLabel: string;
+    };
+    loading: string;
+    loadFailed: string;
+    pagination: {
+      summary: string;
+      previous: string;
+      next: string;
+      enterPage: string;
+      enterPageHint: string;
+      jumpToLast: string;
+      total: string;
+    };
+    export: {
+      settingsLabel: string;
+      buttonLabel: string;
+      loadingLabel: string;
+      dialogTitle: string;
+      dialogDescription: string;
+      settingsAriaLabel: string;
+      closeAriaLabel: string;
+      confirm: string;
+      cancel: string;
+      requiredHint: string;
+      failed: string;
+      columns: {
+        id: string;
+        questionUuid: string;
+        category: string;
+        subCategory: string;
+        asFirst: string;
+      };
+    };
+    item: QuestionListItemCopy;
+  };
 };
 
-type TranslateFn = (key: string, values?: Record<string, any>) => string;
-type RawTranslateFn = (key: string) => string;
+export type QuestionEditorPageCopy = {
+  title: string;
+  description: string;
+  actions: {
+    primary: string;
+    secondary?: string;
+  };
+  backLabel: string;
+  editor: QuestionEditorCopy;
+};
 
-export function buildQuestionFormCopy(t: TranslateFn): QuestionFormCopy {
+export type QuestionImportPageCopy = {
+  title: string;
+  description: string;
+  actions: {
+    backToList: string;
+    create: string;
+  };
+  client: QuestionImportCopy;
+};
+
+export type RandomQuestionsPageCopy = {
+  title: string;
+  description: string;
+  actions: {
+    backToList: string;
+    create: string;
+    import: string;
+  };
+};
+export async function getQuestionFormCopy(locale: string): Promise<QuestionFormCopy> {
+  const formT = await getTranslations({ locale, namespace: 'faqPage.questionForm' });
+
   return {
-    question: t('question'),
-    answersLabel: t('answers.label'),
-    answersPlaceholder: t('answers.placeholder'),
-    answersEmpty: t('answers.empty'),
-    answersExpand: t('answers.expand'),
-    answersCollapse: t('answers.collapse'),
-    answersCorrectPrefix: t('answers.correctPrefix'),
-    answersNoCorrect: t('answers.noCorrect'),
-    categoryLabel: t('category.label'),
-    categoryEmpty: t('category.empty'),
-    subCategoryLabel: t('subCategory.label'),
-    subCategoryEmpty: t('subCategory.empty'),
-    difficultyLabel: t('difficulty.label'),
-    difficultyEmpty: t('difficulty.empty'),
-    tagsLabel: t('tags.label'),
-    tagsPlaceholder: t('tags.placeholder'),
-    tagsEmpty: t('tags.empty'),
-    explanation: t('explanation'),
-    cdnImagePrefix: t('cdnImagePrefix'),
-    questionImage: t('questionImage'),
-    asFirst: t('asFirst'),
+    question: formT('question'),
+    answersLabel: formT('answers.label'),
+    answersPlaceholder: formT('answers.placeholder'),
+    answersEmpty: formT('answers.empty'),
+    answersExpand: formT('answers.expand'),
+    answersCollapse: formT('answers.collapse'),
+    answersCorrectPrefix: formT('answers.correctPrefix'),
+    answersNoCorrect: formT('answers.noCorrect'),
+    categoryLabel: formT('category.label'),
+    categoryEmpty: formT('category.empty'),
+    subCategoryLabel: formT('subCategory.label'),
+    subCategoryEmpty: formT('subCategory.empty'),
+    difficultyLabel: formT('difficulty.label'),
+    difficultyEmpty: formT('difficulty.empty'),
+    tagsLabel: formT('tags.label'),
+    tagsPlaceholder: formT('tags.placeholder'),
+    tagsEmpty: formT('tags.empty'),
+    explanation: formT('explanation'),
+    cdnImagePrefix: formT('cdnImagePrefix'),
+    questionImage: formT('questionImage'),
+    asFirst: formT('asFirst'),
   };
 }
 
-export function buildQuestionEditorCopy(
-  t: TranslateFn,
-  form: QuestionFormCopy,
-  detail: QuestionPreviewCopy
-): QuestionEditorCopy {
+export async function getQuestionPreviewCopy(locale: string): Promise<QuestionPreviewCopy> {
+  const previewT = await getTranslations({ locale, namespace: 'faqPage.questionPreview' });
+
   return {
-    noticeCreate: t('notice'),
-    noticeEdit: t('notice'),
-    loading: t('status.loading'),
-    submitFailed: t('status.submitFailed'),
-    saving: t('status.saving'),
-    saved: t('status.saved'),
-    createButton: t('actions.submit'),
-    updateButton: t('actions.submit'),
-    form,
-    detail,
-    preview: {
-      toggleAriaLabel: t('preview.toggleAriaLabel'),
-      edit: t('preview.edit'),
-      preview: t('preview.preview'),
-      draftHint: t('preview.draftHint'),
-      reviewButton: t('preview.reviewButton'),
-      previous: t('preview.previous'),
-      next: t('preview.next'),
-      progress: t('preview.progress'),
-      showFullPreview: t('preview.showFullPreview'),
-      switchToPlayerView: t('preview.switchToPlayerView'),
+    firstBadge: previewT('firstBadge'),
+    previewDescription: previewT('previewDescription'),
+    options: previewT('options'),
+    explanation: previewT('explanation'),
+    tags: previewT('tags'),
+  };
+}
+
+export async function getQuestionsListPageCopy(locale: string): Promise<QuestionsListPageCopy> {
+  const listT = await getTranslations({ locale, namespace: 'faqPage.questionsList' });
+  const importT = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
+
+  return {
+    title: listT('title'),
+    description: listT('description'),
+    actions: {
+      create: listT('actions.create'),
+      import: importT('title'),
+      randomSets: 'Random Sets',
+    },
+    client: {
+      filters: {
+        categoryLabel: listT('filters.category.label'),
+        categoryAll: listT('filters.category.all'),
+        subCategoryLabel: listT('filters.subCategory.label'),
+        subCategoryAll: listT('filters.subCategory.all'),
+        difficultyLabel: listT('filters.difficulty.label'),
+        difficultyAll: listT('filters.difficulty.all'),
+        questionLabel: listT('filters.question.label'),
+        questionPlaceholder: listT('filters.question.placeholder'),
+        correctAnswerLabel: listT('filters.correctAnswer.label'),
+        correctAnswerPlaceholder: listT('filters.correctAnswer.placeholder'),
+        createdAtFromLabel: listT('filters.createdAt.fromLabel'),
+        createdAtToLabel: listT('filters.createdAt.toLabel'),
+        advancedToggle: listT('filters.advancedToggle'),
+        idLabel: listT('filters.id.label'),
+        idPlaceholder: listT('filters.id.placeholder'),
+        uuidLabel: listT('filters.uuid.label'),
+        uuidPlaceholder: listT('filters.uuid.placeholder'),
+        firstLabel: listT('filters.first.label'),
+      },
+      loading: listT('status.loading'),
+      loadFailed: listT('status.loadFailed'),
+      pagination: {
+        summary: listT.raw('pagination.summary'),
+        previous: listT('pagination.previous'),
+        next: listT('pagination.next'),
+        enterPage: listT('pagination.enterPage'),
+        enterPageHint: listT('pagination.enterPageHint'),
+        jumpToLast: listT('pagination.jumpToLast'),
+        total: listT.raw('pagination.total'),
+      },
+      export: {
+        settingsLabel: listT('export.settings'),
+        buttonLabel: listT('export.button'),
+        loadingLabel: listT('export.loading'),
+        dialogTitle: listT('export.dialog.title'),
+        dialogDescription: listT('export.dialog.description'),
+        settingsAriaLabel: listT('export.dialog.settingsAriaLabel'),
+        closeAriaLabel: listT('export.dialog.closeAriaLabel'),
+        confirm: listT('export.dialog.confirm'),
+        cancel: listT('export.dialog.cancel'),
+        requiredHint: listT('export.dialog.requiredHint'),
+        failed: listT('export.status.failed'),
+        columns: {
+          id: listT('export.columns.id'),
+          questionUuid: listT('export.columns.questionUuid'),
+          category: listT('export.columns.category'),
+          subCategory: listT('export.columns.subCategory'),
+          asFirst: listT('export.columns.asFirst'),
+        },
+      },
+      item: {
+        empty: listT('item.empty'),
+        copyId: listT('item.copyId'),
+        copyUuid: listT('item.copyUuid'),
+        firstBadge: listT('item.firstBadge'),
+        deleteLoading: listT('item.deleteLoading'),
+        delete: listT('item.delete'),
+        view: listT('item.view'),
+        edit: listT('item.edit'),
+        confirmDeleteTitle: listT('item.confirmDeleteTitle'),
+        confirmDeleteDescription: listT('item.confirmDeleteDescription'),
+        cancel: listT('item.cancel'),
+        confirmDelete: listT('item.confirmDelete'),
+      },
     },
   };
 }
 
-export function buildQuestionImportCopy(
-  t: TranslateFn,
-  raw: RawTranslateFn,
-  form: QuestionFormCopy
-): QuestionImportCopy {
+export async function getQuestionCreatePageCopy(locale: string): Promise<QuestionEditorPageCopy> {
+  const createT = await getTranslations({ locale, namespace: 'faqPage.questionCreate' });
+  const importT = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
+  const [formCopy, previewCopy] = await Promise.all([
+    getQuestionFormCopy(locale),
+    getQuestionPreviewCopy(locale),
+  ]);
+
   return {
-    toolbar: {
-      uploadJson: t('toolbar.uploadJson'),
-      loadSample: t('toolbar.loadSample'),
-      validateAll: t('toolbar.validateAll'),
-      validating: t('toolbar.validating'),
-      import: t('toolbar.import'),
-      importing: t('toolbar.importing'),
+    title: createT('title'),
+    description: createT('description'),
+    actions: {
+      primary: importT('title'),
     },
-    errors: {
-      jsonOnly: t('errors.jsonOnly'),
-      dialogTitle: t('errors.dialogTitle'),
-      closeAriaLabel: t('errors.closeAriaLabel'),
+    backLabel: createT('actions.backToList'),
+    editor: {
+      noticeCreate: createT('notice'),
+      noticeEdit: createT('notice'),
+      loading: createT('status.loading'),
+      submitFailed: createT('status.submitFailed'),
+      saving: createT('status.saving'),
+      saved: createT('status.saved'),
+      createButton: createT('actions.submit'),
+      updateButton: createT('actions.submit'),
+      form: formCopy,
+      detail: previewCopy,
+      preview: {
+        toggleAriaLabel: createT('preview.toggleAriaLabel'),
+        edit: createT('preview.edit'),
+        preview: createT('preview.preview'),
+        draftHint: createT('preview.draftHint'),
+        reviewButton: createT('preview.reviewButton'),
+        previous: createT('preview.previous'),
+        next: createT('preview.next'),
+        progress: createT('preview.progress'),
+        showFullPreview: createT('preview.showFullPreview'),
+        switchToPlayerView: createT('preview.switchToPlayerView'),
+      },
     },
-    result: {
-      title: t('result.title'),
-      total: raw('result.total'),
-      success: raw('result.success'),
-      dialogTitle: t('result.dialogTitle'),
-      dialogDescription: t('result.dialogDescription'),
-    },
-    workbench: {
-      title: t('workbench.title'),
-      itemProgress: raw('workbench.itemProgress'),
-      removeCurrent: t('workbench.removeCurrent'),
-      validateCurrent: t('workbench.validateCurrent'),
-      validating: t('workbench.validating'),
-    },
-    form,
   };
 }
 
-export function buildQuestionListItemCopy(t: TranslateFn): QuestionListItemCopy {
+export async function getQuestionDetailPageCopy(locale: string, id: string): Promise<QuestionEditorPageCopy> {
+  const detailT = await getTranslations({ locale, namespace: 'faqPage.questionDetail' });
+  const createT = await getTranslations({ locale, namespace: 'faqPage.questionCreate' });
+  const importT = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
+  const editT = await getTranslations({ locale, namespace: 'faqPage.questionEdit' });
+  const [formCopy, previewCopy] = await Promise.all([
+    getQuestionFormCopy(locale),
+    getQuestionPreviewCopy(locale),
+  ]);
+
   return {
-    empty: t('item.empty'),
-    copyId: t('item.copyId'),
-    copyUuid: t('item.copyUuid'),
-    firstBadge: t('item.firstBadge'),
-    deleteLoading: t('item.deleteLoading'),
-    delete: t('item.delete'),
-    view: t('item.view'),
-    edit: t('item.edit'),
-    confirmDeleteTitle: t('item.confirmDeleteTitle'),
-    confirmDeleteDescription: t('item.confirmDeleteDescription'),
-    cancel: t('item.cancel'),
-    confirmDelete: t('item.confirmDelete'),
+    title: detailT('title', { id }),
+    description: detailT('description'),
+    actions: {
+      primary: importT('title'),
+      secondary: createT('title'),
+    },
+    backLabel: detailT('actions.backToList'),
+    editor: {
+      noticeCreate: editT('notice'),
+      noticeEdit: editT('notice'),
+      loading: editT('status.loading'),
+      submitFailed: editT('status.submitFailed'),
+      saving: editT('status.saving'),
+      saved: editT('status.saved'),
+      createButton: editT('actions.submit'),
+      updateButton: editT('actions.submit'),
+      form: formCopy,
+      detail: previewCopy,
+      preview: {
+        toggleAriaLabel: editT('preview.toggleAriaLabel'),
+        edit: editT('preview.edit'),
+        preview: editT('preview.preview'),
+        draftHint: editT('preview.draftHint'),
+        reviewButton: editT('preview.reviewButton'),
+        previous: editT('preview.previous'),
+        next: editT('preview.next'),
+        progress: editT('preview.progress'),
+        showFullPreview: editT('preview.showFullPreview'),
+        switchToPlayerView: editT('preview.switchToPlayerView'),
+      },
+    },
   };
 }
 
-export function buildQuestionPreviewCopy(t: TranslateFn): QuestionPreviewCopy {
+export async function getQuestionEditPageCopy(locale: string, id: string): Promise<QuestionEditorPageCopy> {
+  const editT = await getTranslations({ locale, namespace: 'faqPage.questionEdit' });
+  const createT = await getTranslations({ locale, namespace: 'faqPage.questionCreate' });
+  const importT = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
+  const [formCopy, previewCopy] = await Promise.all([
+    getQuestionFormCopy(locale),
+    getQuestionPreviewCopy(locale),
+  ]);
+
   return {
-    firstBadge: t('firstBadge'),
-    previewDescription: t('previewDescription'),
-    options: t('options'),
-    explanation: t('explanation'),
-    tags: t('tags'),
-    showFullPreview: t('showFullPreview'),
-    switchToPlayerView: t('switchToPlayerView'),
-    openPreview: t('openPreview'),
+    title: editT('title', { id }),
+    description: editT('description'),
+    actions: {
+      primary: importT('title'),
+      secondary: createT('title'),
+    },
+    backLabel: createT('actions.backToList'),
+    editor: {
+      noticeCreate: editT('notice'),
+      noticeEdit: editT('notice'),
+      loading: editT('status.loading'),
+      submitFailed: editT('status.submitFailed'),
+      saving: editT('status.saving'),
+      saved: editT('status.saved'),
+      createButton: editT('actions.submit'),
+      updateButton: editT('actions.submit'),
+      form: formCopy,
+      detail: previewCopy,
+      preview: {
+        toggleAriaLabel: editT('preview.toggleAriaLabel'),
+        edit: editT('preview.edit'),
+        preview: editT('preview.preview'),
+        draftHint: editT('preview.draftHint'),
+        reviewButton: editT('preview.reviewButton'),
+        previous: editT('preview.previous'),
+        next: editT('preview.next'),
+        progress: editT('preview.progress'),
+        showFullPreview: editT('preview.showFullPreview'),
+        switchToPlayerView: editT('preview.switchToPlayerView'),
+      },
+    },
   };
 }
 
-export function buildQuestionDetailClientCopy(t: TranslateFn): QuestionDetailClientCopy {
+export async function getQuestionImportPageCopy(locale: string): Promise<QuestionImportPageCopy> {
+  const importT = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
+  const createT = await getTranslations({ locale, namespace: 'faqPage.questionCreate' });
+  const formCopy = await getQuestionFormCopy(locale);
+
   return {
-    loading: t('status.loading'),
-    notFound: t('status.notFound'),
-    loadFailed: t('status.loadFailed'),
+    title: importT('title'),
+    description: importT('description'),
+    actions: {
+      backToList: importT('actions.backToList'),
+      create: createT('title'),
+    },
+    client: {
+      toolbar: {
+        uploadJson: importT('toolbar.uploadJson'),
+        loadSample: importT('toolbar.loadSample'),
+        validateAll: importT('toolbar.validateAll'),
+        validating: importT('toolbar.validating'),
+        import: importT('toolbar.import'),
+        importing: importT('toolbar.importing'),
+      },
+      errors: {
+        jsonOnly: importT('errors.jsonOnly'),
+        dialogTitle: importT('errors.dialogTitle'),
+        closeAriaLabel: importT('errors.closeAriaLabel'),
+      },
+      result: {
+        title: importT('result.title'),
+        total: importT.raw('result.total'),
+        success: importT.raw('result.success'),
+        dialogTitle: importT('result.dialogTitle'),
+        dialogDescription: importT('result.dialogDescription'),
+      },
+      workbench: {
+        title: importT('workbench.title'),
+        itemProgress: importT.raw('workbench.itemProgress'),
+        removeCurrent: importT('workbench.removeCurrent'),
+        validateCurrent: importT('workbench.validateCurrent'),
+        validating: importT('workbench.validating'),
+      },
+      form: formCopy,
+    },
+  };
+}
+
+export async function getRandomQuestionsPageCopy(locale: string): Promise<RandomQuestionsPageCopy> {
+  const listT = await getTranslations({ locale, namespace: 'faqPage.questionsList' });
+  const importT = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
+
+  return {
+    title: 'Random Question Sets',
+    description: 'Generate daily random question sets, inspect saved dates, and regenerate a day when the pool changes.',
+    actions: {
+      backToList: 'Back to List',
+      create: listT('actions.create'),
+      import: importT('title'),
+    },
   };
 }

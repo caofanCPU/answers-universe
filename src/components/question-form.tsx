@@ -96,8 +96,6 @@ function RequiredMark() {
   return <span className="text-red-500">*</span>;
 }
 
-const AS_FIRST_LABEL = 'Mark as first-release question';
-
 function InlineTooltipLabel({
   label,
   required = false,
@@ -305,7 +303,7 @@ export function QuestionForm({
               onChange={onInputChange('asFirst')}
               className="h-4 w-4 rounded border-black/10"
             />
-            <span>{AS_FIRST_LABEL}</span>
+            <span>{usb.asFirst}</span>
           </label>
           {asFirstError ? <InfoTooltip content={asFirstError} className="md:-translate-y-px" /> : null}
         </div>
