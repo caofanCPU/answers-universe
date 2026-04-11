@@ -219,7 +219,7 @@
         },
         "difficulty": {
           "label": "Difficulty",
-          "empty": "Select difficulty"
+          "empty": "Unknown"
         },
         "tags": {
           "label": "Tags",

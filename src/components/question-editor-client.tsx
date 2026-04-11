@@ -8,6 +8,7 @@ import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
 import { XButton, XToggleButton } from '@windrun-huaiin/third-ui/main';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
 import { SiteEyeIcon, SiteEyeOffIcon } from '@/lib/site-config';
+import { QUESTION_DEFAULT_DIFFICULTY } from '@/server/questions/constants';
 import { loadQuestionGroupContext } from './question-group-context';
 import {
   buildAnswerOptionDrafts,
@@ -79,7 +80,7 @@ function emptyFormValues(): QuestionFormValues {
     correctAnswer: '',
     incorrectAnswersText: '',
     explanation: '',
-    difficulty: '',
+    difficulty: QUESTION_DEFAULT_DIFFICULTY,
     category: '',
     subCategory: '',
     tags: [],
@@ -99,7 +100,7 @@ function detailToFormValues(detail: QuestionDetailDto): QuestionFormValues {
     correctAnswer: detail.correctAnswer,
     incorrectAnswersText: detail.incorrectAnswers.join('\n'),
     explanation: detail.explanation,
-    difficulty: detail.difficulty,
+    difficulty: detail.difficulty || QUESTION_DEFAULT_DIFFICULTY,
     category: detail.category,
     subCategory: detail.subCategory ?? '',
     tags: detail.tags,
@@ -121,7 +122,7 @@ function formValuesToPayload(
     correctAnswerIndex: answers.correctAnswerIndex,
     incorrectAnswers: answers.incorrectAnswers,
     explanation: values.explanation.trim(),
-    difficulty: values.difficulty.trim(),
+    difficulty: values.difficulty.trim() || QUESTION_DEFAULT_DIFFICULTY,
     category: values.category.trim(),
     subCategory: values.subCategory.trim(),
     tags: values.tags,
@@ -145,7 +146,7 @@ function formValuesToPreview(
     correctAnswer: payload.correctAnswer || '--',
     incorrectAnswers: payload.incorrectAnswers,
     explanation: payload.explanation || '--',
-    difficulty: payload.difficulty || '',
+    difficulty: payload.difficulty || QUESTION_DEFAULT_DIFFICULTY,
     category: payload.category || '',
     subCategory: payload.subCategory || null,
     tags: payload.tags ?? [],

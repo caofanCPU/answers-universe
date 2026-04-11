@@ -10,7 +10,7 @@ CREATE TABLE faq.usb (
     correct_answer_index INTEGER NOT NULL DEFAULT 0,
     incorrect_answers JSON NOT NULL,
     explanation TEXT NOT NULL,
-    difficulty VARCHAR(30) NOT NULL,
+    difficulty VARCHAR(30) NOT NULL DEFAULT 'unknown',
     category VARCHAR(100) NOT NULL,
     sub_category VARCHAR(500),
     as_first SMALLINT NOT NULL DEFAULT 0,
@@ -25,7 +25,7 @@ CREATE TABLE faq.usb (
     CONSTRAINT chk_usb_correct_answer_index CHECK (correct_answer_index >= 0),
     CONSTRAINT chk_usb_deleted CHECK (deleted IN (0, 1)),
     CONSTRAINT chk_usb_as_first CHECK (as_first IN (0, 1)),
-    CONSTRAINT chk_usb_difficulty CHECK (difficulty IN ('easy', 'medium', 'hard')),
+    CONSTRAINT chk_usb_difficulty CHECK (difficulty IN ('unknown', 'easy', 'medium', 'hard')),
     CONSTRAINT chk_usb_category CHECK (
         category IN (
             'Science & Nature',

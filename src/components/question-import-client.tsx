@@ -323,12 +323,12 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
         <div className="space-y-3 border-b border-black/10 pb-4 dark:border-white/10">
           <div className="-mx-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex min-w-max items-center justify-center gap-1.5">
-              <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5">
-                <SiteStacked className="h-3.5 w-3.5 shrink-0 text-slate-600 dark:text-slate-300" aria-hidden="true" />
+              <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[84px] md:gap-2 md:px-3 md:py-1.5">
+                <SiteStacked className="h-3.5 w-3.5 shrink-0 text-slate-600 dark:text-slate-300 md:h-4 md:w-4" aria-hidden="true" />
                 {renderCountBadge(totalCount, 'neutral')}
               </div>
-              <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5">
-                <SiteBookmarkCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
+              <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[84px] md:gap-2 md:px-3 md:py-1.5">
+                <SiteBookmarkCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300 md:h-4 md:w-4" aria-hidden="true" />
                 {renderCountBadge(validCount, 'success')}
               </div>
               <button
@@ -338,13 +338,13 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
                     scrollToToFix();
                   }
                 }}
-                className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5"
+                className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[84px] md:gap-2 md:px-3 md:py-1.5"
               >
-                <SiteBookmarkX className="h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-300" aria-hidden="true" />
+                <SiteBookmarkX className="h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-300 md:h-4 md:w-4" aria-hidden="true" />
                 {renderCountBadge(invalidCount, 'danger')}
               </button>
-              <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5">
-                <SiteDatabaseZap className="h-3.5 w-3.5 shrink-0 text-cyan-600 dark:text-cyan-300" aria-hidden="true" />
+              <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[84px] md:gap-2 md:px-3 md:py-1.5">
+                <SiteDatabaseZap className="h-3.5 w-3.5 shrink-0 text-cyan-600 dark:text-cyan-300 md:h-4 md:w-4" aria-hidden="true" />
                 {renderCountBadge(importedCount, importedCount > 0 ? 'success' : 'neutral')}
               </div>
             </div>

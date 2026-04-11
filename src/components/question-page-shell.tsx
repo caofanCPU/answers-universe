@@ -42,7 +42,7 @@ export function QuestionPageShell({
                 icon={action.icon}
                 openInNewTab={false}
                 align="center"
-                className="w-full sm:w-auto"
+                className="w-full sm:w-[148px]"
               />
             ))}
           </div>

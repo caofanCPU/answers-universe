@@ -272,7 +272,7 @@ export function QuestionForm({
         </div>
         <div className={getFieldContainerClass(difficultyError)}>
           <XFormPills
-            label={<InlineTooltipLabel label={usb.difficultyLabel} required tooltip={difficultyError} />}
+            label={<InlineTooltipLabel label={usb.difficultyLabel} tooltip={difficultyError} />}
             value={values.difficulty}
             options={difficultyOptions}
             onChange={(value) => updateField(values, onChange, 'difficulty', value)}

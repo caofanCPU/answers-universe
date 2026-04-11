@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { QUESTION_CATEGORIES, QUESTION_DIFFICULTIES, QUESTION_SUB_CATEGORIES } from '@/server/questions/constants';
+import {
+  QUESTION_CATEGORIES,
+  QUESTION_DEFAULT_DIFFICULTY,
+  QUESTION_DIFFICULTIES,
+  QUESTION_SUB_CATEGORIES,
+} from '@/server/questions/constants';
 
 function normalizeDayBoundary(value: Date, boundary: 'start' | 'end'): Date {
   const normalized = new Date(value);
@@ -58,7 +63,10 @@ export const questionUpsertSchema = z.object({
   correctAnswerIndex: z.coerce.number().int().optional().default(0),
   incorrectAnswers: z.array(z.string().trim().min(1)).default([]),
   explanation: z.string().trim().min(1, 'explanation is required'),
-  difficulty: z.enum(QUESTION_DIFFICULTIES),
+  difficulty: z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+    z.enum(QUESTION_DIFFICULTIES).optional().default(QUESTION_DEFAULT_DIFFICULTY)
+  ),
   category: z.enum(QUESTION_CATEGORIES),
   subCategory: optionalEnumLikeString(QUESTION_SUB_CATEGORIES),
   asFirst: z.boolean().optional().default(false),

@@ -18,6 +18,7 @@ import type {
 } from './types';
 import {
   QUESTION_CATEGORIES,
+  QUESTION_DEFAULT_DIFFICULTY,
   QUESTION_DIFFICULTIES,
   QUESTION_SUB_CATEGORIES,
   type QuestionCategory,
@@ -353,7 +354,7 @@ function buildQuestionWhereInput(params: QuestionListParams): Prisma.UsbWhereInp
 }
 
 function buildQuestionCreateInput(input: QuestionUpsertInput, userId: string): Prisma.UsbUncheckedCreateInput {
-  const difficulty = normalizeDifficulty(input.difficulty);
+  const difficulty = normalizeDifficulty(input.difficulty || QUESTION_DEFAULT_DIFFICULTY);
   const category = normalizeCategory(input.category);
   const subCategory = input.subCategory ? normalizeSubCategory(input.subCategory) : null;
   const incorrectAnswers = normalizeStringArray(input.incorrectAnswers);
@@ -388,7 +389,7 @@ function buildQuestionCreateInput(input: QuestionUpsertInput, userId: string): P
 }
 
 function buildQuestionUpdateInput(input: QuestionUpsertInput, userId: string): Prisma.UsbUncheckedUpdateInput {
-  const difficulty = normalizeDifficulty(input.difficulty);
+  const difficulty = normalizeDifficulty(input.difficulty || QUESTION_DEFAULT_DIFFICULTY);
   const category = normalizeCategory(input.category);
   const subCategory = input.subCategory ? normalizeSubCategory(input.subCategory) : null;
   const incorrectAnswers = normalizeStringArray(input.incorrectAnswers);
@@ -716,7 +717,7 @@ function normalizeQuestionImportDraft(item: Record<string, unknown>, index: numb
     correctAnswerIndex,
     incorrectAnswers,
     explanation,
-    difficulty: difficulty ?? '',
+    difficulty: difficulty ?? QUESTION_DEFAULT_DIFFICULTY,
     category: category ?? '',
     subCategory,
     tags,
@@ -733,8 +734,10 @@ const questionImportFieldValidators: FieldValidator[] = [
     isNonEmptyString(source.subCategory) && !normalizeSubCategory(source.subCategory)
       ? { subCategory: `subCategory must be one of: ${QUESTION_SUB_CATEGORIES.join(', ')}` }
       : {},
-  (draft) =>
-    !draft.difficulty ? { difficulty: `difficulty must be one of: ${QUESTION_DIFFICULTIES.join(', ')}` } : {},
+  (_draft, source) =>
+    isNonEmptyString(source.difficulty) && !normalizeDifficulty(source.difficulty)
+      ? { difficulty: `difficulty must be one of: ${QUESTION_DIFFICULTIES.join(', ')}` }
+      : {},
   (draft) => (!draft.correctAnswer ? { correctAnswer: 'correctAnswer is required' } : {}),
   (draft) => (!draft.explanation ? { explanation: 'explanation is required' } : {}),
   (draft) =>
@@ -767,7 +770,7 @@ function buildQuestionImportPayload(
       : draft.correctAnswerIndex;
 
   const payload: QuestionUpsertInput | null =
-    !hasFieldErrors && draft.category && draft.difficulty
+    !hasFieldErrors && draft.category
       ? {
           question: draft.question,
           cdnImagePrefix: normalizeNullableString(draft.cdnImagePrefix),
@@ -776,7 +779,7 @@ function buildQuestionImportPayload(
           correctAnswerIndex: normalizedCorrectAnswerIndex,
           incorrectAnswers: draft.incorrectAnswers,
           explanation: draft.explanation,
-          difficulty: draft.difficulty,
+          difficulty: draft.difficulty || QUESTION_DEFAULT_DIFFICULTY,
           category: draft.category,
           subCategory: draft.subCategory,
           tags: draft.tags,
@@ -829,7 +832,7 @@ export async function importQuestions(
       continue;
     }
 
-    const created = await prisma.usb.create({
+    await prisma.usb.create({
       data: buildQuestionCreateInput(item.payload, userId),
       select: { id: true, questionUuid: true },
     });
