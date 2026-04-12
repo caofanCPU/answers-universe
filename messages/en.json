@@ -1,65 +1,65 @@
 {
   "home": {
     "title": "Answer·You",
-    "banner": "Ship Faster | Charge Smarter | Scale Fearlessly",
-    "webTitle": "Diaomao – The Ultimate AI SaaS Starter Kit with Stripe, Credits & Docs",
-    "webDescription": "Next.js 14 + Prisma + PostgreSQL + Stripe + Clerk + Fumadocs. Production-ready pricing tiers, credit system, anonymous-to-auth onboarding, and beautiful docs — everything you need to launch and monetize your AI product in days, not months.",
-    "keywords": "AI SaaS template, Next.js boilerplate, Stripe billing, credit-based pricing, anonymous onboarding, Fumadocs, Prisma PostgreSQL, Clerk authentication"
+    "banner": "Build Better | Review Faster | Reuse Richer",
+    "webTitle": "Answer You - A Practical Question Bank Workspace for Writing, Reviewing, Importing, and Publishing",
+    "webDescription": "Answer You helps teams create, edit, preview, import, and organize question data in one clean workflow. Review before publishing, fix invalid JSON batches, generate daily random sets, and connect to your base library through an external API. AI-assisted duplicate and quality checks are planned next.",
+    "keywords": "question bank platform, question management system, quiz content workspace, question import validation, question editor, random question generator, question base api, content review workflow"
   },
   "hero": {
-    "mainTitle": "All the universe's intelligence will",
+    "mainTitle": "Your full question workflow in",
     "mainEyesOn": "Answer You",
-    "description": "Pricing that upgrades itself. Credits that never leak. Docs that stay in sync. Stripe flows that just work. Diaomao is the full-stack chassis trusted by makers who refuse to waste another weekend on billing infrastructure.",
-    "button": "View Question List",
-    "about": "QuestionsWorkspace·AI park",
-    "heroImageAlt": "Diaomao – Modern pricing, credit dashboard and documentation system",
+    "description": "Create, review, import, and organize question data in one practical workspace. Move from draft to preview to publish with less friction and better control.",
+    "button": "Open Question Library",
+    "about": "Question editing, preview, batch import, daily sets, all in one",
+    "heroImageAlt": "Answer You question workspace overview",
     "heroImageUrl": "https://r2.d8ger.com/default.webp"
   },
   "usage": {
-    "title": "From zero to paid users",
-    "eyesOn": "in 3 stupidly simple steps",
-    "description": "Everything is pre-wired. You just turn the knobs.",
+    "title": "How teams usually use",
+    "eyesOn": "Answer You every day",
+    "description": "The workflow is straightforward: bring questions in, review them properly, then reuse them wherever your product needs them.",
     "steps": [
       {
-        "title": "Connect your stack",
-        "description": "Drop in Stripe, PostgreSQL, and Clerk keys. Your pricing page and credit system instantly become user-aware on day one.",
-        "iconKey": "Zap"
+        "title": "Collect questions your way",
+        "description": "Add one question at a time in the editor or paste a full JSON batch for validation. You can start small, import in bulk, or mix both as your library grows.",
+        "iconKey": "SquarePen"
       },
       {
-        "title": "Tune your config",
-        "description": "Switch between monthly, yearly, and one-time credit packs with a single config flag. Upgrade paths, discounts, and CTAs auto-adapt to each user.",
-        "iconKey": "Settings"
+        "title": "Review before anything goes live",
+        "description": "Preview each question before saving, repair invalid records inside the import workbench, and keep your content cleaner than a spreadsheet-first workflow ever could.",
+        "iconKey": "ScanSearch"
       },
       {
-        "title": "Launch your story",
-        "description": "Beautiful docs, mega-menu navigation, and gradient-rich marketing pages — all driven by the same MDX files. Ship updates without touching CSS.",
-        "iconKey": "Rocket"
+        "title": "Reuse across operations",
+        "description": "Browse the question base, open detail pages, generate date-based random sets, and expose structured question data through API endpoints. AI-assisted duplicate and quality checks are planned next.",
+        "iconKey": "Layers3"
       }
     ]
   },
   "faq": {
-    "title": "Got questions?",
-    "description": "We’ve got answers.",
+    "title": "Questions people ask before switching",
+    "description": "Short answers, based on what the product actually does today.",
     "items": [
       {
-        "question": "What exactly is Diaomao?",
-        "answer": "The fastest way to launch a production-ready, monetized AI product. Next.js 14 + Prisma + PostgreSQL + Stripe + Clerk + beautiful docs — everything pre-built and battle-tested."
+        "question": "What is Answer You built for?",
+        "answer": "It is built for teams that need a cleaner way to manage question content: create and edit questions, preview before saving, import batches with validation, browse the library, and reuse structured data later."
       },
       {
-        "question": "Can I sell both subscriptions AND one-time credit packs?",
-        "answer": "Absolutely. Toggle between monthly, yearly, and one-time purchases with a single config change. Upgrade buttons automatically route to Stripe Checkout or Customer Portal."
+        "question": "Can I import existing question data instead of rewriting everything by hand?",
+        "answer": "Yes. The import flow accepts JSON, validates the whole batch, shows pass and invalid counts, and lets you fix problematic records before import. That makes migration much safer than direct bulk insertion."
       },
       {
-        "question": "What happens to anonymous users?",
-        "answer": "They get a fingerprint ID and starter credits instantly. When they eventually sign in, their balance and history merge seamlessly — zero data loss, zero flicker."
+        "question": "How does Answer You help reduce publishing mistakes?",
+        "answer": "Single-question editing includes a preview workflow, and batch import includes a check-first workbench with focused fixing for invalid items. The product is designed around review before commit, not blind saving."
       },
       {
-        "question": "How hard is it to customize navigation & docs?",
-        "answer": "Dead easy. Mega-menu, mobile pinning, and docs are all driven by simple JSON/MDX config. Change once, updates everywhere."
+        "question": "Does it support recurring daily question sets?",
+        "answer": "Yes. The random question workspace can generate date-based daily sets with business rules such as first-question handling, category constraints, history-aware reuse control, and diagnostics when the pool is not sufficient."
       },
       {
-        "question": "Is the entire Stripe lifecycle handled?",
-        "answer": "Yes. Checkout, Portal, webhooks, renewals, dunning, refunds, upgrades/downgrades — all idempotent and logged. You’ll never lose a payment event again."
+        "question": "Is AI already generating questions or checking duplicates?",
+        "answer": "Not yet as a live production feature. Today the product focuses on reliable editing, preview, validation, and structured reuse. AI-assisted duplicate detection and higher-quality content checks are planned as an upcoming quality layer."
       }
     ]
   },
@@ -226,29 +226,29 @@
     }
   },
   "features": {
-    "title": "Everything you keep rebuilding",
-    "eyesOn": "Diaomao already solved",
-    "description": "Stop gluing together half-baked solutions. This is the template that ends the weekend billing nightmares.",
+    "title": "What makes",
+    "eyesOn": "Answer You useful in practice",
+    "description": "The product is built around real question operations, not just a pretty front page. Every core screen exists to help content teams move faster with fewer avoidable errors.",
     "items": [
       {
-        "title": "Money Price 2.0",
-        "description": "Monthly / Yearly / One-time toggle that instantly reflects the user’s current plan. Discount badges, upgrade guards, and SSR defaults — all automatic.",
-        "iconKey": "Sparkles"
+        "title": "Editor and Preview in One Workflow",
+        "description": "Write or revise a question, check the rendered result immediately, and submit only when the content is ready. Editing and confirmation stay connected instead of split across disconnected tools.",
+        "iconKey": "FilePenLine"
       },
       {
-        "title": "Credit System",
-        "description": "Buckets, expiration tags, and smart CTAs. Desktop = modals. Mobile = redirects. Zero confusion, maximum upsells.",
-        "iconKey": "Gift"
+        "title": "Batch Import with a Real Repair Loop",
+        "description": "Upload or paste JSON, validate the whole batch, inspect failed items, fix them in context, recheck, and import only when the batch is clean. That is the difference between bulk upload and bulk control.",
+        "iconKey": "Files"
       },
       {
-        "title": "Auth and Anonymous",
-        "description": "Fingerprint on first visit → starter credits → seamless merge on sign-in. No flicker, no balance loss, no support tickets.",
-        "iconKey": "Fingerprint"
+        "title": "Daily Random Sets with Guardrails",
+        "description": "Generate question sets by date with first-question rules, category distribution logic, and complete diagnostics when the pool is not enough. It is designed to help operators act on gaps instead of guessing.",
+        "iconKey": "CalendarRange"
       },
       {
-        "title": "Docs & Navigation",
-        "description": "Fumadocs + mega-menu header. One source of truth for marketing and documentation. Mobile pinning, dark mode, and accessibility included.",
-        "iconKey": "BookOpen"
+        "title": "Structured Question Data Ready for Reuse",
+        "description": "Browse the library through filters, open detail pages, export key fields, and connect external systems through the questions base API. AI-assisted duplicate and quality checks can be added on top as the next reliability layer.",
+        "iconKey": "Database"
       }
     ]
   },
@@ -292,75 +292,75 @@
     ]
   },
   "tips": {
-    "title": "Tips for Getting the Best Results with",
-    "eyesOn": "Diaomao",
+    "title": "Tips for Getting More Value from",
+    "eyesOn": "Answer You",
     "sections": [
       {
-        "title": "Configure before coding",
-        "description": "Pricing, credits, navigation, and CTAs are config-driven—tune parameters before touching code."
+        "title": "Treat preview as a checkpoint",
+        "description": "Use the preview state to confirm wording, answer order, explanation clarity, and image display before saving. It is the simplest way to catch avoidable content mistakes early."
       },
       {
-        "title": "Keep billing options",
-        "description": "Even if you default to onetime, leave monthly/yearly available to avoid dead ends."
+        "title": "Import in batches you can actually review",
+        "description": "Large imports are supported, but smaller logical batches make validation results easier to fix and safer to publish."
       },
       {
-        "title": "Honor device behaviors",
-        "description": "Mobile uses redirects/auth then closes; desktop can modal—follow the design guide."
+        "title": "Use categories consistently",
+        "description": "Category quality affects filtering, browsing, and daily random set generation. A disciplined taxonomy pays off across the entire product."
       },
       {
-        "title": "Prefer SSR context",
-        "description": "Use InitUserContext to prehydrate user state—no first-screen jitter, billing defaults match reality."
+        "title": "Write explanations for reuse, not just for storage",
+        "description": "Clear explanations make preview review faster, improve downstream detail pages, and give future AI quality checks better material to evaluate."
       },
       {
-        "title": "Follow the schema",
-        "description": "Stick to Users/Subscriptions/Transactions/Credits; order_id + event.id keep webhooks idempotent."
+        "title": "Reserve first questions intentionally",
+        "description": "The daily random set workflow depends on first-question supply. Keep that pool meaningful and refreshed, or generation quality will flatten quickly."
       },
       {
-        "title": "Tell the story in docs",
-        "description": "Use Fumadocs cards and banners to ship product narrative and releases without extra styling."
+        "title": "Plan for AI quality checks now",
+        "description": "Even before AI duplicate detection goes live, keeping question wording, tags, and explanations structured will make that future quality layer far more useful."
       }
     ]
   },
   "seoContent": {
-    "title": "The AI-era product chassis with",
-    "eyesOn": "Diaomao",
-    "description": "Pricing, credits, docs, navigation, and Stripe orchestrated as one.",
-    "intro": "Diaomao compresses the slowest parts of shipping AI products into one template: Money Price runs subscription/onetime in parallel, Credit Overview governs buckets and CTA matrix, fingerprint-to-Clerk prevents funnel gaps, Stripe lifecycle and schema are pre-aligned, and Fumadocs + Header keep story and navigation consistent.",
+    "title": "Why teams choose a focused question workspace like",
+    "eyesOn": "Answer You",
+    "description": "Because question quality is not just about writing fast. It is about reviewing clearly, importing safely, and reusing clean data across workflows.",
+    "intro": "Answer You is designed for the operational side of question content. It gives teams a practical path from drafting and editing to preview, validation, publishing, random-set scheduling, and external reuse. Instead of forcing everything through spreadsheets or ad hoc admin screens, it creates one workflow for cleaner question data. AI-assisted duplicate detection and quality checks are positioned as the next layer, not a fake promise about what is already live.",
     "sections": [
       {
-        "title": "Pricing that adapts to user state",
-        "content": "Billing pills switch monthly|yearly|onetime; SSR defaults to the user’s plan, and upgrade buttons honor enableSubscriptionUpgrade with Portal fallback."
+        "title": "A workflow built around review, not just input",
+        "content": "Single-question editing is tied to preview so users can confirm the final result before commit. That matters when question wording, answer order, explanation quality, and image rendering all affect trust."
       },
       {
-        "title": "Credits with clear buckets and CTA matrix",
-        "content": "Buckets, expiry hints, and device-aware actions: desktop modals or auth-to-Portal, mobile redirects or custom handlers."
+        "title": "Batch import that helps fix problems before they spread",
+        "content": "The import workbench parses JSON, validates batches, keeps pass and invalid counts visible, and lets operators repair problematic records in context. It is a safer migration and maintenance path than blind bulk insert."
       },
       {
-        "title": "Anonymous-first onboarding",
-        "content": "Fingerprint issues `fp_xxx`, grants starter credits, and writes records; after login the same context continues with balances and audit intact."
+        "title": "Daily random sets with explicit business rules",
+        "content": "Date-based generation is not left to luck. First-question selection, category uniqueness, history-aware reuse control, and full diagnostic feedback are all part of the workflow so operators know what to fix when generation falls short."
       },
       {
-        "title": "Stripe lifecycle baked in",
-        "content": "Checkout|Portal, async confirmation, renewal, past-due, refund, end-of-period cancel, upgrade|downgrade—all guarded by order_id metadata and webhook idempotency."
+        "title": "Question data that stays reusable after entry",
+        "content": "Answer You supports list browsing, detail views, editing loops, exports, and an external questions base API. That means data entered once can keep serving downstream products, workflows, and integrations."
       },
       {
-        "title": "Navigation and docs that scale",
-        "content": "Header mega menu, pinned behaviors, and actionOrders keep Docs|pricing|auth buttons in place; Fumadocs cards and banners ship with no extra styling."
+        "title": "A better foundation for future quality tooling",
+        "content": "Today the platform gives structure, validation, and review. Tomorrow that same structure can power AI-assisted duplicate checks, overlap detection, and content-quality signals without rebuilding the whole workflow."
       },
       {
-        "title": "Schema-first reliability",
-        "content": "Users, Subscriptions, Credits, Transactions, CreditAuditLog indexed for fingerprint lookup, order routing, and audit stability."
+        "title": "Useful for teams before it tries to be flashy",
+        "content": "The value proposition is simple: fewer content mistakes, less manual cleanup, clearer publishing flow, and better reuse of question assets. The product earns trust by solving the boring operational parts well."
       }
     ],
-    "conclusion": "Plug in keys, tune config, fill copy—launch an AI-ready, revenue-ready, story-ready site in a week."
+    "conclusion": "If your product depends on clean question content, Answer You gives you a stronger operational base today and a credible path to AI-assisted quality control next."
   },
   "cta": {
-    "title": "Start shipping your AI idea with",
-    "eyesOn": "Diaomao",
-    "description1": "One template. Every hard part solved.",
-    "description2": "Stripe, credits, auth— all production-ready out of the box.",
-    "button": "Get Diaomao Now →",
-    "url": "https://newspaper-template.org/"
+    "title": "Start building a workflow with",
+    "eyesOn": "Answer You",
+    "description1": "Create, preview, import, and organize question data in one place.",
+    "description2": "Use it as your current workspace now, then layer in AI-assisted quality checks as the product evolves.",
+    "button": "Open Answer You",
+    "url": "/questions"
   },
   "languageDetection": {
     "title": "Language Detection",
