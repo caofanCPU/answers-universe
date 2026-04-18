@@ -1,0 +1,133 @@
+{
+  "clientPage": {
+    "list": {
+      "title": "Outer Clients",
+      "description": "Manage external application clients and prepare credentials for SDK access.",
+      "actions": {
+        "backToQuestions": "Back To Lists"
+      },
+      "client": {
+        "loading": "Loading clients...",
+        "loadFailed": "Failed to load clients: ",
+        "empty": "No external clients yet.",
+        "createTitle": "Client Access",
+        "createDescription": "Create a client only when you need a new business application to read FAQ data. The list remains the primary workspace.",
+        "createOpen": "Create Client",
+        "createPanelTitle": "Create Client",
+        "createPanelDescription": "Operators only need to fill in the display name, remark, and validity period. The platform generates client_id and the first key automatically.",
+        "createResultTitle": "Client Created",
+        "createResultDescription": "Copy the env block once and save it into the target application's local environment file before you leave this panel.",
+        "nameLabel": "Display Name",
+        "namePlaceholder": "Knowledge App",
+        "remarkLabel": "Remark",
+        "remarkPlaceholder": "Short description for internal operators",
+        "expiresInLabel": "Key Validity",
+        "expiresInEmpty": "Choose a validity period",
+        "expiresInOptions": {
+          "3_months": "3 Months",
+          "6_months": "6 Months",
+          "1_year": "1 Year",
+          "never": "Never Expires"
+        },
+        "createButton": "Create Client",
+        "creating": "Creating...",
+        "closePanel": "Close Panel",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "deleteClientTitle": "Delete Client?",
+        "deleteClientDescription": "Deleting this client will disable all of its keys. Confirm that you want to continue.",
+        "detail": "Open Detail",
+        "delete": "Delete Client",
+        "deleting": "Deleting...",
+        "copied": "Copied",
+        "copyEnvBlock": "Copy Env Block",
+        "showSecret": "Show Secret",
+        "hideSecret": "Hide Secret",
+        "environment": "Environment",
+        "clientId": "Client ID",
+        "keyCount": "Key Count",
+        "activeKeyCount": "Active Keys",
+        "updatedAt": "Updated At"
+      }
+    },
+    "detail": {
+      "title": "Client Detail",
+      "description": "Issue or rotate keys, inspect active key versions, and reveal one-time private keys for copy only.",
+      "actions": {
+        "backToClients": "Back To Clients"
+      },
+      "client": {
+        "loading": "Loading client detail...",
+        "loadFailed": "Failed to load client detail: ",
+        "notFound": "Client not found.",
+        "issueKeyTitle": "Issue Key",
+        "issueKeyDescription": "Issue a new key in the current runtime environment. The previous active key enters rotating status for a short grace window.",
+        "environmentLabel": "Environment",
+        "expiresAtLabel": "Expires At",
+        "expiresInLabel": "Key Validity",
+        "expiresInEmpty": "Choose a validity period",
+        "expiresInOptions": {
+          "3_months": "3 Months",
+          "6_months": "6 Months",
+          "1_year": "1 Year",
+          "never": "Never Expires"
+        },
+        "issueKey": "Issue New Key",
+        "issuing": "Issuing...",
+        "keyListTitle": "Issued Keys",
+        "oneTimeTitle": "One-Time Secret",
+        "oneTimeDescription": "The private key only exists in the current page state. Refresh, leave, or close this card and it will disappear.",
+        "unsavedLeaveTitle": "Leave Secret View?",
+        "unsavedLeaveDescription": "After leaving or closing this area, the private key will no longer be visible. Confirm that you have already saved it.",
+        "deleteClientTitle": "Delete Client?",
+        "deleteClientDescription": "Deleting this client will disable all of its keys. Confirm that you want to continue.",
+        "deleteActiveKeyTitle": "Delete Active Key?",
+        "deleteActiveKeyDescription": "This key is currently active. After deletion, this client may no longer be callable until a new key is issued.",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "closeSecret": "Dismiss Secret",
+        "closeDialog": "Close Dialog",
+        "copyPublicKey": "Copy Public Key",
+        "copyPrivateKey": "Copy Private Key",
+        "copyEnvBlock": "Copy Env Block",
+        "copied": "Copied",
+        "showSecret": "Show Secret",
+        "hideSecret": "Hide Secret",
+        "secretMasked": "Private key is hidden. Use the eye toggle to reveal it before copying.",
+        "noKeys": "No keys have been issued for this client yet.",
+        "privateKeyLabel": "Private Key",
+        "envBlockTitle": "Environment Variables",
+        "envBlockDescription": "Copy the full block into your local env file. The secret line follows the eye toggle in the card header.",
+        "rotatingGraceHint": "Rotating keys remain valid until their grace expiry time.",
+        "deleteKey": "Delete Key",
+        "extendKey": "Extend",
+        "extendByLabel": "Extend By",
+        "extending": "Extending...",
+        "deleting": "Deleting...",
+        "deleteClient": "Delete Client",
+        "summaryTitle": "Client Summary",
+        "secretCardHint": "Use the eye icon in the card header to reveal or hide the secret value before copying.",
+        "summary": {
+          "clientId": "Client ID",
+          "name": "Display Name",
+          "status": "Status",
+          "remark": "Remark",
+          "environment": "Environment",
+          "keyCount": "Key Count",
+          "activeKeyCount": "Active Keys"
+        },
+        "keys": {
+          "environment": "Environment",
+          "keyVersion": "Key Version",
+          "algorithm": "Algorithm",
+          "fingerprint": "Fingerprint",
+          "status": "Status",
+          "expiresAt": "Expires At",
+          "lastUsedAt": "Last Used",
+          "createdAt": "Created At",
+          "publicKey": "Public Key"
+        }
+      }
+    }
+  }
+}

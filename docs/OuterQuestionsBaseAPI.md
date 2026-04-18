@@ -1,239 +1,474 @@
-# 题库基础列表外部接口文档
+# Outer Questions Base API / SDK 接入说明
 
-本文档对应接口实现文件：[route.ts](/Users/zhch/Oversea/answers-universe/src/app/api/outer/questions-base/route.ts)。
+本文档用于说明 FAQ Base 对第三方业务方开放的只读题目能力 `v1` 接入规范。
 
-## 1. 接口说明
+注意，这不是传统意义上的 HTTP 接口开放文档。对外接入的唯一允许方式是：
 
-- 接口路径：`/api/outer/questions-base`
-- 请求方法：`GET`
-- 接口用途：按条件查询题库基础信息列表，返回分页结果
-- 排序规则：固定按 `updatedAt` 倒序返回
-- 数据范围：仅返回未删除数据
+- 通过 `@windrun-huaiin/faq-sdk` 调用
 
-## 2. 鉴权方式
+不允许的方式：
 
-调用该接口时，必须同时传以下请求头：
+- 业务方自行拼接 HTTP 请求直调 `/api/outer/v1/*`
+- 业务方自行实现签名逻辑
+- 业务方绕过 SDK 自己控制分批、并发、验签协议
 
-- `Authorization: Bearer <token>`
-- `x-outer-identity-provider: <identityProvider>`
+换句话说，`outer` 路由是 SDK 的服务端承载层，不是面向第三方直接公开的裸 HTTP 协议。
 
-说明：
+相关文档：
 
-- `Authorization` 必须使用 Bearer Token 格式
-- `x-outer-identity-provider` 必须与服务端配置的身份提供方完全匹配
-- 任一请求头缺失、格式错误、或 token/identityProvider 不匹配时，接口返回 `401`
+- [Client-Auth.design.md](/Users/funeye/IdeaProjects/answers-universe/docs/Client-Auth.design.md)
+- [README.md](/Users/funeye/IdeaProjects/answers-universe/README.md)
+
+## 1. 设计目标
+
+FAQ Base 是题目生成、编辑、导入、存储的唯一数据真源。
+
+第三方业务项目的职责是消费题目，而不是参与题库写入。因此对外能力被收敛为：
+
+- 只读
+- 可版本化
+- 强制签名鉴权
+- 强制通过 SDK 使用
+
+该设计的目标有三点：
+
+1. 让接入方只关心“配置 + 函数调用”，不关心底层签名协议。
+2. 让服务端保留平滑升级鉴权、DTO、缓存链路和路由结构的空间。
+3. 让题目读取主链路保持稳定，避免业务方各自实现一套不一致的调用逻辑。
+
+## 2. 唯一接入方式
+
+外部业务系统接入 FAQ Base 时，必须通过 SDK：
+
+- 包名：`@windrun-huaiin/faq-sdk`
+
+不允许 HTTP 直调的原因很明确：
+
+- 服务端鉴权协议会持续演进，SDK 是唯一受控入口
+- `ids` 分组、并发、去重、超时控制需要统一
+- 错误格式、返回模型、版本切换需要统一
+- 一旦放开直调，后续协议升级会被外部实现绑死
+
+因此本项目的立场是：
+
+- `outer` API 只对 SDK 开放
+- 业务接入文档只提供 SDK 用法
+- 联调时如需查看 HTTP 细节，仅限本项目内部排查，不作为对外协议承诺
+
+## 3. 版本机制
+
+当前对外版本为 `v1`。
+
+版本同时存在于两层：
+
+- Route：`/api/outer/v1/...`
+- SDK：`client.v1.*`
+
+SDK 初始化时也带版本配置：
+
+```ts
+version?: 'v1'
+```
+
+当前默认值就是 `v1`。
+
+后续如果出现以下情况，需要考虑升级到 `v2`：
+
+- DTO 出现不兼容变更
+- SDK 的默认行为发生不兼容变化
+- 鉴权签名协议变化
+- 路由语义变化
+
+在 `v1` 生命周期内，只允许做兼容增强，不允许破坏既有字段语义。
+
+## 4. 使用方需要准备什么
+
+业务方接入前，需要先在 FAQ Base 后台创建一个 `client`，平台会为其签发一组可用于 SDK 的凭证。
+
+业务方最终需要持有以下配置：
+
+- `baseUrl`
+- `clientId`
+- `keyVersion`
+- `publicKey`
+- `privateKey`
+- `version`
+- `idsBatchSize`
+- `parallelism`
+- `timeoutMs`
+
+其中，真正必填且必须来自平台下发的凭证字段是：
+
+- `clientId`
+- `keyVersion`
+- `publicKey`
+- `privateKey`
+
+### 4.1 推荐环境变量
+
+推荐业务方以环境变量方式保存配置。
 
 示例：
 
-```bash
-curl --request GET 'https://your-domain.com/api/outer/questions-base?page=1&pageSize=20' \
-  --header 'Authorization: Bearer your-token' \
-  --header 'x-outer-identity-provider: your-provider'
+```env
+WINDRUN_HUAIIN_FAQ_BASE_URL=https://your-faq-base-domain.com
+WINDRUN_HUAIIN_FAQ_CLIENT_ID=client_xxxxxxxxxxxx
+WINDRUN_HUAIIN_FAQ_KEY_VERSION=v1
+NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_TEST_PK=pk_test_xxxxxxxxxxxx
+WINDRUN_HUAIIN_FAQ_TEST_SK=sk_test_xxxxxxxxxxxx
 ```
 
-## 3. Query 参数
+如果是生产环境，则通常会对应：
 
-所有参数都通过 URL Query String 传递。
-
-| 参数名 | 类型 | 必填 | 默认值 | 说明 |
-| --- | --- | --- | --- | --- |
-| `page` | number | 否 | `1` | 页码，最小值 `1` |
-| `pageSize` | number | 否 | `20` | 每页数量，范围 `1-100` |
-| `ids` | string | 否 | - | 按题目 ID 批量过滤，支持英文逗号 `,`、中文逗号 `，`、竖线 `|` 分隔，如 `1,2,3` |
-| `uuids` | string | 否 | - | 按题目 UUID 批量过滤，支持 `,` / `，` / `|` 分隔 |
-| `asFirst` | boolean | 否 | - | 是否为首题，支持 `true` / `false` / `1` / `0` |
-| `category` | string | 否 | - | 题目大类，必须是枚举值之一 |
-| `subCategory` | string | 否 | - | 题目子类，必须是枚举值之一 |
-| `difficulty` | string | 否 | - | 难度，必须是枚举值之一 |
-| `createdAtFrom` | string | 否 | - | 创建时间起始，传可被 JS `Date` 解析的日期或时间字符串 |
-| `createdAtTo` | string | 否 | - | 创建时间结束，传可被 JS `Date` 解析的日期或时间字符串 |
-| `updatedAtFrom` | string | 否 | - | 更新时间起始，传可被 JS `Date` 解析的日期或时间字符串 |
-| `updatedAtTo` | string | 否 | - | 更新时间结束，传可被 JS `Date` 解析的日期或时间字符串 |
-
-### 3.1 枚举值
-
-`difficulty` 可选值：
-
-- `easy`
-- `medium`
-- `hard`
-
-`category` 可选值：
-
-- `Science & Nature`
-- `Tech & Innovation`
-- `Pop Culture`
-- `Lifestyle & Fun`
-- `Geography`
-- `History`
-- `Sports`
-- `Music`
-- `Sociology`
-- `Art & Culture`
-- `General Knowledge`
-- `Food & Drink`
-- `Psychology`
-- `Linguistics`
-- `Environment & Climate`
-- `Business & Economics`
-- `Architecture`
-
-`subCategory` 可选值：
-
-- `animal`
-- `movie`
-- `science`
-- `car`
-- `soccer`
-- `chemistry`
-
-### 3.2 日期参数说明
-
-- `createdAtFrom` 和 `updatedAtFrom` 会被自动归一化到当天 `00:00:00.000 UTC`
-- `createdAtTo` 和 `updatedAtTo` 会被自动归一化到当天 `23:59:59.999 UTC`
-- 如果 `createdAtFrom > createdAtTo`，返回 `400`
-- 如果 `updatedAtFrom > updatedAtTo`，返回 `400`
-
-### 3.3 过滤逻辑说明
-
-- 所有筛选条件之间是“且”关系
-- `ids` 表示 `id IN (...)` 查询，例如传 `ids=1,2,3`，会返回数据库中 `id` 属于 `1`、`2`、`3` 的全部记录
-- `uuids` 表示 `uuid IN (...)` 查询，例如传多个 UUID，会返回数据库中命中的全部记录
-- 如果传了 `ids` 和 `uuids`，则两个条件同时生效，等价于 `id IN (...) AND uuid IN (...)`
-- 因此，`ids=1,2,3` 且数据库中存在 `1`、`2`、`3`，会返回 3 条；如果只存在 `1`、`2`，会返回 2 条，不会只返回 1 条
-
-## 4. 响应结构
-
-成功时返回 `200 OK`，响应体结构如下：
-
-```json
-{
-  "items": [
-    {
-      "id": "10001",
-      "uuid": "7e8d0a1d-2d31-4c0a-8c51-5e1a5d9f7b01",
-      "question": "What is the chemical symbol for water?",
-      "category": "Science & Nature",
-      "subCategory": "chemistry",
-      "difficulty": "easy",
-      "asFirst": true,
-      "createdAt": "2026-03-01T10:00:00.000Z",
-      "updatedAt": "2026-03-20T08:30:00.000Z"
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "pageSize": 20,
-    "total": 1,
-    "totalPages": 1
-  }
-}
+```env
+NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_LIVE_PK=pk_live_xxxxxxxxxxxx
+WINDRUN_HUAIIN_FAQ_LIVE_SK=sk_live_xxxxxxxxxxxx
 ```
 
-### 4.1 `items` 字段说明
+说明：
 
-| 字段名 | 类型 | 说明 |
-| --- | --- | --- |
-| `id` | string | 题目主键 ID，服务端会将 bigint 转成字符串返回 |
-| `uuid` | string | 题目 UUID |
-| `question` | string | 题干 |
-| `category` | string | 题目大类 |
-| `subCategory` | string \| null | 题目子类 |
-| `difficulty` | string | 难度 |
-| `asFirst` | boolean | 是否为首题 |
-| `createdAt` | string \| null | 创建时间，ISO 8601 字符串 |
-| `updatedAt` | string \| null | 更新时间，ISO 8601 字符串 |
+- `publicKey` 可以放前端可见环境变量命名形式，但 SDK 实际建议仅在服务端使用
+- `privateKey` 必须只放服务端环境变量
+- 业务方不应把 `privateKey` 注入到浏览器侧
 
-### 4.2 `pagination` 字段说明
+### 4.2 配置项含义
 
-| 字段名 | 类型 | 说明 |
-| --- | --- | --- |
-| `page` | number | 当前页码 |
-| `pageSize` | number | 当前每页数量 |
-| `total` | number | 符合条件的总记录数 |
-| `totalPages` | number | 总页数，计算方式为 `Math.ceil(total / pageSize)` |
+#### `baseUrl`
 
-## 5. 错误响应
+FAQ Base 服务地址，例如：
 
-### 5.1 401 未授权
-
-```json
-{
-  "error": "UNAUTHORIZED"
-}
+```txt
+https://your-faq-base-domain.com
 ```
 
-触发场景：
+SDK 内部会自动处理尾部斜杠。
 
-- 缺少 `Authorization`
-- 缺少 `x-outer-identity-provider`
-- `Authorization` 不是 `Bearer <token>` 格式
-- token 或 identityProvider 校验失败
-- 服务端未配置对应外部接口凭证
+#### `clientId`
 
-### 5.2 400 请求参数错误
+平台生成的客户端标识，格式固定为：
 
-```json
-{
-  "error": "INVALID_REQUEST",
-  "details": {
-    "formErrors": [],
-    "fieldErrors": {
-      "pageSize": [
-        "Number must be less than or equal to 100"
-      ]
-    }
-  }
-}
+```txt
+client_xxx
 ```
 
-常见触发场景：
+业务方不需要自行生成。
 
-- `page < 1`
-- `pageSize > 100`
-- `ids` 中包含非正整数
-- `asFirst` 不是合法布尔值
-- `category` / `subCategory` / `difficulty` 不是合法枚举值
-- 日期格式无法解析
-- 开始时间晚于结束时间
+#### `keyVersion`
 
-### 5.3 500 服务端错误
+平台签发 key 时对应的版本号。服务端会通过 `clientId + keyVersion` 查找有效公钥。
 
-```json
-{
-  "error": "INTERNAL_SERVER_ERROR"
-}
+#### `publicKey`
+
+平台签发的公钥字符串。当前支持两种形态：
+
+- PEM 文本
+- `pk_test_xxx` / `pk_live_xxx` 这样的平台格式字符串
+
+#### `privateKey`
+
+平台签发的私钥字符串。当前支持两种形态：
+
+- PEM 文本
+- `sk_test_xxx` / `sk_live_xxx` 这样的平台格式字符串
+
+#### `idsBatchSize`
+
+按 `ids` 批量查询时，每个请求分组大小。
+
+这是一个业务可配置项，但 SDK 内部有硬上限保护：
+
+```txt
+realBatchSize = min(userConfiguredBatchSize, 100)
 ```
 
-## 6. 调用示例
+也就是说：
 
-### 6.1 按分页查询
+- 你可以配 `20`
+- 你可以配 `50`
+- 你也可以配 `200`
+- 但 SDK 实际最多只会按 `100` 一组发请求
+
+当前默认值：
+
+```txt
+50
+```
+
+#### `parallelism`
+
+批量分组后的最大并发请求数。
+
+当前默认值：
+
+```txt
+3
+```
+
+#### `timeoutMs`
+
+单次请求超时时间，单位毫秒。
+
+当前默认值：
+
+```txt
+10000
+```
+
+## 5. SDK 初始化
+
+安装：
 
 ```bash
-curl --request GET 'https://your-domain.com/api/outer/questions-base?page=1&pageSize=20' \
-  --header 'Authorization: Bearer your-token' \
-  --header 'x-outer-identity-provider: your-provider'
+pnpm add @windrun-huaiin/faq-sdk
 ```
 
-### 6.2 按多个 ID 查询
+初始化示例：
 
-```bash
-curl --request GET 'https://your-domain.com/api/outer/questions-base?ids=10001,10002,10003' \
-  --header 'Authorization: Bearer your-token' \
-  --header 'x-outer-identity-provider: your-provider'
+```ts
+import { createAnswersUniverseClient } from '@windrun-huaiin/faq-sdk';
+
+const faqClient = createAnswersUniverseClient({
+  baseUrl: process.env.WINDRUN_HUAIIN_FAQ_BASE_URL!,
+  version: 'v1',
+  clientId: process.env.WINDRUN_HUAIIN_FAQ_CLIENT_ID!,
+  keyVersion: process.env.WINDRUN_HUAIIN_FAQ_KEY_VERSION!,
+  publicKey: process.env.NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_TEST_PK!,
+  privateKey: process.env.WINDRUN_HUAIIN_FAQ_TEST_SK!,
+  idsBatchSize: 50,
+  parallelism: 3,
+  timeoutMs: 10000,
+});
 ```
 
-### 6.3 按条件组合查询
+SDK 初始化完成后，统一从 `v1` 命名空间下访问能力：
 
-```bash
-curl --request GET 'https://your-domain.com/api/outer/questions-base?page=1&pageSize=50&category=Science%20%26%20Nature&difficulty=easy&asFirst=true&updatedAtFrom=2026-03-01&updatedAtTo=2026-03-31' \
-  --header 'Authorization: Bearer your-token' \
-  --header 'x-outer-identity-provider: your-provider'
+```ts
+faqClient.v1.questionsBase
+faqClient.v1.questionDetail
 ```
 
-## 7. 接入建议
+## 6. 业务方如何使用
 
-- `id` 是字符串类型，客户端不要按 JavaScript Number 处理超大整数
-- `category` 中包含空格和 `&`，拼接 URL 时应进行 URL Encode
-- 如果需要稳定翻页，建议固定传 `page` 和 `pageSize`
-- 如果只是同步增量数据，优先使用 `updatedAtFrom` / `updatedAtTo`
+当前 `v1` 主要提供两类能力：
+
+- 批量基础信息读取
+- 单题详情读取
+
+### 6.1 按 ids 批量获取
+
+这是业务方的主调用方式，也是推荐方式。
+
+```ts
+const result = await faqClient.v1.questionsBase.getByIds([
+  '123',
+  '456',
+  '789',
+]);
+
+console.log(result.items);
+```
+
+SDK 内部会自动完成：
+
+1. 去重
+2. 过滤空字符串
+3. 按 `idsBatchSize` 分组
+4. 按 `parallelism` 控制并发
+5. 合并返回结果
+
+业务方不应该自行做一层 HTTP 分批封装来替代 SDK。
+
+### 6.2 条件查询
+
+SDK 当前也保留了通用查询入口：
+
+```ts
+const result = await faqClient.v1.questionsBase.query({
+  page: 1,
+  pageSize: 20,
+  ids: ['123', '456'],
+  category: 'frontend',
+});
+```
+
+但对于业务接入来说，主路径仍然应该是：
+
+- 业务方自己确定要消费的题目 `ids`
+- 再调用 `getByIds(ids)`
+
+不要把 FAQ Base 当成第三方业务侧的复杂搜索平台。
+
+### 6.3 单题详情
+
+```ts
+const detail = await faqClient.v1.questionDetail.getById('123');
+
+console.log(detail);
+```
+
+## 7. 为什么主推 ids 批量查询
+
+这一点需要明确写死，因为它会直接影响 SDK、缓存和接口稳定性。
+
+主推 `ids` 的原因：
+
+- 业务语义最稳定
+- 最适合做题目 `id` 级别缓存
+- 容易控制查询规模
+- 更容易做服务保护
+
+因此对外能力的核心不是“开放复杂检索语义”，而是“给业务方一个稳定的按题目集合取数能力”。
+
+## 8. 缓存链路说明
+
+Redis 缓存主要服务 `outer` 读链路，而不是内部后台列表查询。
+
+链路边界：
+
+- 内部管理查询：直接走 DB
+- 对外只读查询：优先建设 Redis 缓存
+
+### 8.1 缓存粒度
+
+一期缓存粒度明确为：
+
+- 题目 `id` 级别
+
+不做的事情：
+
+- 不做列表查询缓存
+- 不做复杂筛选条件缓存
+- 不做组合 query key 缓存
+
+### 8.2 读链路
+
+对外详情读取时：
+
+1. 先查 Redis
+2. 命中则直接返回 DTO
+3. miss 则回源 DB
+4. 先把 DB 结果返回
+5. 再异步投递缓存重建任务
+
+这条链路的目标是：
+
+- 保证读取稳定
+- 不让同步写缓存拖慢读请求
+
+### 8.3 写后构建链路
+
+创建、更新、导入题目后，不要求同步写 Redis，而是通过 QStash 异步触发缓存构建。
+
+也就是说：
+
+- 写入成功
+- 投递异步任务
+- 后台重建该题目 `id` 对应缓存
+
+这与 SDK 的主使用方式是匹配的，因为 SDK 主推按 `ids` 批量取题，底层缓存天然就应该是题目粒度。
+
+## 9. DTO 与 contracts
+
+FAQ Base 对外暴露的数据模型，统一来自 contracts 包。
+
+当前相关包：
+
+- `@windrun-huaiin/faq-contracts`
+- `@windrun-huaiin/faq-sdk`
+
+其中：
+
+- `contracts` 负责稳定的数据类型与协议结构
+- `sdk` 负责接入方调用体验、签名、请求控制、错误处理
+
+SDK 已直接 re-export `contracts` 的 `outer/v1` 类型，业务方可以直接复用：
+
+```ts
+import type { OuterQuestionDetailDto } from '@windrun-huaiin/faq-sdk';
+```
+
+这意味着：
+
+- 使用方不需要自己重新定义一套 DTO
+- FAQ Base 内部和业务方消费的 DTO 语义保持统一
+
+## 10. 鉴权说明
+
+SDK 会自动为每个请求生成签名头，业务方不需要自己拼接。
+
+当前请求头核心包括：
+
+- `x-au-client-id`
+- `x-au-key-version`
+- `x-au-timestamp`
+- `x-au-nonce`
+- `x-au-signature`
+
+服务端会做以下校验：
+
+- 根据 `clientId + keyVersion` 查找有效公钥
+- 校验签名
+- 校验时间窗口
+- 校验 Redis nonce 防重放
+
+因此对业务方的要求只有两条：
+
+1. 正确配置平台下发的 `clientId / keyVersion / publicKey / privateKey`
+2. 只通过 SDK 调用
+
+## 11. QuickStart
+
+```mermaid
+flowchart TD
+    A[业务方在 FAQ Base 后台创建 client] --> B[平台返回 client_id / key_version / pk_xxx / sk_xxx]
+    B --> C[业务方写入服务端环境变量]
+    C --> D[初始化 @windrun-huaiin/faq-sdk]
+    D --> E[调用 client.v1.questionsBase.getByIds(ids)]
+    E --> F[SDK 自动去重 / 分组 / 并发 / 签名]
+    F --> G[服务端校验签名与 Redis nonce]
+    G --> H[Outer Route 读取 DTO]
+    H --> I{Redis 命中?}
+    I -- Yes --> J[直接返回 DTO]
+    I -- No --> K[回源 DB]
+    K --> L[返回 DTO]
+    L --> M[QStash 异步重建缓存]
+```
+
+## 12. 明确约束
+
+这一章是硬约束，不是建议。
+
+### 12.1 对业务方
+
+- 必须通过 `@windrun-huaiin/faq-sdk` 调用
+- 不允许 HTTP 直调 `outer` 路由
+- 不允许自行实现签名协议
+- 不允许绕过 SDK 的分组和并发控制
+
+### 12.2 对 FAQ Base 自身
+
+- 对外能力以 SDK 为唯一接入面
+- DTO 必须保持版本稳定
+- `idsBatchSize` 必须保留 `100` 的硬上限保护
+- 缓存粒度继续保持题目 `id` 级别
+- 后续协议升级优先通过 SDK 向外平滑演进
+
+## 13. 当前 v1 能力边界
+
+当前文档对应的 `v1` 能力边界是：
+
+- SDK 初始化
+- `questionsBase.getByIds(ids)`
+- `questionsBase.query(params)`
+- `questionDetail.getById(id)`
+- 服务端签名鉴权
+- Redis `id` 级别缓存
+- QStash 异步缓存构建
+
+暂不在 `v1` 承诺的内容：
+
+- 面向业务方的复杂搜索 DSL
+- 列表缓存
+- 条件组合缓存
+- 允许跳过 SDK 的 HTTP 对外协议
+

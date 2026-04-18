@@ -1,0 +1,275 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["faq", "public"]
+}
+
+// === backend-core models ===
+model User {
+  id            BigInt         @id @default(autoincrement())
+  userId        String         @unique @default(dbgenerated("gen_random_uuid()")) @map("user_id") @db.Uuid
+  status        String         @default("anonymous") @db.VarChar(50)
+  fingerprintId String?        @map("fingerprint_id") @db.VarChar(255)
+  clerkUserId   String?        @unique @map("clerk_user_id") @db.VarChar(255)
+  stripeCusId   String?        @unique @map("stripe_cus_id") @db.VarChar(255)
+  email         String?        @db.VarChar(255)
+  userName String?        @map("user_name") @db.VarChar(255)
+  createdAt     DateTime?      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime?      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  sourceRef     Json?          @map("source_ref")
+  creditAuditLogs   CreditAuditLog[]
+  credit       Credit?
+  subscription  Subscription?
+  transactions  Transaction[]
+
+  @@index([fingerprintId], map: "idx_users_fingerprint_id")
+  @@map("users")
+
+  @@schema("faq")
+}
+
+model Subscription {
+  id                BigInt    @id @default(autoincrement())
+  userId            String    @unique @map("user_id") @db.Uuid
+  status            String    @default("incomplete") @db.VarChar(50)
+  paySubscriptionId String?   @map("pay_subscription_id") @db.VarChar(255)
+  orderId           String?    @map("order_id") @db.VarChar(255)
+  priceId           String?   @map("price_id") @db.VarChar(255)
+  priceName         String?   @map("price_name") @db.VarChar(255)
+  creditsAllocated  Int       @default(0) @map("credits_allocated")
+  subPeriodStart    DateTime? @map("sub_period_start") @db.Timestamptz(6)
+  subPeriodEnd      DateTime? @map("sub_period_end") @db.Timestamptz(6)
+  createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deleted           Int       @default(0)
+  user              User      @relation(fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([paySubscriptionId], map: "idx_subscriptions_pay_subscription_id")
+  @@index([orderId], map: "idx_subscriptions_order_id")
+  @@map("subscriptions")
+
+  @@schema("faq")
+}
+
+model Credit {
+  id             BigInt    @id @default(autoincrement())
+  userId         String    @unique @map("user_id") @db.Uuid
+
+  // ===== 免费积分 =====
+  balanceFree    Int       @default(0) @map("balance_free")
+  totalFreeLimit Int       @default(0) @map("total_free_limit")
+  freeStart      DateTime? @map("free_start") @db.Timestamptz(6)
+  freeEnd        DateTime? @map("free_end") @db.Timestamptz(6)
+
+  // ===== 订阅付费积分 =====
+  balancePaid    Int       @default(0) @map("balance_paid")
+  totalPaidLimit Int       @default(0) @map("total_paid_limit")
+  paidStart      DateTime? @map("paid_start") @db.Timestamptz(6)
+  paidEnd        DateTime? @map("paid_end") @db.Timestamptz(6)
+
+  // ===== 一次性支付积分 =====
+  balanceOneTimePaid    Int       @default(0) @map("balance_onetime_paid")
+  totalOneTimePaidLimit Int       @default(0) @map("total_onetime_paid_limit")
+  oneTimePaidStart      DateTime? @map("onetime_paid_start") @db.Timestamptz(6)
+  oneTimePaidEnd        DateTime? @map("onetime_paid_end") @db.Timestamptz(6)
+
+  createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user           User      @relation(fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([userId], map: "idx_credits_user_id")
+  @@map("credits")
+
+  @@schema("faq")
+}
+
+model Transaction {
+  id                BigInt    @id @default(autoincrement())
+  userId            String    @map("user_id") @db.Uuid
+  orderId           String    @unique @map("order_id") @db.VarChar(255)
+  orderStatus       String    @default("created") @map("order_status") @db.VarChar(50)
+  orderCreatedAt    DateTime? @default(now()) @map("order_created_at") @db.Timestamptz(6)
+  orderExpiredAt    DateTime? @map("order_expired_at") @db.Timestamptz(6)
+  orderUpdatedAt    DateTime? @default(now()) @updatedAt @map("order_updated_at") @db.Timestamptz(6)
+  type              String?   @db.VarChar(50)
+  paySupplier       String?   @map("pay_supplier") @db.VarChar(255)
+  paySessionId      String?   @map("pay_session_id") @db.VarChar(255)
+  payTransactionId  String?   @unique @map("pay_transaction_id") @db.VarChar(255)
+  paySubscriptionId String?   @map("pay_subscription_id") @db.VarChar(255)
+  subPeriodStart    DateTime? @map("sub_period_start") @db.Timestamptz(6)
+  subPeriodEnd      DateTime? @map("sub_period_end") @db.Timestamptz(6)
+  subLastTryCancelAt  DateTime? @map("sub_last_try_cancel_at") @db.Timestamptz(6)
+  subPeriodCanceledAt      DateTime? @map("sub_period_canceled_at") @db.Timestamptz(6)
+  subCancellationDetail  String?   @map("sub_cancellation_detail") @db.Text
+  priceId           String?   @map("price_id") @db.VarChar(255)
+  priceName         String?   @map("price_name") @db.VarChar(255)
+  amount            Decimal?  @db.Decimal(10, 2)
+  currency          String?   @db.VarChar(50)
+  creditsGranted    Int?      @default(0) @map("credits_granted")
+  payInvoiceId      String?   @map("pay_invoice_id") @db.VarChar(255)
+  paymentStatus String    @default("un_paid") @map("payment_status") @db.VarChar(50)
+  billingReason     String?   @map("billing_reason") @db.VarChar(100)
+  hostedInvoiceUrl  String?   @map("hosted_invoice_url") @db.Text
+  invoicePdf        String?   @map("invoice_pdf") @db.Text
+  orderDetail       String?   @map("order_detail")
+  paidEmail         String?   @map("paid_email") @db.VarChar(255)
+  paidAt            DateTime? @map("paid_at") @db.Timestamptz(6)
+  paidDetail        String?   @map("paid_detail")
+  payUpdatedAt      DateTime? @map("pay_updated_at") @db.Timestamptz(6)
+  deleted           Int       @default(0)
+  user              User      @relation(fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([orderId], map: "idx_transactions_order_id")
+  @@index([paySubscriptionId], map: "idx_transactions_pay_subscription_id")
+  @@index([userId], map: "idx_transactions_user_id")
+  @@map("transactions")
+
+  @@schema("faq")
+}
+
+model CreditAuditLog {
+  id            BigInt    @id @default(autoincrement())
+  userId        String    @map("user_id") @db.Uuid
+  creditsChange   Int       @map("credits_change")
+  feature       String?   @db.VarChar(255)
+  creditType    String    @map("credit_type") @db.VarChar(50)
+  operationType String    @map("operation_type") @db.VarChar(100)
+  operationReferId       String?   @map("operation_refer_id") @db.VarChar(255)
+  createdAt     DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  deleted       Int       @default(0)
+  user          User      @relation(fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([creditType], map: "idx_credit_audit_log_credit_type")
+  @@index([operationType], map: "idx_credit_audit_log_operation_type")
+  @@index([userId], map: "idx_credit_audit_log_user_id")
+  @@map("credit_audit_log")
+
+  @@schema("faq")
+}
+
+model UserBackup {
+  id             BigInt    @id @default(autoincrement())
+  originalUserId String    @map("original_user_id") @db.Uuid
+  status         String?   @db.VarChar(50)
+  fingerprintId  String?   @map("fingerprint_id") @db.VarChar(255)
+  clerkUserId    String?   @map("clerk_user_id") @db.VarChar(255)
+  stripeCusId   String?    @map("stripe_cus_id") @db.VarChar(255)
+  email          String?   @db.VarChar(255)
+  userName String?        @map("user_name") @db.VarChar(255)
+  backupData     Json?     @map("backup_data")
+  deletedAt      DateTime? @default(now()) @map("deleted_at") @db.Timestamptz(6)
+  createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  deleted        Int       @default(0)
+
+  @@index([clerkUserId], map: "idx_user_backup_clerk_user_id")
+  @@index([email], map: "idx_user_backup_email")
+  @@index([fingerprintId], map: "idx_user_backup_fingerprint_id")
+  @@index([originalUserId], map: "idx_user_backup_original_user_id")
+  @@map("user_backup")
+
+   @@schema("faq")
+}
+
+model Apilog {
+  id         BigInt    @id @default(autoincrement())
+  apiType    String    @map("api_type") @db.VarChar(100)
+  methodName String    @map("method_name") @db.VarChar(255)
+  summary    String?
+  request    String?
+  response   String?
+  createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("apilog")
+
+  @@schema("faq")
+}
+
+model OuterClient {
+  id              BigInt             @id @default(autoincrement())
+  clientId        String             @unique @map("client_id") @db.VarChar(100)
+  name            String             @db.VarChar(255)
+  status          String             @default("active") @db.VarChar(50)
+  remark          String?            @db.Text
+  createdByUserId String?            @map("created_by_user_id") @db.Uuid
+  updatedByUserId String?            @map("updated_by_user_id") @db.Uuid
+  createdAt       DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime?          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  keys            OuterClientKey[]
+
+  @@index([status], map: "idx_outer_client_status")
+  @@map("outer_client")
+  @@schema("faq")
+}
+
+model OuterClientKey {
+  id          BigInt       @id @default(autoincrement())
+  clientId    String       @map("client_id") @db.VarChar(100)
+  environment String       @db.VarChar(20)
+  keyVersion  String       @map("key_version") @db.VarChar(50)
+  algorithm   String       @default("ed25519") @db.VarChar(50)
+  publicKey   String       @map("public_key") @db.Text
+  fingerprint String?      @db.VarChar(255)
+  status      String       @default("active") @db.VarChar(50)
+  expiresAt   DateTime?    @map("expires_at") @db.Timestamptz(6)
+  lastUsedAt  DateTime?    @map("last_used_at") @db.Timestamptz(6)
+  createdAt   DateTime?    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime?    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  client      OuterClient  @relation(fields: [clientId], references: [clientId], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([clientId, keyVersion], map: "uq_outer_client_key_client_id_key_version")
+  @@index([clientId, status], map: "idx_outer_client_key_client_id_status")
+  @@index([environment], map: "idx_outer_client_key_environment")
+  @@map("outer_client_key")
+  @@schema("faq")
+}
+
+model Usb {
+  id              BigInt      @id @default(autoincrement())
+  questionUuid    String      @unique @map("question_uuid") @db.Uuid
+  question        String      @db.Text
+  cdnImagePrefix  String?     @map("cdn_image_prefix") @db.VarChar(50)
+  questionImage   String?     @map("question_image") @db.VarChar(255)
+  correctAnswer   String      @map("correct_answer") @db.Text
+  correctAnswerIndex Int      @default(0) @map("correct_answer_index")
+  incorrectAnswers Json    @map("incorrect_answers")
+  explanation     String      @db.Text
+  difficulty      String      @default("unknown") @db.VarChar(30)
+  category        String      @db.VarChar(100)
+  subCategory        String?     @map("sub_category") @db.VarChar(500)
+  asFirst         Int         @map("as_first") @default(0) @db.SmallInt
+  deleted         Int         @default(0)
+  tags            String      @map("tags") @default("") @db.Text
+  keywords        Json?       @map("keywords")
+  createUserId    String      @map("create_user_id") @db.Uuid
+  updateUserId    String      @map("update_user_id") @db.Uuid
+  createdAt       DateTime?   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime?   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([questionUuid], map: "idx_usb_question_uuid")
+  @@index([category], map: "idx_usb_category")
+  @@index([difficulty], map: "idx_usb_difficulty")
+  @@map("usb")
+  @@schema("faq")
+}
+
+model RandomUsb {
+  id           BigInt    @id @default(autoincrement())
+  showDate     DateTime  @map("show_date") @db.Date
+  questionId   BigInt    @unique @map("question_id")
+  questionUuid String    @map("question_uuid") @db.Uuid
+  asFirst      Int       @map("as_first") @default(0) @db.SmallInt
+  category     String    @db.VarChar(100)
+  sortOrder    Int       @map("sort_order")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([showDate, questionId], map: "uq_random_usb_show_date_question_id")
+  @@index([showDate], map: "idx_random_usb_show_date")
+  @@index([showDate, sortOrder], map: "idx_random_usb_show_date_sort_order")
+  @@map("random_usb")
+  @@schema("faq")
+}

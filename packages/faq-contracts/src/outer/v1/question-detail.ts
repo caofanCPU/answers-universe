@@ -1,0 +1,26 @@
+import type {
+  OuterQuestionCategory,
+  OuterQuestionDifficulty,
+  OuterQuestionSubCategory,
+} from './shared.js';
+
+export type OuterQuestionDetailDto = {
+  id: string;
+  uuid: string;
+  question: string;
+  cdnImagePrefix: string | null;
+  questionImage: string | null;
+  questionImageUrl: string | null;
+  correctAnswer: string;
+  correctAnswerIndex: number;
+  incorrectAnswers: string[];
+  explanation: string;
+  difficulty: OuterQuestionDifficulty;
+  category: OuterQuestionCategory;
+  subCategory: OuterQuestionSubCategory | null;
+  asFirst: boolean;
+  tags: string[];
+  keywords: string[];
+  createdAt: string | null;
+  updatedAt: string | null;
+};
