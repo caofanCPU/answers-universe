@@ -214,6 +214,64 @@ realBatchSize = min(userConfiguredBatchSize, 100)
 10000
 ```
 
+### 4.3 缓存链路相关环境变量
+
+这一节主要是 FAQ Base 服务端自身联调和部署时需要关注的环境变量，不是第三方业务方初始化 SDK 时必须传入的字段。
+
+当前缓存链路至少涉及以下配置：
+
+- `NEXT_PUBLIC_QSTASH_CACHE_TASK_URL`
+- `QSTASH_TOKEN`
+- `QSTASH_CURRENT_SIGNING_KEY`
+- `QSTASH_NEXT_SIGNING_KEY`
+
+#### `NEXT_PUBLIC_QSTASH_CACHE_TASK_URL`
+
+QStash 投递缓存任务时使用的完整回调地址。
+
+示例：
+
+```env
+NEXT_PUBLIC_QSTASH_CACHE_TASK_URL=https://your-domain.com/api/internal/questions/cache/rebuild
+```
+
+当前题目缓存链路只需要这 `1` 个回调地址。
+
+它负责两类事情：
+
+- 重建单题详情缓存
+- 删除单题详情缓存
+
+#### `QSTASH_TOKEN`
+
+FAQ Base 服务端向 QStash 发布消息时使用的 token。
+
+如果没有这个配置：
+
+- 写后缓存重建任务不会投递
+- 读 miss 后的异步缓存恢复也不会投递
+
+#### `QSTASH_CURRENT_SIGNING_KEY` 与 `QSTASH_NEXT_SIGNING_KEY`
+
+FAQ Base 内部 webhook 在接收 QStash 回调时，用于验签。
+
+当前内部回调路由是：
+
+```txt
+/api/internal/questions/cache/rebuild
+```
+
+如果这两个签名 key 没有配置，内部 webhook 无法完成 QStash 请求验签。
+
+#### 联调建议
+
+本地或测试环境联调缓存链路时，建议最少确认以下几点：
+
+1. `NEXT_PUBLIC_QSTASH_CACHE_TASK_URL` 指向当前 FAQ 服务可访问地址。
+2. `QSTASH_TOKEN` 已配置，确保服务端可以成功发布任务。
+3. `QSTASH_CURRENT_SIGNING_KEY` 和 `QSTASH_NEXT_SIGNING_KEY` 已配置，确保 webhook 可以验签。
+4. Redis 配置已可用，否则即使任务成功执行，也无法真正落缓存。
+
 ## 5. SDK 初始化
 
 安装：
@@ -278,23 +336,35 @@ SDK 内部会自动完成：
 
 业务方不应该自行做一层 HTTP 分批封装来替代 SDK。
 
-### 6.2 条件查询
+当前返回结果就是一组 `items`，不再附带分页结构，因为：
 
-SDK 当前也保留了通用查询入口：
+- `Outer` 现在只支持按 `ids` 读取
+- 单次请求规模由 SDK 的分组控制，而不是由分页控制
+- 这也是 SDK 要做 `idsBatchSize + parallelism` 的直接原因
+
+```ts
+type OuterQuestionBaseResult = {
+  items: OuterQuestionBaseItemDto[];
+};
+```
+
+### 6.2 保留 query 形态
+
+SDK 仍然保留了对象参数形态的 `query` 方法，但当前它只接受 `ids`：
 
 ```ts
 const result = await faqClient.v1.questionsBase.query({
-  page: 1,
-  pageSize: 20,
   ids: ['123', '456'],
-  category: 'frontend',
 });
 ```
 
-但对于业务接入来说，主路径仍然应该是：
+保留这个对象形态的原因不是为了继续支持复杂筛选，而是为了给后续协议扩展保留签名。
 
-- 业务方自己确定要消费的题目 `ids`
-- 再调用 `getByIds(ids)`
+当前 `v1` 的明确结论是：
+
+- `Outer` 查询只支持 `ids`
+- 不支持分页参数
+- 不支持 `category / difficulty / asFirst / 时间范围 / uuids` 等筛选参数
 
 不要把 FAQ Base 当成第三方业务侧的复杂搜索平台。
 
@@ -354,6 +424,15 @@ Redis 缓存主要服务 `outer` 读链路，而不是内部后台列表查询�
 
 - 保证读取稳定
 - 不让同步写缓存拖慢读请求
+
+对外 `questionsBase` 的纯 `ids` 查询也会复用这套 `id` 级缓存，只是当前实现方式是：
+
+1. 逐个 `id` 循环查 Redis
+2. 命中的直接转成 `OuterQuestionBaseItemDto`
+3. miss 的部分一次性回源 DB
+4. 返回结果后异步投递缓存重建任务
+
+当前没有使用 Redis pipeline / mget，这一层后续等底层能力完善后再升级。
 
 ### 8.3 写后构建链路
 
@@ -468,7 +547,5 @@ flowchart TD
 暂不在 `v1` 承诺的内容：
 
 - 面向业务方的复杂搜索 DSL
-- 列表缓存
 - 条件组合缓存
 - 允许跳过 SDK 的 HTTP 对外协议
-

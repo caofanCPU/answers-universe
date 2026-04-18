@@ -80,18 +80,7 @@ export type QuestionListResult = {
 };
 
 export type OuterQuestionBaseQueryParams = {
-  page: number;
-  pageSize: number;
   ids?: bigint[];
-  uuids?: OuterQuestionBaseQuery['uuids'];
-  asFirst?: OuterQuestionBaseQuery['asFirst'];
-  category?: OuterQuestionBaseQuery['category'];
-  subCategory?: OuterQuestionBaseQuery['subCategory'];
-  difficulty?: OuterQuestionBaseQuery['difficulty'];
-  createdAtFrom?: Date;
-  createdAtTo?: Date;
-  updatedAtFrom?: Date;
-  updatedAtTo?: Date;
 };
 
 export type {

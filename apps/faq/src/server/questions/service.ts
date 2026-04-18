@@ -27,6 +27,12 @@ import {
   type QuestionDifficulty,
   type QuestionSubCategory,
 } from './constants';
+import {
+  deleteOuterQuestionDetailCache,
+  enqueueOuterQuestionDetailCacheRebuild,
+  getOuterQuestionDetailCache,
+  setOuterQuestionDetailCache,
+} from './outer-cache';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;
@@ -194,6 +200,20 @@ function buildOuterQuestionBaseItemDto(record: Usb): OuterQuestionBaseItemDto {
     asFirst: record.asFirst === 1,
     createdAt: toIsoString(record.createdAt ?? null),
     updatedAt: toIsoString(record.updatedAt ?? null),
+  };
+}
+
+function buildOuterQuestionBaseItemFromDetailDto(record: QuestionDetailDto): OuterQuestionBaseItemDto {
+  return {
+    id: record.id,
+    uuid: record.uuid,
+    question: record.question,
+    category: record.category,
+    subCategory: record.subCategory,
+    difficulty: record.difficulty,
+    asFirst: record.asFirst,
+    createdAt: record.createdAt,
+    updatedAt: record.updatedAt,
   };
 }
 
@@ -431,6 +451,28 @@ export async function getQuestionById(id: bigint): Promise<QuestionDetailDto | n
   return record && record.deleted === 0 ? buildQuestionDetailDto(record) : null;
 }
 
+export async function getOuterQuestionDetailById(id: bigint): Promise<QuestionDetailDto | null> {
+  const cacheKeyId = id.toString();
+  const cached = await getOuterQuestionDetailCache(cacheKeyId);
+
+  if (cached) {
+    return cached;
+  }
+
+  const result = await getQuestionById(id);
+
+  if (!result) {
+    return null;
+  }
+
+  void enqueueOuterQuestionDetailCacheRebuild({
+    questionId: cacheKeyId,
+    reason: 'read_miss',
+  });
+
+  return result;
+}
+
 export async function getQuestionList(params: Partial<QuestionListParams>): Promise<QuestionListResult> {
   const page = normalizePage(params.page);
   const pageSize = normalizePageSize(params.pageSize);
@@ -515,48 +557,58 @@ export async function getQuestionExportList(params: Partial<QuestionListParams>)
   return records.map(buildQuestionExportItemDto);
 }
 
-export async function getOuterQuestionBaseList(
+export async function getOuterQuestionBaseByIds(
   params: Partial<OuterQuestionBaseQueryParams>
 ): Promise<OuterQuestionBaseResult> {
-  const page = normalizePage(params.page);
-  const pageSize = normalizePageSize(params.pageSize);
-  const where = buildQuestionWhereInput({
-    page,
-    pageSize,
-    ids: params.ids,
-    uuids: params.uuids,
-    asFirst: params.asFirst,
-    category: params.category,
-    subCategory: params.subCategory,
-    difficulty: params.difficulty,
-    createdAtFrom: params.createdAtFrom,
-    createdAtTo: params.createdAtTo,
-    updatedAtFrom: params.updatedAtFrom,
-    updatedAtTo: params.updatedAtTo,
-  });
+  const ids = Array.from(new Set((params.ids ?? []).map((item) => item.toString())));
 
-  const skip = (page - 1) * pageSize;
+  if (ids.length === 0) {
+    return {
+      items: [],
+    };
+  }
 
-  const [records, total] = await Promise.all([
-    prisma.usb.findMany({
-      where,
-      skip,
-      take: pageSize,
-      orderBy: {
-        updatedAt: 'desc',
+  const cachedItems = new Map<string, OuterQuestionBaseItemDto>();
+  const missedIds: bigint[] = [];
+
+  for (const id of ids) {
+    const cached = await getOuterQuestionDetailCache(id);
+
+    if (cached) {
+      cachedItems.set(id, buildOuterQuestionBaseItemFromDetailDto(cached));
+      continue;
+    }
+
+    missedIds.push(BigInt(id));
+  }
+
+  if (missedIds.length > 0) {
+    const records = await prisma.usb.findMany({
+      where: {
+        deleted: 0,
+        id: {
+          in: missedIds,
+        },
       },
-    }),
-    prisma.usb.count({ where }),
-  ]);
+    });
+
+    for (const record of records) {
+      const detail = buildQuestionDetailDto(record);
+      cachedItems.set(detail.id, buildOuterQuestionBaseItemFromDetailDto(detail));
+
+      void enqueueOuterQuestionDetailCacheRebuild({
+        questionId: detail.id,
+        reason: 'read_miss',
+      });
+    }
+  }
+
+  const items = ids
+    .map((id) => cachedItems.get(id) ?? null)
+    .filter((item): item is OuterQuestionBaseItemDto => item !== null);
 
   return {
-    items: records.map(buildOuterQuestionBaseItemDto),
-    pagination: {
-      page,
-      pageSize,
-      total,
-      totalPages: Math.ceil(total / pageSize),
-    },
+    items,
   };
 }
 
@@ -566,6 +618,11 @@ export async function createQuestion(input: QuestionUpsertInput, userId: string)
     select: {
       id: true,
     },
+  });
+
+  void enqueueOuterQuestionDetailCacheRebuild({
+    questionId: record.id.toString(),
+    reason: 'create',
   });
 
   return buildQuestionMutationResult(record);
@@ -593,6 +650,11 @@ export async function updateQuestion(
     },
   });
 
+  void enqueueOuterQuestionDetailCacheRebuild({
+    questionId: record.id.toString(),
+    reason: 'update',
+  });
+
   return buildQuestionMutationResult(record);
 }
 
@@ -615,6 +677,13 @@ export async function deleteQuestion(id: bigint, userId: string): Promise<Questi
     select: {
       id: true,
     },
+  });
+
+  void deleteOuterQuestionDetailCache(record.id.toString());
+  void enqueueOuterQuestionDetailCacheRebuild({
+    questionId: record.id.toString(),
+    reason: 'delete',
+    deleteOnly: true,
   });
 
   return buildQuestionMutationResult(record);
@@ -828,18 +897,27 @@ export async function importQuestions(
 ): Promise<QuestionImportCommitResult> {
   const validation = validateQuestionImportItems(items);
   const importedImportIds: string[] = [];
+  const importedQuestionIds: string[] = [];
 
   for (const item of validation.items) {
     if (!item.payload) {
       continue;
     }
 
-    await prisma.usb.create({
+    const created = await prisma.usb.create({
       data: buildQuestionCreateInput(item.payload, userId),
-      select: { id: true, questionUuid: true },
+      select: { id: true },
     });
 
+    importedQuestionIds.push(created.id.toString());
     importedImportIds.push(item.importId);
+  }
+
+  for (const questionId of importedQuestionIds) {
+    void enqueueOuterQuestionDetailCacheRebuild({
+      questionId,
+      reason: 'import',
+    });
   }
 
   return {
@@ -849,4 +927,16 @@ export async function importQuestions(
     importedImportIds,
     items: validation.items.map(({ payload: _payload, ...rest }) => ({ ...rest, payload: null })),
   };
+}
+
+export async function rebuildOuterQuestionDetailCache(questionId: bigint): Promise<'rebuilt' | 'deleted' | 'missing'> {
+  const result = await getQuestionById(questionId);
+
+  if (!result) {
+    await deleteOuterQuestionDetailCache(questionId.toString());
+    return 'missing';
+  }
+
+  await setOuterQuestionDetailCache(questionId.toString(), result);
+  return 'rebuilt';
 }

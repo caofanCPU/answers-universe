@@ -1,17 +1,6 @@
-import type { OuterPagination, OuterQuestionCategory, OuterQuestionDifficulty, OuterQuestionSubCategory } from './shared.js';
+import type { OuterQuestionCategory, OuterQuestionDifficulty, OuterQuestionSubCategory } from './shared.js';
 export type OuterQuestionBaseQuery = {
-    page?: number;
-    pageSize?: number;
     ids?: string[];
-    uuids?: string[];
-    asFirst?: boolean;
-    category?: OuterQuestionCategory;
-    subCategory?: OuterQuestionSubCategory;
-    difficulty?: OuterQuestionDifficulty;
-    createdAtFrom?: string;
-    createdAtTo?: string;
-    updatedAtFrom?: string;
-    updatedAtTo?: string;
 };
 export type OuterQuestionBaseItemDto = {
     id: string;
@@ -26,5 +15,4 @@ export type OuterQuestionBaseItemDto = {
 };
 export type OuterQuestionBaseResult = {
     items: OuterQuestionBaseItemDto[];
-    pagination: OuterPagination;
 };

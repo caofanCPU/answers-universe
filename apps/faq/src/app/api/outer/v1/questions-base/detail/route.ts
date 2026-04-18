@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { OuterApiError, OuterQuestionDetailDto } from '@windrun-huaiin/faq-contracts/outer/v1';
 import { ZodError, z } from 'zod';
 import { requireOuterV1ApiAuth } from '@/lib/server/outer-v1-api-auth';
-import { getQuestionById } from '@/server/questions/service';
+import { getOuterQuestionDetailById } from '@/server/questions/service';
 
 const outerQuestionDetailQuerySchema = z.object({
   id: z.coerce.bigint().positive(),
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
       id: req.nextUrl.searchParams.get('id') ?? undefined,
     });
 
-    const result = await getQuestionById(query.id);
+    const result = await getOuterQuestionDetailById(query.id);
 
     if (!result) {
       return notFound();
