@@ -20,6 +20,11 @@ export type OuterV1AuthContext = {
   signature: string;
 };
 
+type OuterV1ApiAuthOptions = {
+  reserveNonce?: boolean;
+  validateTimestampWindow?: boolean;
+};
+
 function requireHeader(req: NextRequest, headerName: string): string {
   const value = req.headers.get(headerName)?.trim();
 
@@ -34,7 +39,12 @@ function isOuterAuthDebugEnabled(): boolean {
   return process.env.WINDRUN_HUAIIN_SDK_DEBUG === 'true';
 }
 
-export async function requireOuterV1ApiAuth(req: NextRequest): Promise<OuterV1AuthContext> {
+export async function requireOuterV1ApiAuth(
+  req: NextRequest,
+  options: OuterV1ApiAuthOptions = {}
+): Promise<OuterV1AuthContext> {
+  const shouldReserveNonce = options.reserveNonce ?? true;
+  const shouldValidateTimestampWindow = options.validateTimestampWindow ?? true;
   const clientId = requireHeader(req, OUTER_CLIENT_ID_HEADER);
   const keyVersion = requireHeader(req, OUTER_KEY_VERSION_HEADER);
   const timestamp = requireHeader(req, OUTER_TIMESTAMP_HEADER);
@@ -47,11 +57,13 @@ export async function requireOuterV1ApiAuth(req: NextRequest): Promise<OuterV1Au
     throw new Error('UNAUTHORIZED');
   }
 
-  const now = Date.now();
-  const timeDiff = Math.abs(now - requestTimestamp.getTime());
+  if (shouldValidateTimestampWindow) {
+    const now = Date.now();
+    const timeDiff = Math.abs(now - requestTimestamp.getTime());
 
-  if (timeDiff > OUTER_V1_AUTH_WINDOW_MS) {
-    throw new Error('UNAUTHORIZED');
+    if (timeDiff > OUTER_V1_AUTH_WINDOW_MS) {
+      throw new Error('UNAUTHORIZED');
+    }
   }
 
   const keyRecord = await getActiveOuterClientKey(clientId, keyVersion);
@@ -60,15 +72,17 @@ export async function requireOuterV1ApiAuth(req: NextRequest): Promise<OuterV1Au
     throw new Error('UNAUTHORIZED');
   }
 
-  const nonceReserved = await reserveOuterV1Nonce({
-    clientId,
-    keyVersion,
-    nonce,
-    timestamp,
-  });
+  if (shouldReserveNonce) {
+    const nonceReserved = await reserveOuterV1Nonce({
+      clientId,
+      keyVersion,
+      nonce,
+      timestamp,
+    });
 
-  if (!nonceReserved) {
-    throw new Error('UNAUTHORIZED');
+    if (!nonceReserved) {
+      throw new Error('UNAUTHORIZED');
+    }
   }
 
   const authContext: OuterV1AuthContext = {

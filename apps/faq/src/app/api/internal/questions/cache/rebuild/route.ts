@@ -65,11 +65,6 @@ export async function POST(req: NextRequest) {
       url: readRequiredTaskUrl(),
     });
 
-    console.log('[Question cache rebuild] Received task', {
-      rawBody,
-      parsed: JSON.parse(rawBody),
-    });
-
     const envelope = rebuildQuestionCacheEnvelopeSchema.parse(JSON.parse(rawBody));
     const payload = envelope.payload;
 

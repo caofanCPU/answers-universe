@@ -41,7 +41,10 @@ function internalServerError(error: unknown) {
 
 export async function POST(req: NextRequest) {
   try {
-    await requireOuterV1ApiAuth(req);
+    await requireOuterV1ApiAuth(req, {
+      reserveNonce: false,
+      validateTimestampWindow: false,
+    });
     const query = outerQuestionBaseQuerySchema.parse(await req.json());
 
     const result: OuterQuestionBaseResult = await getOuterQuestionBaseByIds(query);

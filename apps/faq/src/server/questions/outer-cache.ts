@@ -1,7 +1,7 @@
 import type { OuterQuestionDetailDto } from '@windrun-huaiin/faq-contracts/outer/v1';
 import { deleteKey, getJson, mgetJson, publishMessage, setJson } from '@windrun-huaiin/backend-core/lib';
 
-const OUTER_QUESTION_DETAIL_CACHE_KEY_PREFIX = 'answers_universe:outer:v1:question:detail';
+const OUTER_QUESTION_DETAIL_CACHE_KEY_PREFIX = 'outer:v1:question:detail';
 const OUTER_QUESTION_DETAIL_CACHE_TTL_SECONDS = 60 * 60 * 24;
 
 export type OuterQuestionCacheRebuildPayload = {

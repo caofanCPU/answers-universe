@@ -1,3 +1,4 @@
+import { getPrefixedRedisKey } from '@windrun-huaiin/backend-core/lib';
 import { prisma } from '@windrun-huaiin/backend-core/prisma';
 import type { Prisma, Usb } from '@prisma/client';
 import type {
@@ -32,6 +33,7 @@ import {
   enqueueOuterQuestionDetailCacheRebuild,
   getOuterQuestionDetailCache,
   getOuterQuestionDetailCacheMap,
+  outerQuestionDetailCacheKey,
   setOuterQuestionDetailCache,
 } from './outer-cache';
 
@@ -961,9 +963,19 @@ export async function rebuildOuterQuestionDetailCache(questionId: bigint): Promi
   const result = await getQuestionById(questionId);
 
   if (!result) {
+    console.warn('[Outer Question Cache] Rebuild target missing', {
+      questionId: questionId.toString(),
+      cacheKey: outerQuestionDetailCacheKey.build(questionId.toString()),
+    });
     await deleteOuterQuestionDetailCache(questionId.toString());
     return 'missing';
   }
+
+  console.log('[Outer Question Cache] Rebuild cache write', {
+    questionId: questionId.toString(),
+    cacheKey: getPrefixedRedisKey(outerQuestionDetailCacheKey.build(questionId.toString())),
+    resultId: result.id,
+  });
 
   await setOuterQuestionDetailCache(questionId.toString(), result);
   return 'rebuilt';
