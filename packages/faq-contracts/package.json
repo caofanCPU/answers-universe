@@ -1,7 +1,6 @@
 {
   "name": "@windrun-huaiin/faq-contracts",
   "version": "11.0.0",
-  "private": false,
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -17,7 +16,7 @@
     }
   },
   "publishConfig": {
-    "access": "restricted"
+    "access": "public"
   },
   "files": [
     "dist",
