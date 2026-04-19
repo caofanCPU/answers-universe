@@ -36,7 +36,7 @@
         "confirm": "Confirm",
         "deleteClientTitle": "Delete Client?",
         "deleteClientDescription": "Deleting this client will disable all of its keys. Confirm that you want to continue.",
-        "detail": "Open Detail",
+        "detail": "View Detail",
         "delete": "Delete Client",
         "deleting": "Deleting...",
         "copied": "Copied",
