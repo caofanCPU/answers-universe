@@ -1,4 +1,4 @@
-# Outer Questions Base API / SDK 接入说明
+# Questions SDK 接入说明
 
 本文档用于说明 FAQ Base 对第三方业务方开放的只读题目能力 `v1` 接入规范。
 

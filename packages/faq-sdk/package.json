@@ -20,18 +20,18 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "pnpm --filter @windrun-huaiin/faq-contracts build && rm -rf dist && rollup -c rollup.config.mjs",
+    "build": "rm -rf dist && rollup -c rollup.config.mjs",
     "pack": "pnpm pack"
   },
   "dependencies": {
     "@windrun-huaiin/faq-contracts": "workspace:*"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "28.0.6",
-    "@rollup/plugin-node-resolve": "16.0.1",
-    "@rollup/plugin-typescript": "12.1.4",
-    "@types/node": "^25.3.2",
-    "rollup": "4.46.2",
-    "typescript": "^5.8.3"
+    "@rollup/plugin-commonjs": "catalog:",
+    "@rollup/plugin-node-resolve": "catalog:",
+    "@rollup/plugin-typescript": "catalog:",
+    "@types/node": "catalog:",
+    "rollup": "catalog:",
+    "typescript": "catalog:"
   }
 }

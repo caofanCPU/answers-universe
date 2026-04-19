@@ -5,26 +5,32 @@
   "type": "module",
   "packageManager": "pnpm@10.16.1",
   "devDependencies": {
-    "@changesets/cli": "^2.29.8",
-    "typescript": "^5.8.3",
-    "@windrun-huaiin/dev-scripts": "^15.3.0"
+    "@changesets/cli": "catalog:",
+    "typescript": "catalog:",
+    "@windrun-huaiin/dev-scripts": "catalog:",
+    "turbo": "catalog:"
   },
   "scripts": {
-    "web:build": "pnpm --filter @windrun-huaiin/faq-contracts build && pnpm --filter @windrun-huaiin/faq-sdk build && pnpm --filter @windrun-huaiin/faq build",
-    "web:dev": "pnpm --filter @windrun-huaiin/faq dev",
-    "build:prod": "pnpm --filter @windrun-huaiin/faq build:prod",
-    "start": "pnpm --filter @windrun-huaiin/faq start",
-    "lint": "pnpm --filter @windrun-huaiin/faq lint",
-    "lint:fix": "pnpm --filter @windrun-huaiin/faq lint:fix",
+    "build": "turbo build",
+    "build:prod": "turbo build:prod",
+    "build:nocache": "turbo build --force",
+    "dev": "turbo dev --parallel",
+    "start": "pnpm -r start",
+    "lint": "turbo lint",
+    "lint:fix": "turbo lint:fix",
     "clean": "pnpm -r clean",
     "deep-clean": "dev-scripts deep-clean",
     "d8": "pnpm run deep-clean",
     "easy-changeset": "dev-scripts easy-changeset",
     "dj": "pnpm run easy-changeset && pnpm changeset status",
-    "djv": "pnpm changeset version && pnpm install",
-    "djvp": "pnpm --filter @windrun-huaiin/faq-contracts build && pnpm --filter @windrun-huaiin/faq-sdk build && pnpm changeset publish",
-    "contracts:build": "pnpm --filter @windrun-huaiin/faq-contracts build",
-    "sdk:build": "pnpm --filter @windrun-huaiin/faq-sdk build"
+    "djv": "pnpm changeset version",
+    "djvp": "pnpm changeset publish",
+    "web:dev": "turbo dev --filter=@windrun-huaiin/faq",
+    "web:build": "turbo build --filter=@windrun-huaiin/faq",
+    "web:build:prod": "turbo build:prod --filter=@windrun-huaiin/faq",
+    "web:start": "pnpm --filter=@windrun-huaiin/faq start",
+    "contracts:build": "turbo build --filter=@windrun-huaiin/faq-contracts",
+    "sdk:build": "turbo build --filter=@windrun-huaiin/faq-sdk"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

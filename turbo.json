@@ -1,0 +1,144 @@
+{
+  "$schema": "https://v2-9-6.turborepo.dev/schema.json",
+  "globalEnv": [
+    "NODE_ENV",
+    "TURBO_TELEMETRY_DISABLED",
+    "TURBO_TOKEN",
+    "TURBO_TEAM"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "NODE_ENV",
+        "NEXT_PUBLIC_*",
+        "CLERK_SECRET_KEY",
+        "CLERK_DEBUG",
+        "NEXT_PUBLIC_CLERK_*",
+        "DATABASE_URL",
+        "CLERK_WEBHOOK_SECRET",
+        "ENABLE_STRIPE_SUBSCRIPTION_UPGRADE",
+        "SHOW_FINGERPRINT_STATUS",
+        "ACTIVE_PAYMENT_PROVIDER",
+        "OPENROUTER_*",
+        "MONEY_PRICE_*",
+        "CREDITS_*",
+        "STRIPE_*",
+        "UPSTASH_REDIS_*",
+        "QSTASH_*"
+      ]
+    },
+    "build:prod": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "NODE_ENV",
+        "NEXT_PUBLIC_*",
+        "CLERK_SECRET_KEY",
+        "CLERK_DEBUG",
+        "NEXT_PUBLIC_CLERK_*",
+        "DATABASE_URL",
+        "CLERK_WEBHOOK_SECRET",
+        "ENABLE_STRIPE_SUBSCRIPTION_UPGRADE",
+        "SHOW_FINGERPRINT_STATUS",
+        "ACTIVE_PAYMENT_PROVIDER",
+        "OPENROUTER_*",
+        "MONEY_PRICE_*",
+        "CREDITS_*",
+        "STRIPE_*",
+        "UPSTASH_REDIS_*",
+        "QSTASH_*"
+      ]
+    },
+    "@windrun-huaiin/faq-contracts#build": {
+      "outputs": ["dist/**"],
+      "env": ["NODE_ENV"]
+    },
+    "@windrun-huaiin/faq-sdk#build": {
+      "dependsOn": ["@windrun-huaiin/faq-contracts#build"],
+      "outputs": ["dist/**"],
+      "env": ["NODE_ENV"]
+    },
+    "@windrun-huaiin/faq#build": {
+      "dependsOn": ["@windrun-huaiin/faq-contracts#build"],
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": [
+        "NODE_ENV",
+        "NEXT_PUBLIC_*",
+        "CLERK_SECRET_KEY",
+        "CLERK_DEBUG",
+        "NEXT_PUBLIC_CLERK_*",
+        "DATABASE_URL",
+        "CLERK_WEBHOOK_SECRET",
+        "ENABLE_STRIPE_SUBSCRIPTION_UPGRADE",
+        "SHOW_FINGERPRINT_STATUS",
+        "ACTIVE_PAYMENT_PROVIDER",
+        "OPENROUTER_*",
+        "MONEY_PRICE_*",
+        "CREDITS_*",
+        "STRIPE_*",
+        "UPSTASH_REDIS_*",
+        "QSTASH_*"
+      ]
+    },
+    "@windrun-huaiin/faq#build:prod": {
+      "dependsOn": ["@windrun-huaiin/faq-contracts#build"],
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": [
+        "NODE_ENV",
+        "NEXT_PUBLIC_*",
+        "CLERK_SECRET_KEY",
+        "CLERK_DEBUG",
+        "NEXT_PUBLIC_CLERK_*",
+        "DATABASE_URL",
+        "CLERK_WEBHOOK_SECRET",
+        "ENABLE_STRIPE_SUBSCRIPTION_UPGRADE",
+        "SHOW_FINGERPRINT_STATUS",
+        "ACTIVE_PAYMENT_PROVIDER",
+        "OPENROUTER_*",
+        "MONEY_PRICE_*",
+        "CREDITS_*",
+        "STRIPE_*",
+        "UPSTASH_REDIS_*",
+        "QSTASH_*"
+      ]
+    },
+    "dev": {
+      "dependsOn": ["@windrun-huaiin/faq-contracts#build"],
+      "cache": false,
+      "persistent": true,
+      "env": [
+        "NODE_ENV",
+        "NEXT_PUBLIC_*",
+        "CLERK_SECRET_KEY",
+        "CLERK_DEBUG",
+        "NEXT_PUBLIC_CLERK_*",
+        "DATABASE_URL",
+        "CLERK_WEBHOOK_SECRET",
+        "ENABLE_STRIPE_SUBSCRIPTION_UPGRADE",
+        "SHOW_FINGERPRINT_STATUS",
+        "ACTIVE_PAYMENT_PROVIDER",
+        "OPENROUTER_*",
+        "MONEY_PRICE_*",
+        "CREDITS_*",
+        "STRIPE_*",
+        "UPSTASH_REDIS_*",
+        "QSTASH_*"
+      ]
+    },
+    "lint": {
+      "outputs": [],
+      "env": ["NODE_ENV"]
+    },
+    "lint:fix": {
+      "cache": false,
+      "outputs": [],
+      "env": ["NODE_ENV"]
+    },
+    "type-check": {
+      "outputs": [],
+      "env": ["NODE_ENV"]
+    }
+  }
+}
