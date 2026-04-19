@@ -73,7 +73,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@typescript-eslint/parser": "catalog:",
-    "@windrun-huaiin/dev-scripts": "^20.0.0",
+    "@windrun-huaiin/dev-scripts": "^20.0.1",
     "baseline-browser-mapping": "catalog:",
     "eslint": "catalog:",
     "eslint-config-next": "catalog:",

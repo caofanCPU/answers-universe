@@ -12,6 +12,21 @@ const rebuildQuestionCachePayloadSchema = z.object({
   deleteOnly: z.boolean().optional().default(false),
 });
 
+const rebuildQuestionCacheEnvelopeSchema = z.object({
+  source_msg_id: z.string().trim().min(1),
+  payload: rebuildQuestionCachePayloadSchema,
+});
+
+function readRequiredTaskUrl(): string {
+  const value = process.env.NEXT_PUBLIC_QSTASH_CACHE_TASK_URL?.trim();
+
+  if (!value) {
+    throw new Error('MISSING_QSTASH_CACHE_TASK_URL');
+  }
+
+  return value;
+}
+
 function badRequest(error: unknown) {
   if (error instanceof z.ZodError) {
     return NextResponse.json(
@@ -47,10 +62,17 @@ export async function POST(req: NextRequest) {
     await verifyQstashSignature({
       signature,
       body: rawBody,
-      url: req.url,
+      url: readRequiredTaskUrl(),
     });
 
-    const payload = rebuildQuestionCachePayloadSchema.parse(JSON.parse(rawBody));
+    console.log('[Question cache rebuild] Received task', {
+      rawBody,
+      parsed: JSON.parse(rawBody),
+    });
+
+    const envelope = rebuildQuestionCacheEnvelopeSchema.parse(JSON.parse(rawBody));
+    const payload = envelope.payload;
+
     const questionId = z.coerce.bigint().positive().parse(payload.questionId);
 
     if (payload.deleteOnly) {
@@ -68,7 +90,12 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error('[Question cache rebuild] Invalid payload', error.flatten());
       return badRequest(error);
+    }
+
+    if (error instanceof Error && error.message === 'MISSING_QSTASH_CACHE_TASK_URL') {
+      return internalServerError(error);
     }
 
     if (error instanceof Error && /signature|unauthorized|signing keys/i.test(error.message)) {
