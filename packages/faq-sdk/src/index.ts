@@ -1,5 +1,4 @@
-import { resolveClientOptions } from './config.js';
-import { createQuestionDetailClient } from './question-detail.js';
+import { readClientOptionsFromEnv, resolveClientOptions } from './config.js';
 import { createQuestionsBaseClient } from './questions-base.js';
 import type { AnswersUniverseClient, AnswersUniverseClientOptions } from './types.js';
 
@@ -14,7 +13,10 @@ export function createAnswersUniverseClient(options: AnswersUniverseClientOption
     options: resolvedOptions,
     v1: {
       questionsBase: createQuestionsBaseClient(resolvedOptions),
-      questionDetail: createQuestionDetailClient(resolvedOptions),
     },
   };
+}
+
+export function createAnswersUniverseClientFromEnv(): AnswersUniverseClient {
+  return createAnswersUniverseClient(readClientOptionsFromEnv());
 }

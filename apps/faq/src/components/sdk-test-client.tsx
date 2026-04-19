@@ -1,14 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { OuterQuestionBaseResult, OuterQuestionDetailDto } from '@windrun-huaiin/faq-contracts/outer/v1';
+import type { OuterQuestionBaseResult } from '@windrun-huaiin/faq-contracts/outer/v1';
 import { XButton } from '@windrun-huaiin/third-ui/main';
 import { XTokenInput } from '@windrun-huaiin/third-ui/main/pill-select';
 
 type SdkTestResult = {
   ids: string[];
   baseResult: OuterQuestionBaseResult;
-  detail: OuterQuestionDetailDto | null;
 };
 
 function normalizeIds(tokens: string[]): string[] {
@@ -121,12 +120,12 @@ export function SdkTestClient() {
       ) : null}
 
       {result ? (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="grid gap-4">
           <section className="space-y-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-900">
             <div>
               <h3 className="font-semibold text-slate-900 dark:text-white">questionsBase.getByIds</h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Returned {result.baseResult.items.length} item(s).
+                Returned {result.baseResult.items.length} full detail item(s).
               </p>
             </div>
             <div className="space-y-3">
@@ -139,32 +138,16 @@ export function SdkTestClient() {
                     <span>difficulty: {item.difficulty}</span>
                     <span>asFirst: {String(item.asFirst)}</span>
                   </div>
+                  <div className="mt-3 space-y-2 text-slate-600 dark:text-slate-300">
+                    <p><span className="font-medium">Correct answer:</span> {item.correctAnswer}</p>
+                    <p><span className="font-medium">Explanation:</span> {item.explanation}</p>
+                    <p><span className="font-medium">Incorrect answers:</span> {item.incorrectAnswers.join(', ')}</p>
+                    <p><span className="font-medium">Tags:</span> {item.tags.join(', ') || '-'}</p>
+                    <p><span className="font-medium">Keywords:</span> {item.keywords.join(', ') || '-'}</p>
+                  </div>
                 </article>
               ))}
             </div>
-          </section>
-
-          <section className="space-y-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-900">
-            <div>
-              <h3 className="font-semibold text-slate-900 dark:text-white">questionDetail.getById</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Detail is fetched for the first returned base item.
-              </p>
-            </div>
-            {result.detail ? (
-              <article className="rounded-xl border border-slate-200 bg-white p-3 text-sm dark:border-slate-800 dark:bg-slate-950">
-                <div className="font-medium text-slate-900 dark:text-white">#{result.detail.id} {result.detail.question}</div>
-                <div className="mt-3 space-y-2 text-slate-600 dark:text-slate-300">
-                  <p><span className="font-medium">Correct answer:</span> {result.detail.correctAnswer}</p>
-                  <p><span className="font-medium">Explanation:</span> {result.detail.explanation}</p>
-                  <p><span className="font-medium">Incorrect answers:</span> {result.detail.incorrectAnswers.join(', ')}</p>
-                </div>
-              </article>
-            ) : (
-              <div className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                No detail fetched because the base query returned no items.
-              </div>
-            )}
           </section>
         </div>
       ) : null}

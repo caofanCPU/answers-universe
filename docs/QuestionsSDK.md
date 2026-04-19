@@ -93,9 +93,6 @@ version?: 'v1'
 - `publicKey`
 - `privateKey`
 - `version`
-- `idsBatchSize`
-- `parallelism`
-- `timeoutMs`
 
 其中，真正必填且必须来自平台下发的凭证字段是：
 
@@ -116,6 +113,7 @@ WINDRUN_HUAIIN_FAQ_CLIENT_ID=client_xxxxxxxxxxxx
 WINDRUN_HUAIIN_FAQ_KEY_VERSION=v1
 NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_PK=pk_test_xxxxxxxxxxxx
 WINDRUN_HUAIIN_FAQ_SK=sk_test_xxxxxxxxxxxx
+WINDRUN_HUAIIN_SDK_DEBUG=false
 ```
 
 生产环境使用同一组变量名，只替换变量值：
@@ -159,60 +157,11 @@ client_xxx
 
 #### `publicKey`
 
-平台签发的公钥字符串。当前支持两种形态：
-
-- PEM 文本
-- `pk_test_xxx` / `pk_live_xxx` 这样的平台格式字符串
+平台签发的公钥字符串，格式为 `pk_test_xxx` / `pk_live_xxx`。
 
 #### `privateKey`
 
-平台签发的私钥字符串。当前支持两种形态：
-
-- PEM 文本
-- `sk_test_xxx` / `sk_live_xxx` 这样的平台格式字符串
-
-#### `idsBatchSize`
-
-按 `ids` 批量查询时，每个请求分组大小。
-
-这是一个业务可配置项，但 SDK 内部有硬上限保护：
-
-```txt
-realBatchSize = min(userConfiguredBatchSize, 100)
-```
-
-也就是说：
-
-- 你可以配 `20`
-- 你可以配 `50`
-- 你也可以配 `200`
-- 但 SDK 实际最多只会按 `100` 一组发请求
-
-当前默认值：
-
-```txt
-50
-```
-
-#### `parallelism`
-
-批量分组后的最大并发请求数。
-
-当前默认值：
-
-```txt
-3
-```
-
-#### `timeoutMs`
-
-单次请求超时时间，单位毫秒。
-
-当前默认值：
-
-```txt
-10000
-```
+平台签发的私钥字符串，格式为 `sk_test_xxx` / `sk_live_xxx`。
 
 ### 4.3 缓存链路相关环境变量
 
@@ -283,34 +232,22 @@ pnpm add @windrun-huaiin/faq-sdk
 初始化示例：
 
 ```ts
-import { createAnswersUniverseClient } from '@windrun-huaiin/faq-sdk';
+import { createAnswersUniverseClientFromEnv } from '@windrun-huaiin/faq-sdk';
 
-const faqClient = createAnswersUniverseClient({
-  baseUrl: process.env.WINDRUN_HUAIIN_FAQ_BASE_URL!,
-  version: 'v1',
-  clientId: process.env.WINDRUN_HUAIIN_FAQ_CLIENT_ID!,
-  keyVersion: process.env.WINDRUN_HUAIIN_FAQ_KEY_VERSION!,
-  publicKey: process.env.NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_PK!,
-  privateKey: process.env.WINDRUN_HUAIIN_FAQ_SK!,
-  idsBatchSize: 50,
-  parallelism: 3,
-  timeoutMs: 10000,
-});
+const faqClient = createAnswersUniverseClientFromEnv();
 ```
 
 SDK 初始化完成后，统一从 `v1` 命名空间下访问能力：
 
 ```ts
 faqClient.v1.questionsBase
-faqClient.v1.questionDetail
 ```
 
 ## 6. 业务方如何使用
 
 当前 `v1` 主要提供两类能力：
 
-- 批量基础信息读取
-- 单题详情读取
+- 按 ids 批量读取完整题目详情
 
 ### 6.1 按 ids 批量获取
 
@@ -330,24 +267,23 @@ SDK 内部会自动完成：
 
 1. 去重
 2. 过滤空字符串
-3. 按 `idsBatchSize` 分组
-4. 使用 `POST` body 发送 `{ ids }`
-5. 按 `parallelism` 控制并发
-6. 合并返回结果
+3. 使用 `POST` body 发送 `{ ids }`
+4. 签名鉴权
 
-业务方不应该自行做一层 HTTP 分批封装来替代 SDK。
+业务方不应该自行拼接 HTTP 请求或实现签名协议。
 
 当前返回结果就是一组 `items`，不再附带分页结构，因为：
 
 - `Outer` 现在只支持按 `ids` 读取
-- 单次请求规模由 SDK 的分组控制，而不是由分页控制
-- 这也是 SDK 要做 `idsBatchSize + parallelism` 的直接原因
+- 单次请求规模和服务端执行策略由 FAQ Base 的 outer route 控制
 
 ```ts
 type OuterQuestionBaseResult = {
   items: OuterQuestionBaseItemDto[];
 };
 ```
+
+`OuterQuestionBaseItemDto` 当前等价于完整题目详情 DTO，包含答案、解析、图片、tags、keywords 等字段。
 
 ### 6.2 保留 query 形态
 
@@ -361,7 +297,7 @@ const result = await faqClient.v1.questionsBase.query({
 
 保留这个对象形态的原因不是为了继续支持复杂筛选，而是为了给后续协议扩展保留签名。
 
-`query({ ids })` 和 `getByIds(ids)` 走同一套底层逻辑，都会使用 `POST` body，并受 `idsBatchSize + parallelism` 控制。
+`query({ ids })` 和 `getByIds(ids)` 走同一套底层逻辑，都会使用 `POST` body。
 
 当前 `v1` 的明确结论是：
 
@@ -371,12 +307,13 @@ const result = await faqClient.v1.questionsBase.query({
 
 不要把 FAQ Base 当成第三方业务侧的复杂搜索平台。
 
-### 6.3 单题详情
+### 6.3 单题读取
+
+如果只需要一个题目，也统一走：
 
 ```ts
-const detail = await faqClient.v1.questionDetail.getById('123');
-
-console.log(detail);
+const result = await faqClient.v1.questionsBase.getByIds(['123']);
+const item = result.items[0] ?? null;
 ```
 
 ## 7. 为什么主推 ids 批量查询
@@ -430,12 +367,13 @@ Redis 缓存主要服务 `outer` 读链路，而不是内部后台列表查询�
 
 对外 `questionsBase` 的纯 `ids` 查询也会复用这套 `id` 级缓存，只是当前实现方式是：
 
-1. 逐个 `id` 循环查 Redis
-2. 命中的直接转成 `OuterQuestionBaseItemDto`
-3. miss 的部分一次性回源 DB
-4. 返回结果后异步投递缓存重建任务
+1. 按 ids 分组
+2. 分组并发读取 Redis 缓存
+3. miss 的部分分组并发回源 DB
+4. 按请求 ids 顺序合并完整题目 DTO
+5. 返回结果后异步投递缓存重建任务
 
-当前没有使用 Redis pipeline / mget，这一层后续等底层能力完善后再升级。
+当前 Redis 读取使用批量 `mget` 能力。
 
 ### 8.3 写后构建链路
 
@@ -466,7 +404,7 @@ FAQ Base 对外暴露的数据模型，统一来自 contracts 包。
 SDK 已直接 re-export `contracts` 的 `outer/v1` 类型，业务方可以直接复用：
 
 ```ts
-import type { OuterQuestionDetailDto } from '@windrun-huaiin/faq-sdk';
+import type { OuterQuestionBaseItemDto } from '@windrun-huaiin/faq-sdk';
 ```
 
 这意味着：
@@ -506,7 +444,7 @@ flowchart TD
     B --> C[业务方写入服务端环境变量]
     C --> D[初始化 @windrun-huaiin/faq-sdk]
     D --> E[调用 client.v1.questionsBase.getByIds(ids)]
-    E --> F[SDK 自动去重 / 分组 / 并发 / 签名]
+    E --> F[SDK 自动去重 / POST body / 签名]
     F --> G[服务端校验签名与 Redis nonce]
     G --> H[Outer Route 读取 DTO]
     H --> I{Redis 命中?}
@@ -525,13 +463,13 @@ flowchart TD
 - 必须通过 `@windrun-huaiin/faq-sdk` 调用
 - 不允许 HTTP 直调 `outer` 路由
 - 不允许自行实现签名协议
-- 不允许绕过 SDK 的分组和并发控制
+- 不允许绕过 SDK 自行拼接请求
 
 ### 12.2 对 FAQ Base 自身
 
 - 对外能力以 SDK 为唯一接入面
 - DTO 必须保持版本稳定
-- `idsBatchSize` 必须保留 `100` 的硬上限保护
+- 大批量 ids 的执行策略由 outer route 内部控制
 - 缓存粒度继续保持题目 `id` 级别
 - 后续协议升级优先通过 SDK 向外平滑演进
 
@@ -542,7 +480,6 @@ flowchart TD
 - SDK 初始化
 - `questionsBase.getByIds(ids)`
 - `questionsBase.query(params)`
-- `questionDetail.getById(id)`
 - 服务端签名鉴权
 - Redis `id` 级别缓存
 - QStash 异步缓存构建

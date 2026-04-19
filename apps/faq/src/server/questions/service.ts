@@ -38,6 +38,8 @@ import {
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
+const OUTER_IDS_CHUNK_SIZE = 100;
+const OUTER_IDS_PARALLELISM = 5;
 
 function normalizePage(value?: number): number {
   if (!value || value < 1) {
@@ -190,20 +192,6 @@ export function buildQuestionListItemDto(record: Usb): QuestionListItemDto {
   };
 }
 
-function buildOuterQuestionBaseItemFromDetailDto(record: QuestionDetailDto): OuterQuestionBaseItemDto {
-  return {
-    id: record.id,
-    uuid: record.uuid,
-    question: record.question,
-    category: record.category,
-    subCategory: record.subCategory,
-    difficulty: record.difficulty,
-    asFirst: record.asFirst,
-    createdAt: record.createdAt,
-    updatedAt: record.updatedAt,
-  };
-}
-
 export function buildQuestionDetailDto(record: Usb): QuestionDetailDto {
   const incorrectAnswers = parseIncorrectAnswers(record.incorrectAnswers);
 
@@ -245,6 +233,46 @@ function buildQuestionExportItemDto(
     subCategory: record.subCategory,
     asFirst: record.asFirst,
   };
+}
+
+function chunkArray<T>(items: T[], chunkSize: number): T[][] {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const chunks: T[][] = [];
+
+  for (let index = 0; index < items.length; index += chunkSize) {
+    chunks.push(items.slice(index, index + chunkSize));
+  }
+
+  return chunks;
+}
+
+async function mapWithConcurrency<TInput, TOutput>(
+  items: TInput[],
+  concurrency: number,
+  mapper: (item: TInput, index: number) => Promise<TOutput>
+): Promise<TOutput[]> {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const results = new Array<TOutput>(items.length);
+  let currentIndex = 0;
+
+  async function worker() {
+    while (currentIndex < items.length) {
+      const targetIndex = currentIndex;
+      currentIndex += 1;
+      results[targetIndex] = await mapper(items[targetIndex], targetIndex);
+    }
+  }
+
+  const workerCount = Math.max(1, Math.min(concurrency, items.length));
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+
+  return results;
 }
 
 function buildQuestionWhereInput(params: QuestionListParams): Prisma.UsbWhereInput {
@@ -555,44 +583,56 @@ export async function getOuterQuestionBaseByIds(
     };
   }
 
-  const cachedItems = new Map<string, OuterQuestionBaseItemDto>();
-  const missedIds: bigint[] = [];
-  const cachedDetails = await getOuterQuestionDetailCacheMap(ids);
+  const chunks = chunkArray(ids, OUTER_IDS_CHUNK_SIZE);
+  const chunkResults = await mapWithConcurrency(chunks, OUTER_IDS_PARALLELISM, async (chunkIds) => {
+    const cachedItems = new Map<string, OuterQuestionBaseItemDto>();
+    const missedIds: bigint[] = [];
+    const cachedDetails = await getOuterQuestionDetailCacheMap(chunkIds);
 
-  for (const id of ids) {
-    const cached = cachedDetails.get(id);
+    for (const id of chunkIds) {
+      const cached = cachedDetails.get(id);
 
-    if (cached) {
-      cachedItems.set(id, buildOuterQuestionBaseItemFromDetailDto(cached));
-      continue;
+      if (cached) {
+        cachedItems.set(id, cached);
+        continue;
+      }
+
+      missedIds.push(BigInt(id));
     }
 
-    missedIds.push(BigInt(id));
-  }
-
-  if (missedIds.length > 0) {
-    const records = await prisma.usb.findMany({
-      where: {
-        deleted: 0,
-        id: {
-          in: missedIds,
+    if (missedIds.length > 0) {
+      const records = await prisma.usb.findMany({
+        where: {
+          deleted: 0,
+          id: {
+            in: missedIds,
+          },
         },
-      },
-    });
-
-    for (const record of records) {
-      const detail = buildQuestionDetailDto(record);
-      cachedItems.set(detail.id, buildOuterQuestionBaseItemFromDetailDto(detail));
-
-      void enqueueOuterQuestionDetailCacheRebuild({
-        questionId: detail.id,
-        reason: 'read_miss',
       });
+
+      for (const record of records) {
+        const detail = buildQuestionDetailDto(record);
+        cachedItems.set(detail.id, detail);
+
+        void enqueueOuterQuestionDetailCacheRebuild({
+          questionId: detail.id,
+          reason: 'read_miss',
+        });
+      }
+    }
+
+    return cachedItems;
+  });
+  const itemsById = new Map<string, OuterQuestionBaseItemDto>();
+
+  for (const chunkResult of chunkResults) {
+    for (const [id, item] of chunkResult) {
+      itemsById.set(id, item);
     }
   }
 
   const items = ids
-    .map((id) => cachedItems.get(id) ?? null)
+    .map((id) => itemsById.get(id) ?? null)
     .filter((item): item is OuterQuestionBaseItemDto => item !== null);
 
   return {

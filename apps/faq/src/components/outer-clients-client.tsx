@@ -23,23 +23,37 @@ function maskSecret(value: string): string {
   return `${value.slice(0, 12)}••••••••${value.slice(-12)}`;
 }
 
-function buildEnvBlock(secret: OuterClientKeyIssueResult, showSecret: boolean): string {
+function resolveFaqBaseUrl(): string {
+  const configuredBaseUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim();
+
+  if (configuredBaseUrl) {
+    return configuredBaseUrl;
+  }
+
+  return 'http://localhost:3000';
+}
+
+function buildEnvBlock(secret: OuterClientKeyIssueResult, showSecret: boolean, baseUrl: string): string {
   const privateValue = showSecret ? secret.privateKey : maskSecret(secret.privateKey);
 
   return [
+    `WINDRUN_HUAIIN_FAQ_BASE_URL=${baseUrl}`,
     `WINDRUN_HUAIIN_FAQ_CLIENT_ID=${secret.clientId}`,
     `WINDRUN_HUAIIN_FAQ_KEY_VERSION=${secret.keyVersion}`,
     `NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_PK=${secret.publicKey}`,
     `WINDRUN_HUAIIN_FAQ_SK=${privateValue}`,
+    'WINDRUN_HUAIIN_SDK_DEBUG=false',
   ].join('\n');
 }
 
-function buildCopyableEnvBlock(secret: OuterClientKeyIssueResult): string {
+function buildCopyableEnvBlock(secret: OuterClientKeyIssueResult, baseUrl: string): string {
   return [
+    `WINDRUN_HUAIIN_FAQ_BASE_URL=${baseUrl}`,
     `WINDRUN_HUAIIN_FAQ_CLIENT_ID=${secret.clientId}`,
     `WINDRUN_HUAIIN_FAQ_KEY_VERSION=${secret.keyVersion}`,
     `NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_PK=${secret.publicKey}`,
     `WINDRUN_HUAIIN_FAQ_SK=${secret.privateKey}`,
+    'WINDRUN_HUAIIN_SDK_DEBUG=false',
   ].join('\n');
 }
 
@@ -178,7 +192,7 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
       return;
     }
 
-    await navigator.clipboard.writeText(buildCopyableEnvBlock(createdSecret));
+    await navigator.clipboard.writeText(buildCopyableEnvBlock(createdSecret, resolveFaqBaseUrl()));
     setCopiedField('env');
   }
 
@@ -190,13 +204,13 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
   ];
 
   const envBlock = useMemo(
-    () => (createdSecret ? buildEnvBlock(createdSecret, showSecret) : ''),
+    () => (createdSecret ? buildEnvBlock(createdSecret, showSecret, resolveFaqBaseUrl()) : ''),
     [createdSecret, showSecret]
   );
 
   return (
     <div className="flex flex-col gap-5 sm:gap-6">
-      <section className="rounded-[2rem] border border-black/10 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-neutral-950/70 sm:p-6">
+      <section className="rounded-4xl border border-black/10 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-neutral-950/70 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{copy.createTitle}</h2>
@@ -221,13 +235,13 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
         </div>
       ) : null}
 
-      <section className="rounded-[2rem] border border-black/10 bg-neutral-50/80 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-neutral-950/60 sm:p-5">
+      <section className="rounded-4xl border border-black/10 bg-neutral-50/80 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-neutral-950/60 sm:p-5">
         {loading ? (
-          <div className="rounded-[1.5rem] border border-dashed border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
+          <div className="rounded-3xl border border-dashed border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
             {copy.loading}
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-[1.5rem] border border-dashed border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
+          <div className="rounded-3xl border border-dashed border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
             {copy.empty}
           </div>
         ) : (
@@ -291,7 +305,7 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
           onClick={() => setPendingDeleteClientId(null)}
         >
           <div
-            className="w-full max-w-lg rounded-[2rem] border border-black/10 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-neutral-950 sm:p-6"
+            className="w-full max-w-lg rounded-4xl border border-black/10 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-neutral-950 sm:p-6"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
@@ -426,7 +440,7 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
 
                 <section className="rounded-[1.75rem] border border-amber-200 bg-amber-50/90 p-4 dark:border-amber-400/20 dark:bg-amber-500/10 sm:p-5">
                   {!createdSecret ? (
-                    <div className="flex h-full min-h-[18rem] items-center justify-center rounded-[1.5rem] border border-dashed border-amber-300/80 px-6 text-center text-sm leading-6 text-slate-600 dark:border-amber-400/25 dark:text-slate-300">
+                    <div className="flex h-full min-h-72 items-center justify-center rounded-3xl border border-dashed border-amber-300/80 px-6 text-center text-sm leading-6 text-slate-600 dark:border-amber-400/25 dark:text-slate-300">
                       {copy.createResultDescription}
                     </div>
                   ) : (
@@ -437,7 +451,7 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
                         <InfoPill label={copy.keyCount} value="1" />
                       </div>
 
-                      <div className="rounded-[1.5rem] border border-black/10 bg-white/90 p-4 dark:border-white/10 dark:bg-neutral-950/85">
+                      <div className="rounded-3xl border border-black/10 bg-white/90 p-4 dark:border-white/10 dark:bg-neutral-950/85">
                         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="flex items-center gap-3">
                             <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">

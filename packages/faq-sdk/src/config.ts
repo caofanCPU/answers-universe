@@ -1,6 +1,26 @@
 import { AnswersUniverseSdkError } from './errors.js';
 import type { AnswersUniverseClientOptions, AnswersUniverseResolvedOptions } from './types.js';
 
+function readRequiredEnv(name: string): string {
+  const value = process.env[name]?.trim();
+
+  if (!value) {
+    throw new AnswersUniverseSdkError('INVALID_CONFIG', `Missing required environment variable: ${name}`);
+  }
+
+  return value;
+}
+
+export function readClientOptionsFromEnv(): AnswersUniverseClientOptions {
+  return {
+    baseUrl: readRequiredEnv('WINDRUN_HUAIIN_FAQ_BASE_URL'),
+    clientId: readRequiredEnv('WINDRUN_HUAIIN_FAQ_CLIENT_ID'),
+    keyVersion: readRequiredEnv('WINDRUN_HUAIIN_FAQ_KEY_VERSION'),
+    publicKey: readRequiredEnv('NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_PK'),
+    privateKey: readRequiredEnv('WINDRUN_HUAIIN_FAQ_SK'),
+  };
+}
+
 export function resolveClientOptions(options: AnswersUniverseClientOptions): AnswersUniverseResolvedOptions {
   if (!options.baseUrl?.trim()) {
     throw new AnswersUniverseSdkError('INVALID_CONFIG', 'baseUrl is required');
@@ -33,9 +53,6 @@ export function resolveClientOptions(options: AnswersUniverseClientOptions): Ans
     publicKey: options.publicKey.trim(),
     privateKey: options.privateKey.trim(),
     version: options.version ?? 'v1',
-    idsBatchSize: Math.min(Math.max(1, options.idsBatchSize ?? 50), 100),
-    parallelism: Math.max(1, options.parallelism ?? 3),
-    timeoutMs: Math.max(1, options.timeoutMs ?? 10_000),
     fetch: options.fetch ?? globalThis.fetch.bind(globalThis),
   };
 }

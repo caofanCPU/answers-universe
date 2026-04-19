@@ -3,6 +3,8 @@ import { buildAuthHeaders } from './auth.js';
 import { AnswersUniverseApiError, AnswersUniverseSdkError, isOuterApiError } from './errors.js';
 import type { AnswersUniverseResolvedOptions } from './types.js';
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 export async function requestJson<TResponse>(
   options: AnswersUniverseResolvedOptions,
   path: string,
@@ -19,7 +21,7 @@ export async function requestJson<TResponse>(
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs);
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   const body = init?.body === undefined ? undefined : JSON.stringify(init.body);
 
   try {
@@ -63,7 +65,7 @@ export async function requestJson<TResponse>(
     }
 
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new AnswersUniverseSdkError('REQUEST_TIMEOUT', `Request timed out after ${options.timeoutMs}ms`);
+      throw new AnswersUniverseSdkError('REQUEST_TIMEOUT', `Request timed out after ${REQUEST_TIMEOUT_MS}ms`);
     }
 
     throw new AnswersUniverseSdkError(

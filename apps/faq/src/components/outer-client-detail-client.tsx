@@ -31,6 +31,8 @@ type PendingLeaveAction =
 
 function getEnvVariableNames() {
   return {
+    baseUrl: 'WINDRUN_HUAIIN_FAQ_BASE_URL',
+    sdkDebug: 'WINDRUN_HUAIIN_SDK_DEBUG',
     publicKey: 'NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_PK',
     privateKey: 'WINDRUN_HUAIIN_FAQ_SK',
   };
@@ -46,6 +48,16 @@ function maskSecret(value: string): string {
   }
 
   return `${value.slice(0, 12)}••••••••${value.slice(-12)}`;
+}
+
+function resolveFaqBaseUrl(): string {
+  const configuredBaseUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim();
+
+  if (configuredBaseUrl) {
+    return configuredBaseUrl;
+  }
+
+  return 'http://localhost:3000';
 }
 
 export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientDetailClientProps) {
@@ -270,10 +282,12 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
     const privateValue = showSecret ? oneTimeSecret.privateKey : activeSecretMask;
 
     return [
+      `${variableNames.baseUrl}=${resolveFaqBaseUrl()}`,
       `WINDRUN_HUAIIN_FAQ_CLIENT_ID=${oneTimeSecret.clientId}`,
       `WINDRUN_HUAIIN_FAQ_KEY_VERSION=${oneTimeSecret.keyVersion}`,
       `${variableNames.publicKey}=${oneTimeSecret.publicKey}`,
       `${variableNames.privateKey}=${privateValue}`,
+      `${variableNames.sdkDebug}=false`,
     ].join('\n');
   }, [activeSecretMask, oneTimeSecret, showSecret]);
 
@@ -284,10 +298,12 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
 
     const variableNames = getEnvVariableNames();
     return [
+      `${variableNames.baseUrl}=${resolveFaqBaseUrl()}`,
       `WINDRUN_HUAIIN_FAQ_CLIENT_ID=${oneTimeSecret.clientId}`,
       `WINDRUN_HUAIIN_FAQ_KEY_VERSION=${oneTimeSecret.keyVersion}`,
       `${variableNames.publicKey}=${oneTimeSecret.publicKey}`,
       `${variableNames.privateKey}=${oneTimeSecret.privateKey}`,
+      `${variableNames.sdkDebug}=false`,
     ].join('\n');
   }, [oneTimeSecret]);
 
