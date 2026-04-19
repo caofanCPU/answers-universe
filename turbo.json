@@ -61,7 +61,7 @@
       "env": ["NODE_ENV"]
     },
     "@windrun-huaiin/faq#build": {
-      "dependsOn": ["@windrun-huaiin/faq-contracts#build"],
+      "dependsOn": ["@windrun-huaiin/faq-sdk#build"],
       "outputs": [".next/**", "!.next/cache/**"],
       "env": [
         "NODE_ENV",
@@ -83,7 +83,7 @@
       ]
     },
     "@windrun-huaiin/faq#build:prod": {
-      "dependsOn": ["@windrun-huaiin/faq-contracts#build"],
+      "dependsOn": ["@windrun-huaiin/faq-sdk#build"],
       "outputs": [".next/**", "!.next/cache/**"],
       "env": [
         "NODE_ENV",
@@ -105,7 +105,7 @@
       ]
     },
     "dev": {
-      "dependsOn": ["@windrun-huaiin/faq-contracts#build"],
+      "dependsOn": ["@windrun-huaiin/faq-sdk#build"],
       "cache": false,
       "persistent": true,
       "env": [

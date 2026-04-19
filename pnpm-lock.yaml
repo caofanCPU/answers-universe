@@ -302,6 +302,9 @@ importers:
       '@windrun-huaiin/faq-contracts':
         specifier: workspace:*
         version: link:../../packages/faq-contracts
+      '@windrun-huaiin/faq-sdk':
+        specifier: workspace:*
+        version: link:../../packages/faq-sdk
       '@windrun-huaiin/lib':
         specifier: 'catalog:'
         version: 20.0.0(clsx@2.1.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(tailwind-merge@3.5.0)

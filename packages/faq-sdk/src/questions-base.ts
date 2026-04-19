@@ -1,51 +1,34 @@
 import type { OuterQuestionBaseQuery, OuterQuestionBaseResult } from '@windrun-huaiin/faq-contracts/outer/v1';
 import type { AnswersUniverseQuestionsBaseClient, AnswersUniverseResolvedOptions } from './types.js';
 import { requestJson } from './http.js';
-import { appendQueryParams, chunkArray, mapWithConcurrency, uniqueNonEmptyStrings } from './utils.js';
+import { chunkArray, mapWithConcurrency, uniqueNonEmptyStrings } from './utils.js';
 
 const QUESTIONS_BASE_PATH = '/api/outer/v1/questions-base';
 
 export function createQuestionsBaseClient(options: AnswersUniverseResolvedOptions): AnswersUniverseQuestionsBaseClient {
-  return {
-    async getByIds(ids: string[]): Promise<OuterQuestionBaseResult> {
-      const normalizedIds = uniqueNonEmptyStrings(ids);
-      const chunks = chunkArray(normalizedIds, options.idsBatchSize);
-
-      const results = await mapWithConcurrency(chunks, options.parallelism, async (idGroup) => {
-        const searchParams = new URLSearchParams();
-        appendQueryParams(searchParamsToUrl(searchParams), {
+  async function getByIds(ids: string[]): Promise<OuterQuestionBaseResult> {
+    const normalizedIds = uniqueNonEmptyStrings(ids);
+    const chunks = chunkArray(normalizedIds, options.idsBatchSize);
+    const results = await mapWithConcurrency(chunks, options.parallelism, async (idGroup) => {
+      return requestJson<OuterQuestionBaseResult>(options, QUESTIONS_BASE_PATH, {
+        method: 'POST',
+        body: {
           ids: idGroup,
-        });
-
-        return requestJson<OuterQuestionBaseResult>(options, QUESTIONS_BASE_PATH, {
-          method: 'GET',
-          query: searchParams,
-        });
+        },
       });
+    });
+    const mergedItems = results.flatMap((result) => result.items);
 
-      const mergedItems = results.flatMap((result) => result.items);
+    return {
+      items: mergedItems,
+    };
+  }
 
-      return {
-        items: mergedItems,
-      };
-    },
+  return {
+    getByIds,
 
     async query(params: OuterQuestionBaseQuery): Promise<OuterQuestionBaseResult> {
-      const searchParams = new URLSearchParams();
-      appendQueryParams(searchParamsToUrl(searchParams), {
-        ids: params.ids,
-      });
-
-      return requestJson<OuterQuestionBaseResult>(options, QUESTIONS_BASE_PATH, {
-        method: 'GET',
-        query: searchParams,
-      });
+      return getByIds(params.ids ?? []);
     },
   };
-}
-
-function searchParamsToUrl(searchParams: URLSearchParams): URL {
-  const url = new URL('https://sdk.local');
-  url.search = searchParams.toString();
-  return url;
 }

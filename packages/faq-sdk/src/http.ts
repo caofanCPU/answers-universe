@@ -7,8 +7,9 @@ export async function requestJson<TResponse>(
   options: AnswersUniverseResolvedOptions,
   path: string,
   init?: {
-    method?: 'GET';
+    method?: 'GET' | 'POST';
     query?: URLSearchParams;
+    body?: unknown;
   }
 ): Promise<TResponse> {
   const url = new URL(path, `${options.baseUrl}/`);
@@ -19,20 +20,24 @@ export async function requestJson<TResponse>(
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs);
+  const body = init?.body === undefined ? undefined : JSON.stringify(init.body);
 
   try {
     const authHeaders = buildAuthHeaders(options, {
       method: init?.method ?? 'GET',
       path: url.pathname,
       query: url.searchParams.toString(),
+      body,
     });
 
     const response = await options.fetch(url, {
       method: init?.method ?? 'GET',
       headers: {
         accept: 'application/json',
+        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
         ...authHeaders,
       },
+      body,
       signal: controller.signal,
     });
 

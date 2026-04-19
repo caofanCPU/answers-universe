@@ -30,6 +30,10 @@ function requireHeader(req: NextRequest, headerName: string): string {
   return value;
 }
 
+function isOuterAuthDebugEnabled(): boolean {
+  return process.env.WINDRUN_HUAIIN_SDK_DEBUG === 'true';
+}
+
 export async function requireOuterV1ApiAuth(req: NextRequest): Promise<OuterV1AuthContext> {
   const clientId = requireHeader(req, OUTER_CLIENT_ID_HEADER);
   const keyVersion = requireHeader(req, OUTER_KEY_VERSION_HEADER);
@@ -76,6 +80,21 @@ export async function requireOuterV1ApiAuth(req: NextRequest): Promise<OuterV1Au
   };
 
   const payload = await buildOuterV1SignaturePayload(req, authContext);
+
+  if (isOuterAuthDebugEnabled()) {
+    console.debug('[Outer V1 Auth] Rebuilt request payload', {
+      clientId,
+      keyVersion,
+      timestamp,
+      nonce,
+      receivedSignature: signature,
+      method: req.method.toUpperCase(),
+      path: req.nextUrl.pathname,
+      query: req.nextUrl.searchParams.toString(),
+      payload,
+    });
+  }
+
   const valid = verifyOuterV1Signature({
     publicKey: keyRecord.publicKey,
     payload,

@@ -55,20 +55,3 @@ export function uniqueNonEmptyStrings(items: string[]): string[] {
 
   return result;
 }
-
-export function appendQueryParams(url: URL, params: Record<string, string | string[] | number | boolean | undefined>) {
-  for (const [key, value] of Object.entries(params)) {
-    if (value === undefined) {
-      continue;
-    }
-
-    if (Array.isArray(value)) {
-      if (value.length > 0) {
-        url.searchParams.set(key, value.join(','));
-      }
-      continue;
-    }
-
-    url.searchParams.set(key, String(value));
-  }
-}

@@ -24,15 +24,23 @@ function maskSecret(value: string): string {
 }
 
 function buildEnvBlock(secret: OuterClientKeyIssueResult, showSecret: boolean): string {
-  const suffix = secret.environment === 'live' ? 'LIVE' : 'TEST';
   const privateValue = showSecret ? secret.privateKey : maskSecret(secret.privateKey);
 
-  return `NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_${suffix}_PK=${secret.publicKey}\nWINDRUN_HUAIIN_FAQ_${suffix}_SK=${privateValue}`;
+  return [
+    `WINDRUN_HUAIIN_FAQ_CLIENT_ID=${secret.clientId}`,
+    `WINDRUN_HUAIIN_FAQ_KEY_VERSION=${secret.keyVersion}`,
+    `NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_PK=${secret.publicKey}`,
+    `WINDRUN_HUAIIN_FAQ_SK=${privateValue}`,
+  ].join('\n');
 }
 
 function buildCopyableEnvBlock(secret: OuterClientKeyIssueResult): string {
-  const suffix = secret.environment === 'live' ? 'LIVE' : 'TEST';
-  return `NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_${suffix}_PK=${secret.publicKey}\nWINDRUN_HUAIIN_FAQ_${suffix}_SK=${secret.privateKey}`;
+  return [
+    `WINDRUN_HUAIIN_FAQ_CLIENT_ID=${secret.clientId}`,
+    `WINDRUN_HUAIIN_FAQ_KEY_VERSION=${secret.keyVersion}`,
+    `NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_PK=${secret.publicKey}`,
+    `WINDRUN_HUAIIN_FAQ_SK=${secret.privateKey}`,
+  ].join('\n');
 }
 
 function formatTime(value: string | null): string {

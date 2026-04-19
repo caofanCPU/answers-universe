@@ -29,12 +29,10 @@ type PendingLeaveAction =
   | { kind: 'delete-active-key'; keyVersion: string }
   | null;
 
-function getEnvVariableNames(environment: string) {
-  const suffix = environment === 'live' ? 'LIVE' : 'TEST';
-
+function getEnvVariableNames() {
   return {
-    publicKey: `NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_${suffix}_PK`,
-    privateKey: `WINDRUN_HUAIIN_FAQ_${suffix}_SK`,
+    publicKey: 'NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_PK',
+    privateKey: 'WINDRUN_HUAIIN_FAQ_SK',
   };
 }
 
@@ -268,10 +266,15 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
       return '';
     }
 
-    const variableNames = getEnvVariableNames(oneTimeSecret.environment);
+    const variableNames = getEnvVariableNames();
     const privateValue = showSecret ? oneTimeSecret.privateKey : activeSecretMask;
 
-    return `${variableNames.publicKey}=${oneTimeSecret.publicKey}\n${variableNames.privateKey}=${privateValue}`;
+    return [
+      `WINDRUN_HUAIIN_FAQ_CLIENT_ID=${oneTimeSecret.clientId}`,
+      `WINDRUN_HUAIIN_FAQ_KEY_VERSION=${oneTimeSecret.keyVersion}`,
+      `${variableNames.publicKey}=${oneTimeSecret.publicKey}`,
+      `${variableNames.privateKey}=${privateValue}`,
+    ].join('\n');
   }, [activeSecretMask, oneTimeSecret, showSecret]);
 
   const copyableEnvBlock = useMemo(() => {
@@ -279,8 +282,13 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
       return '';
     }
 
-    const variableNames = getEnvVariableNames(oneTimeSecret.environment);
-    return `${variableNames.publicKey}=${oneTimeSecret.publicKey}\n${variableNames.privateKey}=${oneTimeSecret.privateKey}`;
+    const variableNames = getEnvVariableNames();
+    return [
+      `WINDRUN_HUAIIN_FAQ_CLIENT_ID=${oneTimeSecret.clientId}`,
+      `WINDRUN_HUAIIN_FAQ_KEY_VERSION=${oneTimeSecret.keyVersion}`,
+      `${variableNames.publicKey}=${oneTimeSecret.publicKey}`,
+      `${variableNames.privateKey}=${oneTimeSecret.privateKey}`,
+    ].join('\n');
   }, [oneTimeSecret]);
 
   const expiresInOptions = [

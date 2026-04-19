@@ -39,13 +39,10 @@ function internalServerError(error: unknown) {
   return NextResponse.json(response, { status: 500 });
 }
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     await requireOuterV1ApiAuth(req);
-
-    const query = outerQuestionBaseQuerySchema.parse({
-      ids: req.nextUrl.searchParams.get('ids') ?? undefined,
-    });
+    const query = outerQuestionBaseQuerySchema.parse(await req.json());
 
     const result: OuterQuestionBaseResult = await getOuterQuestionBaseByIds(query);
     return NextResponse.json(result);

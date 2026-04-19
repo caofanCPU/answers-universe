@@ -114,15 +114,15 @@ version?: 'v1'
 WINDRUN_HUAIIN_FAQ_BASE_URL=https://your-faq-base-domain.com
 WINDRUN_HUAIIN_FAQ_CLIENT_ID=client_xxxxxxxxxxxx
 WINDRUN_HUAIIN_FAQ_KEY_VERSION=v1
-NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_TEST_PK=pk_test_xxxxxxxxxxxx
-WINDRUN_HUAIIN_FAQ_TEST_SK=sk_test_xxxxxxxxxxxx
+NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_PK=pk_test_xxxxxxxxxxxx
+WINDRUN_HUAIIN_FAQ_SK=sk_test_xxxxxxxxxxxx
 ```
 
-如果是生产环境，则通常会对应：
+生产环境使用同一组变量名，只替换变量值：
 
 ```env
-NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_LIVE_PK=pk_live_xxxxxxxxxxxx
-WINDRUN_HUAIIN_FAQ_LIVE_SK=sk_live_xxxxxxxxxxxx
+NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_PK=pk_live_xxxxxxxxxxxx
+WINDRUN_HUAIIN_FAQ_SK=sk_live_xxxxxxxxxxxx
 ```
 
 说明：
@@ -290,8 +290,8 @@ const faqClient = createAnswersUniverseClient({
   version: 'v1',
   clientId: process.env.WINDRUN_HUAIIN_FAQ_CLIENT_ID!,
   keyVersion: process.env.WINDRUN_HUAIIN_FAQ_KEY_VERSION!,
-  publicKey: process.env.NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_TEST_PK!,
-  privateKey: process.env.WINDRUN_HUAIIN_FAQ_TEST_SK!,
+  publicKey: process.env.NEXT_PUBLIC_WINDRUN_HUAIIN_FAQ_PK!,
+  privateKey: process.env.WINDRUN_HUAIIN_FAQ_SK!,
   idsBatchSize: 50,
   parallelism: 3,
   timeoutMs: 10000,
@@ -331,8 +331,9 @@ SDK 内部会自动完成：
 1. 去重
 2. 过滤空字符串
 3. 按 `idsBatchSize` 分组
-4. 按 `parallelism` 控制并发
-5. 合并返回结果
+4. 使用 `POST` body 发送 `{ ids }`
+5. 按 `parallelism` 控制并发
+6. 合并返回结果
 
 业务方不应该自行做一层 HTTP 分批封装来替代 SDK。
 
@@ -359,6 +360,8 @@ const result = await faqClient.v1.questionsBase.query({
 ```
 
 保留这个对象形态的原因不是为了继续支持复杂筛选，而是为了给后续协议扩展保留签名。
+
+`query({ ids })` 和 `getByIds(ids)` 走同一套底层逻辑，都会使用 `POST` body，并受 `idsBatchSize + parallelism` 控制。
 
 当前 `v1` 的明确结论是：
 

@@ -1,24 +1,30 @@
 import { createHash, verify } from 'node:crypto';
 import type { NextRequest } from 'next/server';
 
-export function normalizePemKey(value: string): string {
+export function unwrapPlatformPublicKey(value: string): string {
   const trimmed = value.trim();
+  const matched = trimmed.match(/^pk_(?:test|live)_(.+)$/);
 
-  if (trimmed.startsWith('-----BEGIN')) {
-    return trimmed;
+  if (!matched) {
+    throw new Error('INVALID_OUTER_PUBLIC_KEY');
   }
 
-  const [prefix, encoded] = splitWrappedKey(trimmed);
+  const [, encoded] = matched;
+  const decoded = Buffer.from(encoded, 'base64url').toString('utf8');
 
-  if (!prefix.startsWith('pk_') && !prefix.startsWith('sk_')) {
-    return trimmed;
+  if (!decoded.trim().startsWith('-----BEGIN PUBLIC KEY-----')) {
+    throw new Error('INVALID_OUTER_PUBLIC_KEY');
   }
 
-  const binary = Buffer.from(encoded, 'base64url');
-  const body = binary.toString('base64').match(/.{1,64}/g)?.join('\n') ?? binary.toString('base64');
-  const keyType = prefix.startsWith('pk_') ? 'PUBLIC' : 'PRIVATE';
+  return decoded.trim();
+}
 
-  return `-----BEGIN ${keyType} KEY-----\n${body}\n-----END ${keyType} KEY-----`;
+function isOuterAuthDebugEnabled(): boolean {
+  return process.env.WINDRUN_HUAIIN_SDK_DEBUG === 'true';
+}
+
+function buildKeyFingerprint(publicKey: string): string {
+  return createHash('sha256').update(publicKey).digest('hex');
 }
 
 export async function buildOuterV1SignaturePayload(req: NextRequest, authContext: {
@@ -55,20 +61,21 @@ export function verifyOuterV1Signature(params: {
     throw new Error('UNSUPPORTED_OUTER_KEY_ALGORITHM');
   }
 
-  const normalizedPublicKey = normalizePemKey(params.publicKey);
+  const normalizedPublicKey = unwrapPlatformPublicKey(params.publicKey);
   const normalizedSignature = Buffer.from(params.signature, 'base64url');
+  const valid = verify(null, Buffer.from(params.payload, 'utf8'), normalizedPublicKey, normalizedSignature);
 
-  return verify(null, Buffer.from(params.payload, 'utf8'), normalizedPublicKey, normalizedSignature);
-}
-
-function splitWrappedKey(value: string): [string, string] {
-  const matched = value.match(/^(pk_(?:test|live)|sk_(?:test|live))_(.+)$/);
-
-  if (!matched) {
-    return ['', value];
+  if (isOuterAuthDebugEnabled()) {
+    console.debug('[Outer V1 Auth] Verified request signature', {
+      algorithm: normalizedAlgorithm,
+      publicKeyFingerprint: buildKeyFingerprint(normalizedPublicKey),
+      payload: params.payload,
+      receivedSignature: params.signature,
+      valid,
+    });
   }
 
-  return [matched[1], matched[2]];
+  return valid;
 }
 
 function canonicalizeSearchParams(searchParams: URLSearchParams): string {

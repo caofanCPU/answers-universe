@@ -1,25 +1,26 @@
 import { createHash, randomUUID, sign } from 'node:crypto';
 import type { AnswersUniverseResolvedOptions } from './types.js';
 
-function normalizePemKey(value: string): string {
+function unwrapPlatformPrivateKey(value: string): string {
   const trimmed = value.trim();
-
-  if (trimmed.startsWith('-----BEGIN')) {
-    return trimmed;
-  }
-
-  const matched = trimmed.match(/^(pk_(?:test|live)|sk_(?:test|live))_(.+)$/);
+  const matched = trimmed.match(/^sk_(?:test|live)_(.+)$/);
 
   if (!matched) {
-    return trimmed;
+    throw new Error('INVALID_FAQ_PRIVATE_KEY');
   }
 
-  const [, prefix, encoded] = matched;
-  const binary = Buffer.from(encoded, 'base64url');
-  const body = binary.toString('base64').match(/.{1,64}/g)?.join('\n') ?? binary.toString('base64');
-  const keyType = prefix.startsWith('pk_') ? 'PUBLIC' : 'PRIVATE';
+  const [, encoded] = matched;
+  const decoded = Buffer.from(encoded, 'base64url').toString('utf8');
 
-  return `-----BEGIN ${keyType} KEY-----\n${body}\n-----END ${keyType} KEY-----`;
+  if (!decoded.trim().startsWith('-----BEGIN PRIVATE KEY-----')) {
+    throw new Error('INVALID_FAQ_PRIVATE_KEY');
+  }
+
+  return decoded.trim();
+}
+
+function isAuthDebugEnabled(): boolean {
+  return process.env.WINDRUN_HUAIIN_SDK_DEBUG === 'true';
 }
 
 export function buildAuthHeaders(_options: AnswersUniverseResolvedOptions, _request: {
@@ -42,7 +43,22 @@ export function buildAuthHeaders(_options: AnswersUniverseResolvedOptions, _requ
     _options.keyVersion,
   ].join('\n');
 
-  const signature = sign(null, Buffer.from(payload, 'utf8'), normalizePemKey(_options.privateKey)).toString('base64url');
+  const signature = sign(null, Buffer.from(payload, 'utf8'), unwrapPlatformPrivateKey(_options.privateKey)).toString('base64url');
+
+  if (isAuthDebugEnabled()) {
+    console.debug('[FAQ SDK Auth] Built request signature', {
+      clientId: _options.clientId,
+      keyVersion: _options.keyVersion,
+      method: _request.method.toUpperCase(),
+      path: _request.path,
+      query: _request.query,
+      bodyHash,
+      timestamp,
+      nonce,
+      payload,
+      signature,
+    });
+  }
 
   return {
     'x-au-client-id': _options.clientId,

@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
     '@windrun-huaiin/base-ui',
     '@windrun-huaiin/third-ui',
     '@windrun-huaiin/lib',
+    '@windrun-huaiin/faq-contracts',
+    '@windrun-huaiin/faq-sdk',
   ],
   // eslint: {
   //   ignoreDuringBuilds: true,

@@ -1,6 +1,6 @@
 {
   "name": "@windrun-huaiin/faq",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "keywords": [
@@ -27,6 +27,7 @@
     "@windrun-huaiin/backend-core": "catalog:",
     "@windrun-huaiin/base-ui": "catalog:",
     "@windrun-huaiin/faq-contracts": "workspace:*",
+    "@windrun-huaiin/faq-sdk": "workspace:*",
     "@windrun-huaiin/lib": "catalog:",
     "@windrun-huaiin/third-ui": "catalog:",
     "autoprefixer": "catalog:",
