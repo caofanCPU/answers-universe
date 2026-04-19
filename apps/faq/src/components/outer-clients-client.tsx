@@ -249,48 +249,52 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
             {items.map((item) => (
               <article
                 key={item.clientId}
-                className="rounded-[1.75rem] border border-black/10 bg-white px-4 py-4 dark:border-white/10 dark:bg-neutral-900 sm:px-5 sm:py-5"
+                className="rounded-[1.75rem] border border-black/10 bg-white px-4 py-4 dark:border-white/10 dark:bg-neutral-900 sm:px-5"
               >
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusPill value={item.status} />
                     {item.environment ? <EnvPill value={item.environment} /> : null}
-                    <span className="break-all text-xs text-slate-500 dark:text-slate-400">{item.clientId}</span>
+                    <ClientIdPill value={item.clientId} />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{item.name}</h3>
-                    <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{item.remark || '-'}</p>
-                  </div>
+                  <h3 className="text-xl font-semibold text-slate-900 dark:text-white">{item.name}</h3>
 
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    <InfoPill label={copy.keyCount} value={String(item.keyCount)} />
-                    <InfoPill label={copy.activeKeyCount} value={String(item.activeKeyCount)} />
-                    <InfoPill label={copy.updatedAt} value={formatTime(item.updatedAt)} />
-                  </div>
+                  <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                    <div className="min-w-0 space-y-3">
+                      <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{item.remark || '-'}</p>
 
-                  <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                    <XButton
-                      type="single"
-                      variant="subtle"
-                      button={{
-                        text: deletingClientId === item.clientId ? copy.deleting : copy.delete,
-                        icon: <Trash2Icon className="h-4 w-4" />,
-                        disabled: deletingClientId === item.clientId,
-                        onClick: () => setPendingDeleteClientId(item.clientId),
-                      }}
-                    />
-                    <Link href={getAsNeededLocalizedUrl(locale, `/questions/clients/${item.clientId}`)} className="sm:w-auto">
-                      <XButton
-                        type="single"
-                        variant="subtle"
-                        button={{
-                          text: copy.detail,
-                          icon: <ArrowRightIcon className="h-4 w-4" />,
-                          onClick: () => undefined,
-                        }}
-                      />
-                    </Link>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <MetaTag value={`${item.activeKeyCount}/${item.keyCount}`} tone="emerald" minWidth="min-w-18" />
+                        <MetaTag value={formatTime(item.updatedAt)} tone="slate" />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                      <div className="shrink-0">
+                        <XButton
+                          type="single"
+                          variant="subtle"
+                          button={{
+                            text: deletingClientId === item.clientId ? copy.deleting : copy.delete,
+                            icon: <Trash2Icon className="h-4 w-4" />,
+                            disabled: deletingClientId === item.clientId,
+                            onClick: () => setPendingDeleteClientId(item.clientId),
+                          }}
+                        />
+                      </div>
+                      <Link href={getAsNeededLocalizedUrl(locale, `/questions/clients/${item.clientId}`)} className="block shrink-0">
+                        <XButton
+                          type="single"
+                          variant="subtle"
+                          button={{
+                            text: copy.detail,
+                            icon: <ArrowRightIcon className="h-4 w-4" />,
+                            onClick: () => undefined,
+                          }}
+                        />
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </article>
@@ -351,14 +355,14 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
 
       {panelOpen ? (
         <div
-          className="fixed inset-0 z-50 mt-24 bg-slate-950/45 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/45 px-3 pb-4 pt-32 backdrop-blur-sm sm:px-4 sm:items-center sm:py-6"
           onClick={closeCreatePanel}
         >
           <div
-            className="ml-auto flex h-full w-full max-w-3xl flex-col bg-white shadow-2xl dark:bg-neutral-950"
+            className="flex max-h-[min(88vh,900px)] w-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-2xl dark:border-white/10 dark:bg-neutral-950"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-4 border-b border-black/10 px-5 py-4 dark:border-white/10 sm:px-6">
+            <div className="flex items-start justify-between gap-3 border-b border-black/10 px-4 py-3 dark:border-white/10 sm:gap-4 sm:px-6 sm:py-4">
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
                   {createdSecret ? copy.createResultTitle : copy.createPanelTitle}
@@ -379,9 +383,9 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
-              <div className="flex flex-col gap-5">
-                <section className="rounded-[1.75rem] border border-black/10 bg-neutral-50/80 p-4 dark:border-white/10 dark:bg-neutral-900/60 sm:p-5">
+            <div className="overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+              <div className="grid gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+                <section className="rounded-[1.5rem] border border-black/10 bg-neutral-50/80 p-3.5 dark:border-white/10 dark:bg-neutral-900/60 sm:rounded-[1.75rem] sm:p-4">
                   <div className="space-y-4">
                     <label className="grid gap-1.5 text-sm">
                       <span className="font-medium text-slate-700 dark:text-slate-200">{copy.nameLabel}</span>
@@ -393,7 +397,7 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
                       />
                     </label>
 
-                    <div className="rounded-2xl border border-black/10 bg-white p-3 dark:border-white/10 dark:bg-neutral-950">
+                    <div className="rounded-2xl border border-black/10 bg-white p-2.5 dark:border-white/10 dark:bg-neutral-950 sm:p-3">
                       <XFormPills
                         label={<span className="text-sm font-medium text-slate-700 dark:text-slate-200">{copy.expiresInLabel}</span>}
                         value={expiresIn}
@@ -405,11 +409,10 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
 
                     <label className="grid gap-1.5 text-sm">
                       <span className="font-medium text-slate-700 dark:text-slate-200">{copy.remarkLabel}</span>
-                      <textarea
+                      <input
                         value={remark}
                         onChange={(event) => setRemark(event.target.value)}
                         placeholder={copy.remarkPlaceholder}
-                        rows={4}
                         className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-black/20 dark:border-white/10 dark:bg-neutral-950 dark:text-white"
                       />
                     </label>
@@ -438,9 +441,9 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
                   </div>
                 </section>
 
-                <section className="rounded-[1.75rem] border border-amber-200 bg-amber-50/90 p-4 dark:border-amber-400/20 dark:bg-amber-500/10 sm:p-5">
+                <section className="rounded-[1.5rem] border border-amber-200 bg-amber-50/90 p-3.5 dark:border-amber-400/20 dark:bg-amber-500/10 sm:rounded-[1.75rem] sm:p-4">
                   {!createdSecret ? (
-                    <div className="flex h-full min-h-72 items-center justify-center rounded-3xl border border-dashed border-amber-300/80 px-6 text-center text-sm leading-6 text-slate-600 dark:border-amber-400/25 dark:text-slate-300">
+                    <div className="flex h-full min-h-48 items-center justify-center rounded-3xl border border-dashed border-amber-300/80 px-4 text-center text-sm leading-6 text-slate-600 dark:border-amber-400/25 dark:text-slate-300 sm:min-h-56 sm:px-6">
                       {copy.createResultDescription}
                     </div>
                   ) : (
@@ -508,7 +511,7 @@ function InfoPill({ label, value }: { label: string; value: string }) {
 
 function StatusPill({ value }: { value: string }) {
   return (
-    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-white/10 dark:text-slate-200">
+    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200">
       {value}
     </span>
   );
@@ -520,4 +523,21 @@ function EnvPill({ value }: { value: string }) {
       {value}
     </span>
   );
+}
+
+function ClientIdPill({ value }: { value: string }) {
+  return (
+    <span className="break-all rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-white/10 dark:text-slate-200">
+      {value}
+    </span>
+  );
+}
+
+function MetaTag({ value, tone, minWidth }: { value: string; tone: 'emerald' | 'slate'; minWidth?: string }) {
+  const toneClassName =
+    tone === 'emerald'
+      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200'
+      : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-200';
+
+  return <span className={`rounded-full px-3 py-1 text-center text-xs font-medium ${minWidth ?? ''} ${toneClassName}`}>{value}</span>;
 }
