@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
+import { CheckIcon, CircleIcon, EyeIcon, EyeOffIcon, GripVerticalIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import { themeBorderColor, themeIconColor } from '@windrun-huaiin/base-ui/lib';
 import { cn } from '@windrun-huaiin/lib/utils';
 
@@ -229,7 +229,7 @@ export function QuestionAnswerOptions({
               className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-black/5 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
               aria-label={collapsed ? copy.expand : copy.collapse}
             >
-              {collapsed ? <icons.Eye className="h-4 w-4" /> : <icons.EyeOff className="h-4 w-4" />}
+              {collapsed ? <EyeIcon className="h-4 w-4" /> : <EyeOffIcon className="h-4 w-4" />}
             </button>
           </div>
         ) : null}
@@ -302,7 +302,7 @@ export function QuestionAnswerOptions({
                             )}
                             aria-label={`Mark option ${getAnswerLabel(index)} as correct`}
                           >
-                            {option.isCorrect ? <icons.Check className="h-3.5 w-3.5" /> : <icons.Circle className="h-3.5 w-3.5" />}
+                            {option.isCorrect ? <CheckIcon className="h-3.5 w-3.5" /> : <CircleIcon className="h-3.5 w-3.5" />}
                           </button>
                         ) : showCorrectState ? (
                           <span
@@ -312,9 +312,9 @@ export function QuestionAnswerOptions({
                             )}
                           >
                             {option.isCorrect ? (
-                              <icons.Check className="h-3.5 w-3.5" />
+                              <CheckIcon className="h-3.5 w-3.5" />
                             ) : (
-                              <icons.Circle className="h-3.5 w-3.5 text-slate-400" />
+                              <CircleIcon className="h-3.5 w-3.5 text-slate-400" />
                             )}
                           </span>
                         ) : null}
@@ -339,7 +339,7 @@ export function QuestionAnswerOptions({
                     {!readOnly ? (
                       <div className="flex items-center gap-1">
                         <span className="inline-flex h-7 w-7 cursor-grab items-center justify-center rounded-full text-slate-400">
-                          <icons.GripVertical className="h-3.5 w-3.5" />
+                          <GripVerticalIcon className="h-3.5 w-3.5" />
                         </span>
                         <button
                           type="button"
@@ -350,7 +350,7 @@ export function QuestionAnswerOptions({
                           className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-black/5 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
                           aria-label={`Remove option ${getAnswerLabel(index)}`}
                         >
-                          <icons.X className="h-3.5 w-3.5" />
+                          <XIcon className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     ) : null}

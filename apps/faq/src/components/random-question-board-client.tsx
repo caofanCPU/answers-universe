@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
+import { BookCheckIcon, ChevronLeftIcon, ChevronRightIcon, CircleStopIcon, CopyIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import { cn } from '@windrun-huaiin/lib/utils';
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
 import { XButton, XToggleButton } from '@windrun-huaiin/third-ui/main';
@@ -103,7 +103,7 @@ function QuestionIdentityTags({
             <span className="shrink-0 font-medium text-slate-500 dark:text-slate-400">ID</span>
             <span className="truncate font-mono text-slate-800 dark:text-slate-100">{item.questionId}</span>
             <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-slate-400 dark:text-slate-500">
-              {copiedField === `id-${item.questionId}` ? <icons.X className="h-3 w-3" /> : <icons.Copy className="h-3 w-3" />}
+              {copiedField === `id-${item.questionId}` ? <XIcon className="h-3 w-3" /> : <CopyIcon className="h-3 w-3" />}
             </span>
           </button>
           <button
@@ -116,7 +116,7 @@ function QuestionIdentityTags({
             <span className="shrink-0 font-medium text-slate-500 dark:text-slate-400">UUID</span>
             <span className="truncate font-mono">{item.questionUuid}</span>
             <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-slate-400 dark:text-slate-500">
-              {copiedField === `uuid-${item.questionId}` ? <icons.X className="h-3 w-3" /> : <icons.Copy className="h-3 w-3" />}
+              {copiedField === `uuid-${item.questionId}` ? <XIcon className="h-3 w-3" /> : <CopyIcon className="h-3 w-3" />}
             </span>
           </button>
         </div>
@@ -497,7 +497,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                 aria-label="Previous month"
                 title="Previous month"
               >
-                <icons.ChevronLeft className="h-4 w-4" />
+                <ChevronLeftIcon className="h-4 w-4" />
               </button>
               <div className="text-sm font-semibold text-slate-900 dark:text-white">{getMonthTitle(calendarMonth)}</div>
               <button
@@ -511,7 +511,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                 aria-label="Next month"
                 title="Next month"
               >
-                <icons.ChevronRight className="h-4 w-4" />
+                <ChevronRightIcon className="h-4 w-4" />
               </button>
             </div>
 
@@ -605,7 +605,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                               title="Save set"
                               loadingText="Saving..."
                               align="center"
-                              icon=<icons.BookCheck/>
+                              icon=<BookCheckIcon/>
                               className="sm:w-auto"
                               disabled={saving}
                             />
@@ -628,7 +628,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                           title="Generate preview"
                           loadingText="Loading..."
                           align="center"
-                          icon=<icons.CircleStop/>
+                          icon=<CircleStopIcon/>
                           className="sm:w-auto"
                           disabled={previewState.loading || detailState.loading}
                         />
@@ -714,7 +714,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                 aria-label="Close guidance"
                 title="Close guidance"
               >
-                <icons.X className="h-4 w-4" />
+                <XIcon className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -745,7 +745,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                       aria-label="Previous"
                       title="Previous"
                     >
-                      <icons.ChevronLeft className="h-4 w-4" />
+                      <ChevronLeftIcon className="h-4 w-4" />
                     </button>
                   ) : null}
                   <div
@@ -768,7 +768,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                       aria-label="Next"
                       title="Next"
                     >
-                      <icons.ChevronRight className="h-4 w-4" />
+                      <ChevronRightIcon className="h-4 w-4" />
                     </button>
                   ) : null}
                 </div>
@@ -800,7 +800,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                       aria-label="Previous"
                       title="Previous"
                     >
-                      <icons.ChevronLeft className="h-4 w-4" />
+                      <ChevronLeftIcon className="h-4 w-4" />
                     </button>
                   ) : null}
                   <div
@@ -823,7 +823,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                       aria-label="Next"
                       title="Next"
                     >
-                      <icons.ChevronRight className="h-4 w-4" />
+                      <ChevronRightIcon className="h-4 w-4" />
                     </button>
                   ) : null}
                 </div>
@@ -863,7 +863,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                 aria-label="Close replace confirmation"
                 title="Close replace confirmation"
               >
-                <icons.X className="h-4 w-4" />
+                <XIcon className="h-4 w-4" />
               </button>
             </div>
             <div className="mt-5 flex items-center justify-end gap-2">

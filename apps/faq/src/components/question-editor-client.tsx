@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
+import { BookCheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, EyeOffIcon } from '@windrun-huaiin/base-ui/icons';
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
 import { XButton, XToggleButton } from '@windrun-huaiin/third-ui/main';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
@@ -338,7 +338,7 @@ export function QuestionEditorClient({
                 aria-label={backLabel}
                 title={backLabel}
               >
-                <icons.ChevronLeft className="h-4 w-4" />
+                <ChevronLeftIcon className="h-4 w-4" />
                 <span className="hidden lg:inline">{backLabel}</span>
               </Link>
             </div>
@@ -404,7 +404,7 @@ export function QuestionEditorClient({
           {activeView === 'edit' ? (
             <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex min-w-0 items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                <icons.EyeOff className="h-4 w-4 shrink-0" />
+                <EyeOffIcon className="h-4 w-4 shrink-0" />
                 <span className="min-w-0 wrap-break-word">{usb.preview.draftHint}</span>
               </div>
               <div className="flex min-w-0 items-center justify-end gap-2">
@@ -413,7 +413,7 @@ export function QuestionEditorClient({
                   aria-label={activeStatusText}
                   title={activeStatusText}
                 >
-                  <icons.EyeOff className="h-4 w-4" />
+                  <EyeOffIcon className="h-4 w-4" />
                   <span className="truncate">{activeStatusText}</span>
                 </div>
                 <XButton
@@ -422,7 +422,7 @@ export function QuestionEditorClient({
                   minWidth="min-w-0"
                   className="self-end px-4 py-2.5 sm:px-5 sm:py-3"
                   button={{
-                    icon: <icons.Eye className="h-4 w-4" />,
+                    icon: <EyeIcon className="h-4 w-4" />,
                     text: usb.preview.reviewButton,
                     onClick: openPreview,
                   }}
@@ -441,7 +441,7 @@ export function QuestionEditorClient({
                     aria-label={usb.preview.previous}
                     title={usb.preview.previous}
                   >
-                    <icons.ChevronLeft className="h-4 w-4" />
+                    <ChevronLeftIcon className="h-4 w-4" />
                   </button>
                 ) : null}
                 <div
@@ -457,7 +457,7 @@ export function QuestionEditorClient({
                     aria-label={previewAsPlayer ? usb.preview.showFullPreview : usb.preview.switchToPlayerView}
                     title={previewAsPlayer ? usb.preview.showFullPreview : usb.preview.switchToPlayerView}
                   >
-                    {previewAsPlayer ? <icons.EyeOff className="h-4 w-4" /> : <icons.Eye className="h-4 w-4" />}
+                    {previewAsPlayer ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                   </button>
                   <div className="min-w-0 px-2 text-center text-xs font-medium text-slate-600 dark:text-slate-300 sm:px-3">
                     <span className="truncate">{activeStatusText}</span>
@@ -472,7 +472,7 @@ export function QuestionEditorClient({
                     aria-label={usb.preview.next}
                     title={usb.preview.next}
                   >
-                    <icons.ChevronRight className="h-4 w-4" />
+                    <ChevronRightIcon className="h-4 w-4" />
                   </button>
                 ) : null}
               </div>
@@ -482,7 +482,7 @@ export function QuestionEditorClient({
                   disabled={saving || loading}
                   title={submitLabel}
                   align="center"
-                  icon=<icons.BookCheck/>
+                  icon=<BookCheckIcon/>
                   className="min-w-0 sm:w-auto"
                 />
               </div>

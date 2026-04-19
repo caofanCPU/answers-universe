@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server'
-import { globalLucideIcons as icons} from '@windrun-huaiin/base-ui/components/server'
+import { BookOpenIcon } from '@windrun-huaiin/base-ui/icons'
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
 import { GradientButton } from "@windrun-huaiin/third-ui/fuma/mdx"
 import { HeroMedia, HeroSection } from "@windrun-huaiin/third-ui/main";
@@ -29,7 +29,7 @@ export async function Hero({ locale }: { locale: string }) {
             className="md:w-full"
           />
           <div className="flex items-center gap-2 text-sm text-gray-400">
-            <icons.BookOpen className="h-4 w-4" />
+            <BookOpenIcon className="h-4 w-4" />
             <span>{t('about')}</span>
           </div>
         </>

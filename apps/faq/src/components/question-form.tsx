@@ -9,7 +9,7 @@ import {
   QUESTION_SUB_CATEGORIES,
 } from '@/server/questions/constants';
 import { XFormPills, XTokenInput } from '@windrun-huaiin/third-ui/main/pill-select';
-import { InfoTooltip } from './info-tooltip';
+import { InfoTooltip } from '@windrun-huaiin/third-ui/main';
 import type { QuestionImportFieldErrors, QuestionImportFieldKey } from '@/server/questions/types';
 import type { QuestionFormCopy } from './question-copy';
 

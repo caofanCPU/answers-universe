@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
+import { ArrowRightIcon, CopyIcon, EyeIcon, EyeOffIcon, PlusIcon, Trash2Icon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import { XButton } from '@windrun-huaiin/third-ui/main';
 import { XFormPills } from '@windrun-huaiin/third-ui/main/pill-select';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
 import type { OuterClientExpiryOption, OuterClientKeyIssueResult, OuterClientListItemDto } from '@/server/outer-clients/types';
 import type { OuterClientsPageCopy } from './outer-client-copy';
-import { InfoTooltip } from './info-tooltip';
+import { InfoTooltip } from '@windrun-huaiin/third-ui/main';
 
 type OuterClientsClientProps = {
   locale: string;
@@ -221,7 +221,7 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
             variant="subtle"
             button={{
               text: copy.createOpen,
-              icon: <icons.Copy className="h-4 w-4" />,
+              icon: <PlusIcon className="h-4 w-4" />,
               onClick: () => setPanelOpen(true),
             }}
           />
@@ -275,7 +275,7 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
                       variant="subtle"
                       button={{
                         text: deletingClientId === item.clientId ? copy.deleting : copy.delete,
-                        icon: <icons.X className="h-4 w-4" />,
+                        icon: <Trash2Icon className="h-4 w-4" />,
                         disabled: deletingClientId === item.clientId,
                         onClick: () => setPendingDeleteClientId(item.clientId),
                       }}
@@ -286,7 +286,7 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
                         variant="subtle"
                         button={{
                           text: copy.detail,
-                          icon: <icons.ArrowRight className="h-4 w-4" />,
+                          icon: <ArrowRightIcon className="h-4 w-4" />,
                           onClick: () => undefined,
                         }}
                       />
@@ -320,7 +320,7 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
                 aria-label={copy.closePanel}
                 title={copy.closePanel}
               >
-                <icons.X className="h-4 w-4" />
+                <XIcon className="h-4 w-4" />
               </button>
             </div>
 
@@ -339,7 +339,7 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
                 variant="subtle"
                 button={{
                   text: deletingClientId === pendingDeleteClientId ? copy.deleting : copy.confirm,
-                  icon: <icons.X className="h-4 w-4" />,
+                  icon: <Trash2Icon className="h-4 w-4" />,
                   disabled: deletingClientId === pendingDeleteClientId,
                   onClick: () => void handleDelete(pendingDeleteClientId),
                 }}
@@ -375,7 +375,7 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
                 aria-label={copy.closePanel}
                 title={copy.closePanel}
               >
-                <icons.X className="h-4 w-4" />
+                <XIcon className="h-4 w-4" />
               </button>
             </div>
 
@@ -429,7 +429,7 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
                         variant="subtle"
                         button={{
                           text: creating ? copy.creating : copy.createButton,
-                          icon: <icons.Copy className="h-4 w-4" />,
+                          icon: <PlusIcon className="h-4 w-4" />,
                           disabled: creating || !name.trim(),
                           onClick: () => void handleCreate(),
                         }}
@@ -467,14 +467,14 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
                               aria-label={showSecret ? copy.hideSecret : copy.showSecret}
                               title={showSecret ? copy.hideSecret : copy.showSecret}
                             >
-                              {showSecret ? <icons.EyeOff className="h-4 w-4" /> : <icons.Eye className="h-4 w-4" />}
+                              {showSecret ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                             </button>
                             <XButton
                               type="single"
                               variant="subtle"
                               button={{
                                 text: copiedField === 'env' ? copy.copied : copy.copyEnvBlock,
-                                icon: <icons.Copy className="h-4 w-4" />,
+                                icon: <CopyIcon className="h-4 w-4" />,
                                 onClick: () => void copyEnvBlock(),
                               }}
                             />

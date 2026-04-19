@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
+import { CheckIcon } from '@windrun-huaiin/base-ui/icons';
 import { themeBgColor, themeBorderColor, themeIconColor } from '@windrun-huaiin/base-ui/lib';
 import { cn } from '@windrun-huaiin/lib/utils';
 import type { QuestionAnswerOptionDraft } from './question-answer-options';
@@ -85,7 +85,7 @@ export function QuestionDetail({
                 >
                 {option.text}
               </span>
-              {!previewAsPlayer && option.isCorrect ? <icons.Check className="h-4 w-4 shrink-0" /> : null}
+              {!previewAsPlayer && option.isCorrect ? <CheckIcon className="h-4 w-4 shrink-0" /> : null}
             </div>
           ))}
         </div>

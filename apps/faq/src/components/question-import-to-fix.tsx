@@ -1,6 +1,6 @@
 'use client';
 
-import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
+import { ChevronLeftIcon, ChevronRightIcon } from '@windrun-huaiin/base-ui/icons';
 import { XButton } from '@windrun-huaiin/third-ui/main';
 import type { QuestionImportValidationItem } from '@/server/questions/types';
 import { buildAnswerOptionDrafts, type QuestionAnswerOptionDraft } from './question-answer-options';
@@ -75,7 +75,7 @@ export function QuestionImportToFix({
             disabled={index === 0}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
           >
-            <icons.ChevronLeft className="h-4 w-4" />
+            <ChevronLeftIcon className="h-4 w-4" />
           </button>
           <button
             type="button"
@@ -83,7 +83,7 @@ export function QuestionImportToFix({
             disabled={index >= total - 1}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
           >
-            <icons.ChevronRight className="h-4 w-4" />
+            <ChevronRightIcon className="h-4 w-4" />
           </button>
         </div>
       </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
+import { CheckLineIcon, CopyIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
 import { XButton } from '@windrun-huaiin/third-ui/main';
@@ -83,7 +83,7 @@ export function QuestionList({ locale, items, copy, onDeleted }: QuestionListPro
             <span className="shrink-0 font-medium text-slate-500 dark:text-slate-400">ID</span>
             <span className="truncate font-mono text-[11px] text-slate-800 dark:text-slate-100">{item.id}</span>
             <span className="inline-flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full text-slate-400 dark:text-slate-500">
-              {copiedField === `id-${item.id}` ? <icons.X className="h-3 w-3" /> : <icons.Copy className="h-3 w-3" />}
+              {copiedField === `id-${item.id}` ? <XIcon className="h-3 w-3" /> : <CopyIcon className="h-3 w-3" />}
             </span>
           </button>
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -99,7 +99,7 @@ export function QuestionList({ locale, items, copy, onDeleted }: QuestionListPro
                   <span className="shrink-0 font-medium text-slate-500 dark:text-slate-400">UUID</span>
                   <span className="truncate font-mono text-[11px] text-slate-800 dark:text-slate-100">{item.uuid}</span>
                   <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 dark:text-slate-500">
-                    {copiedField === `uuid-${item.id}` ? <icons.X className="h-3 w-3" /> : <icons.Copy className="h-3 w-3" />}
+                    {copiedField === `uuid-${item.id}` ? <XIcon className="h-3 w-3" /> : <CopyIcon className="h-3 w-3" />}
                   </span>
                 </button>
               </div>
@@ -119,7 +119,7 @@ export function QuestionList({ locale, items, copy, onDeleted }: QuestionListPro
                 {item.question}
               </h2>
               <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                <icons.CheckLine className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                <CheckLineIcon className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
                 <span>{item.correctAnswer}</span>
               </div>
               <div className="flex flex-wrap gap-1.5">

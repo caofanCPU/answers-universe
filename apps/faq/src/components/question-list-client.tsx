@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
+import { FileDownIcon, SettingsIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
 import { XButton } from '@windrun-huaiin/third-ui/main';
 import type { QuestionListItemCopy } from './question-copy';
@@ -541,7 +541,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
                 aria-label={copy.export.settingsAriaLabel}
                 title={copy.export.settingsAriaLabel}
               >
-                <icons.Settings className="h-4 w-4" />
+                <SettingsIcon className="h-4 w-4" />
               </button>
               <GradientButton
                 onClick={() => void handleExport()}
@@ -549,7 +549,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
                 title={copy.export.buttonLabel}
                 loadingText={copy.export.loadingLabel}
                 align="center"
-                icon=<icons.FileDown/>
+                icon=<FileDownIcon/>
                 className="sm:w-auto"
               />
             </div>
@@ -579,7 +579,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
                 aria-label={copy.export.closeAriaLabel}
                 title={copy.export.closeAriaLabel}
               >
-                <icons.X className="h-4 w-4" />
+                <XIcon className="h-4 w-4" />
               </button>
             </div>
             <div className="mt-4 space-y-2">

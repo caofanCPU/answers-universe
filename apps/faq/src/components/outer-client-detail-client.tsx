@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
+import { ArrowLeftIcon, BookmarkPlusIcon, CoinsIcon, CopyIcon, EyeIcon, EyeOffIcon, Trash2Icon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import { XButton } from '@windrun-huaiin/third-ui/main';
 import { XFormPills } from '@windrun-huaiin/third-ui/main/pill-select';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
@@ -375,7 +375,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
           }}
           className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:bg-neutral-950 dark:text-slate-200 dark:hover:bg-white/5"
         >
-          <icons.ArrowLeft className="h-4 w-4" />
+          <ArrowLeftIcon className="h-4 w-4" />
           <span>{copy.backToClients}</span>
         </Link>
       </div>
@@ -422,7 +422,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
                     variant="subtle"
                     button={{
                       text: deletingClient ? copy.deleting : copy.deleteClient,
-                      icon: <icons.X className="h-4 w-4" />,
+                      icon: <Trash2Icon className="h-4 w-4" />,
                       disabled: deletingClient,
                       onClick: () => setPendingLeaveAction({ kind: 'delete-client' }),
                     }}
@@ -458,7 +458,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
                     variant="subtle"
                     button={{
                       text: issuing ? copy.issuing : copy.issueKey,
-                      icon: <icons.Copy className="h-4 w-4" />,
+                      icon: <BookmarkPlusIcon className="h-4 w-4" />,
                       disabled: issuing,
                       onClick: () => void issueKey(),
                     }}
@@ -485,14 +485,14 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
                       aria-label={showSecret ? copy.hideSecret : copy.showSecret}
                       title={showSecret ? copy.hideSecret : copy.showSecret}
                     >
-                      {showSecret ? <icons.EyeOff className="h-4 w-4" /> : <icons.Eye className="h-4 w-4" />}
+                      {showSecret ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                     </button>
                     <XButton
                       type="single"
                       variant="subtle"
                       button={{
                         text: copy.closeSecret,
-                        icon: <icons.X className="h-4 w-4" />,
+                        icon: <XIcon className="h-4 w-4" />,
                         onClick: requestDismissSecret,
                       }}
                     />
@@ -518,7 +518,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
                       variant="subtle"
                       button={{
                         text: copiedField === 'env' ? copy.copied : copy.copyEnvBlock,
-                        icon: <icons.Copy className="h-4 w-4" />,
+                        icon: <CopyIcon className="h-4 w-4" />,
                         onClick: () => void copyText(copyableEnvBlock),
                       }}
                     />
@@ -616,7 +616,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
                 aria-label={copy.closeDialog}
                 title={copy.closeDialog}
               >
-                <icons.X className="h-4 w-4" />
+                <XIcon className="h-4 w-4" />
               </button>
             </div>
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -643,7 +643,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
                           ? copy.deleting
                           : copy.confirm
                         : copy.confirm,
-                  icon: <icons.X className="h-4 w-4" />,
+                  icon: <Trash2Icon className="h-4 w-4" />,
                   onClick: confirmLeaveAction,
                   disabled:
                     deletingClient ||
@@ -743,7 +743,7 @@ function KeyCard({
                 variant="subtle"
                 button={{
                   text: extending ? copy.extending : copy.extendKey,
-                  icon: <icons.Copy className="h-4 w-4" />,
+                  icon: <CoinsIcon className="h-4 w-4" />,
                   disabled: extending,
                   onClick: onExtend,
                 }}
@@ -753,7 +753,7 @@ function KeyCard({
                 variant="subtle"
                 button={{
                   text: deleting ? copy.deleting : copy.deleteKey,
-                  icon: <icons.X className="h-4 w-4" />,
+                  icon: <Trash2Icon className="h-4 w-4" />,
                   disabled: deleting,
                   onClick: onDelete,
                 }}

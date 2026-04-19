@@ -1,5 +1,5 @@
 import { GradientButton } from "@windrun-huaiin/third-ui/fuma/mdx";
-import { InfoTooltip } from './info-tooltip';
+import { InfoTooltip } from '@windrun-huaiin/third-ui/main';
 
 type ShellAction = {
   href: string;

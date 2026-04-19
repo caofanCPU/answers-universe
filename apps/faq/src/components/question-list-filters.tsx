@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { globalLucideIcons as icons } from '@windrun-huaiin/base-ui/components/server';
+import { ChevronDownIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import {
   QUESTION_CATEGORIES,
   QUESTION_DIFFICULTIES,
@@ -133,7 +133,7 @@ export function QuestionListFilters(props: QuestionListFiltersProps) {
               aria-label="Clear all filters"
               title="Clear all filters"
             >
-              <icons.X className="h-4 w-4" />
+              <XIcon className="h-4 w-4" />
             </button>
           </span>
         </label>
@@ -149,7 +149,7 @@ export function QuestionListFilters(props: QuestionListFiltersProps) {
               : 'text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white'
           }`}
         >
-          <icons.ChevronDown
+          <ChevronDownIcon
             className={`h-4 w-4 transition ${advancedOpen ? 'rotate-180' : ''}`}
           />
           <span>{copy.advancedToggle}</span>
@@ -240,7 +240,7 @@ export function QuestionListFilters(props: QuestionListFiltersProps) {
                       aria-label="Clear ID"
                       title="Clear ID"
                     >
-                      <icons.X className="h-3.5 w-3.5" />
+                      <XIcon className="h-3.5 w-3.5" />
                     </button>
                   ) : null}
                 </div>
@@ -268,7 +268,7 @@ export function QuestionListFilters(props: QuestionListFiltersProps) {
                       aria-label="Clear UUID"
                       title="Clear UUID"
                     >
-                      <icons.X className="h-3.5 w-3.5" />
+                      <XIcon className="h-3.5 w-3.5" />
                     </button>
                   ) : null}
                 </div>
