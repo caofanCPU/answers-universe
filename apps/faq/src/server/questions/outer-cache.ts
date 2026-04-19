@@ -1,5 +1,5 @@
 import type { OuterQuestionDetailDto } from '@windrun-huaiin/faq-contracts/outer/v1';
-import { deleteKey, getJson, publishMessage, setJson } from '@windrun-huaiin/backend-core/lib';
+import { deleteKey, getJson, mgetJson, publishMessage, setJson } from '@windrun-huaiin/backend-core/lib';
 
 const OUTER_QUESTION_DETAIL_CACHE_KEY_PREFIX = 'answers_universe:outer:v1:question:detail';
 const OUTER_QUESTION_DETAIL_CACHE_TTL_SECONDS = 60 * 60 * 24;
@@ -29,6 +29,29 @@ export async function getOuterQuestionDetailCache(questionId: string): Promise<O
   return getJson<OuterQuestionDetailDto>(buildQuestionDetailCacheKey(questionId));
 }
 
+export async function getOuterQuestionDetailCacheMap(
+  questionIds: string[]
+): Promise<Map<string, OuterQuestionDetailDto>> {
+  const uniqueQuestionIds = Array.from(new Set(questionIds));
+
+  if (uniqueQuestionIds.length === 0) {
+    return new Map();
+  }
+
+  const values = await mgetJson<OuterQuestionDetailDto>(
+    uniqueQuestionIds.map((questionId) => buildQuestionDetailCacheKey(questionId))
+  );
+  const result = new Map<string, OuterQuestionDetailDto>();
+
+  values?.forEach((value, index) => {
+    if (value) {
+      result.set(uniqueQuestionIds[index], value);
+    }
+  });
+
+  return result;
+}
+
 export async function setOuterQuestionDetailCache(
   questionId: string,
   value: OuterQuestionDetailDto
@@ -50,10 +73,12 @@ export async function enqueueOuterQuestionDetailCacheRebuild(
     return null;
   }
 
-  return publishMessage({
+  const result = await publishMessage({
     url,
     body: payload,
   });
+
+  return result?.messageId ?? null;
 }
 
 export const outerQuestionDetailCacheKey = {

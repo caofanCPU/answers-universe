@@ -31,6 +31,7 @@ import {
   deleteOuterQuestionDetailCache,
   enqueueOuterQuestionDetailCacheRebuild,
   getOuterQuestionDetailCache,
+  getOuterQuestionDetailCacheMap,
   setOuterQuestionDetailCache,
 } from './outer-cache';
 
@@ -185,20 +186,6 @@ export function buildQuestionListItemDto(record: Usb): QuestionListItemDto {
     tags: parseTags(record.tags),
     keywords: parseKeywords(record.keywords),
     asFirst: record.asFirst === 1,
-    updatedAt: toIsoString(record.updatedAt ?? null),
-  };
-}
-
-function buildOuterQuestionBaseItemDto(record: Usb): OuterQuestionBaseItemDto {
-  return {
-    id: record.id.toString(),
-    uuid: record.questionUuid,
-    question: record.question,
-    category: record.category as QuestionCategory,
-    subCategory: record.subCategory,
-    difficulty: record.difficulty as QuestionDifficulty,
-    asFirst: record.asFirst === 1,
-    createdAt: toIsoString(record.createdAt ?? null),
     updatedAt: toIsoString(record.updatedAt ?? null),
   };
 }
@@ -570,9 +557,10 @@ export async function getOuterQuestionBaseByIds(
 
   const cachedItems = new Map<string, OuterQuestionBaseItemDto>();
   const missedIds: bigint[] = [];
+  const cachedDetails = await getOuterQuestionDetailCacheMap(ids);
 
   for (const id of ids) {
-    const cached = await getOuterQuestionDetailCache(id);
+    const cached = cachedDetails.get(id);
 
     if (cached) {
       cachedItems.set(id, buildOuterQuestionBaseItemFromDetailDto(cached));

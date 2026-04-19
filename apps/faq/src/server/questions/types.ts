@@ -1,6 +1,5 @@
 import type {
   OuterQuestionBaseItemDto,
-  OuterQuestionBaseQuery,
   OuterQuestionBaseResult,
   OuterQuestionDetailDto,
 } from '@windrun-huaiin/faq-contracts/outer/v1';

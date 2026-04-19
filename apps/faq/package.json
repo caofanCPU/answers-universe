@@ -12,7 +12,6 @@
     "react"
   ],
   "dependencies": {
-    "@windrun-huaiin/faq-contracts": "workspace:*",
     "@clerk/localizations": "catalog:",
     "@clerk/nextjs": "catalog:",
     "@clerk/shared": "catalog:",
@@ -27,6 +26,7 @@
     "@types/mdx": "catalog:",
     "@windrun-huaiin/backend-core": "catalog:",
     "@windrun-huaiin/base-ui": "catalog:",
+    "@windrun-huaiin/faq-contracts": "workspace:*",
     "@windrun-huaiin/lib": "catalog:",
     "@windrun-huaiin/third-ui": "catalog:",
     "autoprefixer": "catalog:",
@@ -72,7 +72,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@typescript-eslint/parser": "catalog:",
-    "@windrun-huaiin/dev-scripts": "catalog:",
+    "@windrun-huaiin/dev-scripts": "^20.0.0",
     "baseline-browser-mapping": "catalog:",
     "eslint": "catalog:",
     "eslint-config-next": "catalog:",
