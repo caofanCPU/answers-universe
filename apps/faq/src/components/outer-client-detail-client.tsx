@@ -14,6 +14,7 @@ import type {
   OuterClientKeySummaryDto,
 } from '@/server/outer-clients/types';
 import type { OuterClientDetailPageCopy } from './outer-client-copy';
+import { OuterClientActionModal } from './outer-client-action-modal';
 
 type OuterClientDetailClientProps = {
   locale: string;
@@ -25,7 +26,6 @@ type SecretState = OuterClientKeyIssueResult | null;
 type PendingLeaveAction =
   | { kind: 'dismiss-secret' }
   | { kind: 'navigate'; href: string }
-  | { kind: 'delete-client' }
   | { kind: 'delete-active-key'; keyVersion: string }
   | null;
 
@@ -65,7 +65,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
   const [detail, setDetail] = useState<OuterClientDetailDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [issuing, setIssuing] = useState(false);
-  const [deletingClient, setDeletingClient] = useState(false);
+  const [issuingPanelOpen, setIssuingPanelOpen] = useState(false);
   const [deletingKeyVersion, setDeletingKeyVersion] = useState<string | null>(null);
   const [extendingKeyVersion, setExtendingKeyVersion] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -167,33 +167,6 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
       setError(nextError instanceof Error ? nextError.message : 'Unknown error');
     } finally {
       setIssuing(false);
-    }
-  }
-
-  async function handleDeleteClient() {
-    if (deletingClient) {
-      return;
-    }
-
-    setDeletingClient(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`/api/questions/clients/${encodeURIComponent(clientId)}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      setPendingLeaveAction(null);
-      router.push(backHref);
-    } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : 'Unknown error');
-    } finally {
-      setDeletingClient(false);
     }
   }
 
@@ -314,13 +287,9 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
     { label: copy.expiresInOptions.never, value: 'never' },
   ];
 
-  function requestDismissSecret() {
-    if (!oneTimeSecret) {
-      return;
-    }
+  const activeKey = detail?.keys.find((item) => item.status === 'active') ?? null;
+  const otherKeys = detail?.keys.filter((item) => item.status !== 'active') ?? [];
 
-    setPendingLeaveAction({ kind: 'dismiss-secret' });
-  }
 
   function requestNavigate(href: string) {
     if (!oneTimeSecret) {
@@ -331,6 +300,14 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
     setPendingLeaveAction({ kind: 'navigate', href });
   }
 
+  function closeIssuePanel() {
+    setIssuingPanelOpen(false);
+    setExpiresIn('1_year');
+    setShowSecret(false);
+    setCopiedField(null);
+    setOneTimeSecret(null);
+  }
+
   function confirmLeaveAction() {
     if (!pendingLeaveAction) {
       return;
@@ -339,12 +316,8 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
     if (pendingLeaveAction.kind === 'dismiss-secret') {
       setOneTimeSecret(null);
       setShowSecret(false);
+      setCopiedField(null);
       setPendingLeaveAction(null);
-      return;
-    }
-
-    if (pendingLeaveAction.kind === 'delete-client') {
-      void handleDeleteClient();
       return;
     }
 
@@ -356,6 +329,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
     const href = pendingLeaveAction.href;
     setOneTimeSecret(null);
     setShowSecret(false);
+    setCopiedField(null);
     setPendingLeaveAction(null);
     router.push(href);
   }
@@ -390,151 +364,37 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
         </div>
       ) : (
         <>
-          <section className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-            <section className="rounded-4xl border border-black/10 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-neutral-950/70 sm:p-6">
-              <div className="space-y-5">
-                <div className="space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusPill value={detail.status} />
-                    {detail.environment ? <EnvPill value={detail.environment} /> : null}
-                  </div>
-                  <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{detail.name}</h2>
+          <section className="rounded-4xl border border-black/10 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-neutral-950/70 sm:p-6">
+            <div className="flex flex-col gap-4 sm:gap-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusPill value={detail.status} />
+                <MetaTag value={`${detail.activeKeyCount}/${detail.keyCount}`} tone="emerald" minWidth="min-w-18" />
+                {detail.environment ? <EnvPill value={detail.environment} /> : null}
+                <ClientIdPill value={detail.clientId} />
+              </div>
+
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0 space-y-2">
+                  <h2 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-3xl">{detail.name}</h2>
                   <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{detail.remark || '-'}</p>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
-                    {copy.summaryTitle}
-                  </div>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <SummaryPill label={copy.summary.clientId} value={detail.clientId} />
-                    <SummaryPill label={copy.summary.environment} value={detail.environment ?? '-'} />
-                    <SummaryPill label={copy.summary.status} value={detail.status} />
-                    <SummaryPill label={copy.summary.keyCount} value={String(detail.keyCount)} />
-                    <SummaryPill label={copy.summary.activeKeyCount} value={String(detail.activeKeyCount)} />
-                    <SummaryPill label={copy.summary.remark} value={detail.remark || '-'} />
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
+                <div className="flex flex-col items-start gap-2 lg:items-end">
                   <XButton
                     type="single"
                     variant="subtle"
                     button={{
-                      text: deletingClient ? copy.deleting : copy.deleteClient,
-                      icon: <Trash2Icon className="h-4 w-4" />,
-                      disabled: deletingClient,
-                      onClick: () => setPendingLeaveAction({ kind: 'delete-client' }),
-                    }}
-                  />
-                </div>
-              </div>
-            </section>
-
-            <section className="rounded-4xl border border-black/10 bg-neutral-50/80 p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-neutral-950/60 sm:p-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{copy.issueKeyTitle}</h2>
-                  <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{copy.issueKeyDescription}</p>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <SummaryPill label={copy.environmentLabel} value={detail.environment ?? '-'} />
-                  <div className="rounded-2xl border border-black/10 bg-white p-3 dark:border-white/10 dark:bg-neutral-950">
-                    <XFormPills
-                      label={<span className="text-sm font-medium text-slate-700 dark:text-slate-200">{copy.expiresInLabel}</span>}
-                      value={expiresIn}
-                      options={expiresInOptions}
-                      onChange={(value) => setExpiresIn(value as OuterClientExpiryOption)}
-                      emptyLabel={copy.expiresInEmpty}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">{copy.rotatingGraceHint}</p>
-                  <XButton
-                    type="single"
-                    variant="subtle"
-                    button={{
-                      text: issuing ? copy.issuing : copy.issueKey,
+                      text: issuing ? copy.generating : copy.generateKey,
                       icon: <BookmarkPlusIcon className="h-4 w-4" />,
                       disabled: issuing,
-                      onClick: () => void issueKey(),
+                      onClick: () => setIssuingPanelOpen(true),
                     }}
                   />
+                  <p className="max-w-md text-xs leading-5 text-slate-500 dark:text-slate-400 lg:text-right">{copy.rotatingGraceHint}</p>
                 </div>
               </div>
-            </section>
+            </div>
           </section>
-
-          {oneTimeSecret ? (
-            <section className="rounded-4xl border border-amber-200 bg-amber-50/90 p-5 shadow-sm dark:border-amber-400/20 dark:bg-amber-500/10 sm:p-6">
-              <div className="space-y-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-2">
-                    <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{copy.oneTimeTitle}</h2>
-                    <p className="text-sm leading-6 text-slate-700 dark:text-slate-200">{copy.oneTimeDescription}</p>
-                    <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">{copy.secretCardHint}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowSecret((value) => !value)}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:bg-neutral-950 dark:text-slate-200 dark:hover:bg-white/5"
-                      aria-label={showSecret ? copy.hideSecret : copy.showSecret}
-                      title={showSecret ? copy.hideSecret : copy.showSecret}
-                    >
-                      {showSecret ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                    </button>
-                    <XButton
-                      type="single"
-                      variant="subtle"
-                      button={{
-                        text: copy.closeSecret,
-                        icon: <XIcon className="h-4 w-4" />,
-                        onClick: requestDismissSecret,
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <SummaryPill label={copy.summary.clientId} value={oneTimeSecret.clientId} />
-                  <SummaryPill label={copy.summary.environment} value={oneTimeSecret.environment} />
-                  <SummaryPill label={copy.keys.keyVersion} value={oneTimeSecret.keyVersion} />
-                </div>
-
-                <div className="rounded-3xl border border-black/10 bg-white/90 p-4 dark:border-white/10 dark:bg-neutral-950/85">
-                  <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="space-y-1">
-                      <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        {copy.envBlockTitle}
-                      </div>
-                      <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">{copy.envBlockDescription}</p>
-                    </div>
-                    <XButton
-                      type="single"
-                      variant="subtle"
-                      button={{
-                        text: copiedField === 'env' ? copy.copied : copy.copyEnvBlock,
-                        icon: <CopyIcon className="h-4 w-4" />,
-                        onClick: () => void copyText(copyableEnvBlock),
-                      }}
-                    />
-                  </div>
-
-                  <div className="rounded-2xl bg-neutral-100 p-4 font-mono text-xs leading-6 text-slate-800 dark:bg-neutral-900 dark:text-slate-200 break-all whitespace-pre-wrap">
-                    {envBlock}
-                  </div>
-
-                  {!showSecret ? (
-                    <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">{copy.secretMasked}</p>
-                  ) : null}
-                </div>
-              </div>
-            </section>
-          ) : null}
 
           {error ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
@@ -543,17 +403,41 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
             </div>
           ) : null}
 
+          {activeKey ? (
+            <section className="rounded-4xl border border-emerald-200 bg-emerald-50/70 p-4 shadow-sm dark:border-emerald-400/20 dark:bg-emerald-500/10 sm:p-5">
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white">{copy.currentActiveKeyTitle}</h3>
+              </div>
+              <KeyCard
+                keyItem={activeKey}
+                copy={copy}
+                expiresInOptions={expiresInOptions}
+                extendValue={extendSelection[activeKey.keyVersion] ?? '3_months'}
+                onChangeExtend={(value) =>
+                  setExtendSelection((current) => ({
+                    ...current,
+                    [activeKey.keyVersion]: value,
+                  }))
+                }
+                onExtend={() => void handleExtendKey(activeKey.keyVersion)}
+                onDelete={() => setPendingLeaveAction({ kind: 'delete-active-key', keyVersion: activeKey.keyVersion })}
+                extending={extendingKeyVersion === activeKey.keyVersion}
+                deleting={deletingKeyVersion === activeKey.keyVersion}
+              />
+            </section>
+          ) : null}
+
           <section className="rounded-4xl border border-black/10 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-neutral-950/70 sm:p-6">
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{copy.keyListTitle}</h2>
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-white">{copy.deActiveKeysTitle}</h3>
 
-              {detail.keys.length === 0 ? (
+              {otherKeys.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
                   {copy.noKeys}
                 </div>
               ) : (
                 <div className="grid gap-4">
-                  {detail.keys.map((key) => (
+                  {otherKeys.map((key) => (
                     <KeyCard
                       key={`${key.environment}-${key.keyVersion}`}
                       keyItem={key}
@@ -567,11 +451,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
                         }))
                       }
                       onExtend={() => void handleExtendKey(key.keyVersion)}
-                      onDelete={() =>
-                        key.status === 'active'
-                          ? setPendingLeaveAction({ kind: 'delete-active-key', keyVersion: key.keyVersion })
-                          : void handleDeleteKey(key.keyVersion)
-                      }
+                      onDelete={() => void handleDeleteKey(key.keyVersion)}
                       extending={extendingKeyVersion === key.keyVersion}
                       deleting={deletingKeyVersion === key.keyVersion}
                     />
@@ -582,6 +462,111 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
           </section>
         </>
       )}
+
+      <OuterClientActionModal
+        open={issuingPanelOpen}
+        title={oneTimeSecret ? copy.generatedKeyTitle : copy.generateKeyTitle}
+        description={oneTimeSecret ? copy.generatedKeyDescription : copy.generateKeyDescription}
+        closeLabel={copy.closeSecret}
+        onClose={closeIssuePanel}
+        formContent={
+          <section className="rounded-3xl border border-black/10 bg-neutral-50/80 p-3.5 dark:border-white/10 dark:bg-neutral-900/60 sm:rounded-[1.75rem] sm:p-4">
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-black/10 bg-white p-2.5 dark:border-white/10 dark:bg-neutral-950 sm:p-3">
+                <XFormPills
+                  label={<span className="text-sm font-medium text-slate-700 dark:text-slate-200">{copy.expiresInLabel}</span>}
+                  value={expiresIn}
+                  options={expiresInOptions}
+                  onChange={(value) => setExpiresIn(value as OuterClientExpiryOption)}
+                  emptyLabel={copy.expiresInEmpty}
+                />
+              </div>
+
+              <div className="rounded-2xl border border-dashed border-black/10 bg-white/70 px-4 py-3 text-sm leading-6 text-slate-600 dark:border-white/10 dark:bg-neutral-950/60 dark:text-slate-300">
+                {copy.rotatingGraceHint}
+              </div>
+
+              <div className="flex flex-col-reverse gap-3 border-t border-black/10 pt-4 dark:border-white/10 sm:flex-row sm:justify-end">
+                <XButton
+                  type="single"
+                  variant="subtle"
+                  button={{
+                    text: copy.cancel,
+                    icon: false,
+                    onClick: closeIssuePanel,
+                  }}
+                />
+                <XButton
+                  type="single"
+                  variant="subtle"
+                  button={{
+                    text: issuing ? copy.generating : copy.generateKey,
+                    icon: <BookmarkPlusIcon className="h-4 w-4" />,
+                    disabled: issuing,
+                    onClick: () => void issueKey(),
+                  }}
+                />
+              </div>
+            </div>
+          </section>
+        }
+        resultContent={
+          <section className="rounded-3xl border border-amber-200 bg-amber-50/90 p-3.5 dark:border-amber-400/20 dark:bg-amber-500/10 sm:rounded-[1.75rem] sm:p-4">
+            {!oneTimeSecret ? (
+              <div className="flex h-full min-h-48 items-center justify-center rounded-3xl border border-dashed border-amber-300/80 px-4 text-center text-sm leading-6 text-slate-600 dark:border-amber-400/25 dark:text-slate-300 sm:min-h-56 sm:px-6">
+                {copy.generatedKeyDescription}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <InfoPill label={copy.summary.clientId} value={oneTimeSecret.clientId} />
+                  <InfoPill label={copy.keys.environment} value={oneTimeSecret.environment} />
+                  <InfoPill label={copy.keys.keyVersion} value={oneTimeSecret.keyVersion} />
+                </div>
+
+                <div className="rounded-3xl border border-black/10 bg-white/90 p-4 dark:border-white/10 dark:bg-neutral-950/85">
+                  <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-1">
+                      <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        {copy.envBlockTitle}
+                      </div>
+                      <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">{copy.envBlockDescription}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowSecret((value) => !value)}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:bg-neutral-900 dark:text-slate-200 dark:hover:bg-white/5"
+                        aria-label={showSecret ? copy.hideSecret : copy.showSecret}
+                        title={showSecret ? copy.hideSecret : copy.showSecret}
+                      >
+                        {showSecret ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                      </button>
+                      <XButton
+                        type="single"
+                        variant="subtle"
+                        button={{
+                          text: copiedField === 'env' ? copy.copied : copy.copyEnvBlock,
+                          icon: <CopyIcon className="h-4 w-4" />,
+                          onClick: () => void copyText(copyableEnvBlock),
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-neutral-100 p-4 font-mono text-xs leading-6 text-slate-800 dark:bg-neutral-900 dark:text-slate-200 break-all whitespace-pre-wrap">
+                    {envBlock}
+                  </div>
+
+                  {!showSecret ? (
+                    <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">{copy.secretMasked}</p>
+                  ) : null}
+                </div>
+              </div>
+            )}
+          </section>
+        }
+      />
 
       {pendingLeaveAction ? (
         <div
@@ -595,18 +580,10 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-2">
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                  {pendingLeaveAction.kind === 'delete-client'
-                    ? copy.deleteClientTitle
-                    : pendingLeaveAction.kind === 'delete-active-key'
-                      ? copy.deleteActiveKeyTitle
-                      : copy.unsavedLeaveTitle}
+                  {pendingLeaveAction.kind === 'delete-active-key' ? copy.deleteActiveKeyTitle : copy.unsavedLeaveTitle}
                 </h2>
                 <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-                  {pendingLeaveAction.kind === 'delete-client'
-                    ? copy.deleteClientDescription
-                    : pendingLeaveAction.kind === 'delete-active-key'
-                      ? copy.deleteActiveKeyDescription
-                      : copy.unsavedLeaveDescription}
+                  {pendingLeaveAction.kind === 'delete-active-key' ? copy.deleteActiveKeyDescription : copy.unsavedLeaveDescription}
                 </p>
               </div>
               <button
@@ -634,21 +611,13 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
                 variant="subtle"
                 button={{
                   text:
-                    pendingLeaveAction.kind === 'delete-client'
-                      ? deletingClient
-                        ? copy.deleting
-                        : copy.confirm
-                      : pendingLeaveAction.kind === 'delete-active-key'
-                        ? deletingKeyVersion === pendingLeaveAction.keyVersion
-                          ? copy.deleting
-                          : copy.confirm
-                        : copy.confirm,
+                    pendingLeaveAction.kind === 'delete-active-key' && deletingKeyVersion === pendingLeaveAction.keyVersion
+                      ? copy.deleting
+                      : copy.confirm,
                   icon: <Trash2Icon className="h-4 w-4" />,
                   onClick: confirmLeaveAction,
                   disabled:
-                    deletingClient ||
-                    (pendingLeaveAction.kind === 'delete-active-key' &&
-                      deletingKeyVersion === pendingLeaveAction.keyVersion),
+                    pendingLeaveAction.kind === 'delete-active-key' && deletingKeyVersion === pendingLeaveAction.keyVersion,
                 }}
               />
             </div>
@@ -659,7 +628,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
   );
 }
 
-function SummaryPill({ label, value }: { label: string; value: string }) {
+function InfoPill({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-black/10 bg-white/90 px-4 py-3 dark:border-white/10 dark:bg-neutral-950/80">
       <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</div>
@@ -668,18 +637,9 @@ function SummaryPill({ label, value }: { label: string; value: string }) {
   );
 }
 
-function InfoLine({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-black/10 bg-white px-4 py-3 dark:border-white/10 dark:bg-neutral-950">
-      <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</div>
-      <div className="mt-1 break-all text-sm font-medium text-slate-900 dark:text-white">{value}</div>
-    </div>
-  );
-}
-
 function StatusPill({ value }: { value: string }) {
   return (
-    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-white/10 dark:text-slate-200">
+    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200">
       {value}
     </span>
   );
@@ -690,6 +650,32 @@ function EnvPill({ value }: { value: string }) {
     <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-medium text-sky-700 dark:bg-sky-500/10 dark:text-sky-200">
       {value}
     </span>
+  );
+}
+
+function ClientIdPill({ value }: { value: string }) {
+  return (
+    <span className="break-all rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-white/10 dark:text-slate-200">
+      {value}
+    </span>
+  );
+}
+
+function MetaTag({ value, tone, minWidth }: { value: string; tone: 'emerald' | 'slate'; minWidth?: string }) {
+  const toneClassName =
+    tone === 'emerald'
+      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200'
+      : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-200';
+
+  return <span className={`rounded-full px-3 py-1 text-center text-xs font-medium ${minWidth ?? ''} ${toneClassName}`}>{value}</span>;
+}
+
+function KeyInfoCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-black/10 bg-white px-4 py-3 dark:border-white/10 dark:bg-neutral-950">
+      <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</div>
+      <div className="mt-1 break-all text-sm font-medium text-slate-900 dark:text-white">{value}</div>
+    </div>
   );
 }
 
@@ -715,29 +701,46 @@ function KeyCard({
   deleting: boolean;
 }) {
   return (
-    <article className="rounded-[1.75rem] border border-black/10 bg-neutral-50/90 p-4 dark:border-white/10 dark:bg-white/5 sm:p-5">
+    <article className="rounded-[1.75rem] border border-black/10 bg-white px-4 py-4 dark:border-white/10 dark:bg-neutral-900 sm:px-5 sm:py-5">
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <StatusPill value={keyItem.status} />
-              <EnvPill value={keyItem.environment} />
-            </div>
-            <div className="text-base font-semibold text-slate-900 dark:text-white">{keyItem.keyVersion}</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">{keyItem.fingerprint || '-'}</div>
+        <div className="flex flex-wrap items-center gap-2">
+          <EnvPill value={keyItem.environment} />
+          <StatusPill value={keyItem.status} />
+        </div>
+
+        <div className="grid gap-2">
+          <KeyInfoCell label={copy.keys.publicKey} value={keyItem.publicKey} />
+        </div>
+
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <KeyInfoCell label={copy.keys.keyVersion} value={keyItem.keyVersion} />
+          <KeyInfoCell label={copy.keys.algorithm} value={keyItem.algorithm} />
+          <KeyInfoCell label={copy.privateKeyLabel} value="--" />
+        </div>
+
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <KeyInfoCell label={copy.keys.expiresAt} value={formatTime(keyItem.expiresAt)} />
+          <KeyInfoCell label={copy.keys.lastUsedAt} value={formatTime(keyItem.lastUsedAt)} />
+          <KeyInfoCell label={copy.keys.createdAt} value={formatTime(keyItem.createdAt)} />
+        </div>
+
+        <div className="grid gap-2">
+          <KeyInfoCell label={copy.keys.fingerprint} value={keyItem.fingerprint || '-'} />
+        </div>
+
+        <div className="grid gap-3 border-t border-black/10 pt-4 dark:border-white/10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+          <div className="rounded-2xl border border-black/10 bg-neutral-50/80 p-3 dark:border-white/10 dark:bg-neutral-950/70">
+            <XFormPills
+              label={<span className="text-sm font-medium text-slate-700 dark:text-slate-200">{copy.extendByLabel}</span>}
+              value={extendValue}
+              options={expiresInOptions}
+              onChange={(value) => onChangeExtend(value as OuterClientExpiryOption)}
+              emptyLabel={copy.expiresInEmpty}
+            />
           </div>
 
-          <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[20rem]">
-            <div className="rounded-2xl border border-black/10 bg-white p-3 dark:border-white/10 dark:bg-neutral-950">
-              <XFormPills
-                label={<span className="text-sm font-medium text-slate-700 dark:text-slate-200">{copy.extendByLabel}</span>}
-                value={extendValue}
-                options={expiresInOptions}
-                onChange={(value) => onChangeExtend(value as OuterClientExpiryOption)}
-                emptyLabel={copy.expiresInEmpty}
-              />
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+            <div className="shrink-0">
               <XButton
                 type="single"
                 variant="subtle"
@@ -748,6 +751,8 @@ function KeyCard({
                   onClick: onExtend,
                 }}
               />
+            </div>
+            <div className="shrink-0">
               <XButton
                 type="single"
                 variant="subtle"
@@ -760,21 +765,6 @@ function KeyCard({
               />
             </div>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          <InfoLine label={copy.keys.environment} value={keyItem.environment} />
-          <InfoLine label={copy.keys.keyVersion} value={keyItem.keyVersion} />
-          <InfoLine label={copy.keys.algorithm} value={keyItem.algorithm} />
-          <InfoLine label={copy.keys.fingerprint} value={keyItem.fingerprint || '-'} />
-          <InfoLine label={copy.keys.status} value={keyItem.status} />
-          <InfoLine label={copy.keys.expiresAt} value={formatTime(keyItem.expiresAt)} />
-          <InfoLine label={copy.keys.lastUsedAt} value={formatTime(keyItem.lastUsedAt)} />
-          <InfoLine label={copy.keys.createdAt} value={formatTime(keyItem.createdAt)} />
-        </div>
-
-        <div className="rounded-2xl bg-white p-4 font-mono text-xs leading-6 text-slate-800 dark:bg-neutral-950 dark:text-slate-200 break-all">
-          {keyItem.publicKey}
         </div>
       </div>
     </article>

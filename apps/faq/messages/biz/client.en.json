@@ -52,7 +52,7 @@
     },
     "detail": {
       "title": "Client Detail",
-      "description": "Issue or rotate keys, inspect active key versions, and reveal one-time private keys for copy only.",
+      "description": "Generate or rotate keys, inspect active key versions, and reveal one-time private keys for copy only.",
       "actions": {
         "backToClients": "Back To Clients"
       },
@@ -60,8 +60,8 @@
         "loading": "Loading client detail...",
         "loadFailed": "Failed to load client detail: ",
         "notFound": "Client not found.",
-        "issueKeyTitle": "Issue Key",
-        "issueKeyDescription": "Issue a new key in the current runtime environment. The previous active key enters rotating status for a short grace window.",
+        "generateKeyTitle": "Generate New Key",
+        "generateKeyDescription": "Generate a new key in the current runtime environment. The previous active key enters rotating status for a short grace window.",
         "environmentLabel": "Environment",
         "expiresAtLabel": "Expires At",
         "expiresInLabel": "Key Validity",
@@ -72,11 +72,12 @@
           "1_year": "1 Year",
           "never": "Never Expires"
         },
-        "issueKey": "Issue New Key",
-        "issuing": "Issuing...",
-        "keyListTitle": "Issued Keys",
-        "oneTimeTitle": "One-Time Secret",
-        "oneTimeDescription": "The private key only exists in the current page state. Refresh, leave, or close this card and it will disappear.",
+        "generateKey": "Generate New Key",
+        "generating": "Generating...",
+        "currentActiveKeyTitle": "Current Active Key",
+        "deActiveKeysTitle": "DeActive Keys",
+        "generatedKeyTitle": "Generated Key Result",
+        "generatedKeyDescription": "The private key can only be viewed in the current page state. Refresh, leave, or close this panel and it will disappear.",
         "unsavedLeaveTitle": "Leave Secret View?",
         "unsavedLeaveDescription": "After leaving or closing this area, the private key will no longer be visible. Confirm that you have already saved it.",
         "deleteClientTitle": "Delete Client?",

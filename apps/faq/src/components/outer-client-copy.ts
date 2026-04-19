@@ -58,18 +58,19 @@ export type OuterClientDetailPageCopy = {
     loading: string;
     loadFailed: string;
     notFound: string;
-    issueKeyTitle: string;
-    issueKeyDescription: string;
+    generateKeyTitle: string;
+    generateKeyDescription: string;
     environmentLabel: string;
     expiresAtLabel: string;
     expiresInLabel: string;
     expiresInEmpty: string;
     expiresInOptions: ExpiryOptions;
-    issueKey: string;
-    issuing: string;
-    keyListTitle: string;
-    oneTimeTitle: string;
-    oneTimeDescription: string;
+    generateKey: string;
+    generating: string;
+    currentActiveKeyTitle: string;
+    deActiveKeysTitle: string;
+    generatedKeyTitle: string;
+    generatedKeyDescription: string;
     unsavedLeaveTitle: string;
     unsavedLeaveDescription: string;
     deleteClientTitle: string;
@@ -192,8 +193,8 @@ export async function getOuterClientDetailPageCopy(locale: string): Promise<Oute
       loading: t('client.loading'),
       loadFailed: t('client.loadFailed'),
       notFound: t('client.notFound'),
-      issueKeyTitle: t('client.issueKeyTitle'),
-      issueKeyDescription: t('client.issueKeyDescription'),
+      generateKeyTitle: t('client.generateKeyTitle'),
+      generateKeyDescription: t('client.generateKeyDescription'),
       environmentLabel: t('client.environmentLabel'),
       expiresAtLabel: t('client.expiresAtLabel'),
       expiresInLabel: t('client.expiresInLabel'),
@@ -204,11 +205,12 @@ export async function getOuterClientDetailPageCopy(locale: string): Promise<Oute
         '1_year': t('client.expiresInOptions.1_year'),
         never: t('client.expiresInOptions.never'),
       },
-      issueKey: t('client.issueKey'),
-      issuing: t('client.issuing'),
-      keyListTitle: t('client.keyListTitle'),
-      oneTimeTitle: t('client.oneTimeTitle'),
-      oneTimeDescription: t('client.oneTimeDescription'),
+      generateKey: t('client.generateKey'),
+      generating: t('client.generating'),
+      currentActiveKeyTitle: t('client.currentActiveKeyTitle'),
+      deActiveKeysTitle: t('client.deActiveKeysTitle'),
+      generatedKeyTitle: t('client.generatedKeyTitle'),
+      generatedKeyDescription: t('client.generatedKeyDescription'),
       unsavedLeaveTitle: t('client.unsavedLeaveTitle'),
       unsavedLeaveDescription: t('client.unsavedLeaveDescription'),
       deleteClientTitle: t('client.deleteClientTitle'),

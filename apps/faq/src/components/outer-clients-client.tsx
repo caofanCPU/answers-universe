@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRightIcon, CopyIcon, EyeIcon, EyeOffIcon, PlusIcon, Trash2Icon, XIcon } from '@windrun-huaiin/base-ui/icons';
+import { CopyIcon, EyeIcon, EyeOffIcon, PlusIcon, Trash2Icon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import { XButton } from '@windrun-huaiin/third-ui/main';
 import { XFormPills } from '@windrun-huaiin/third-ui/main/pill-select';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
 import type { OuterClientExpiryOption, OuterClientKeyIssueResult, OuterClientListItemDto } from '@/server/outer-clients/types';
 import type { OuterClientsPageCopy } from './outer-client-copy';
-import { InfoTooltip } from '@windrun-huaiin/third-ui/main';
+import { OuterClientActionModal } from './outer-client-action-modal';
 
 type OuterClientsClientProps = {
   locale: string;
@@ -209,7 +209,7 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
   );
 
   return (
-    <div className="flex flex-col gap-5 sm:gap-6">
+    <div className="flex min-h-[80vh] flex-col gap-5 sm:gap-6">
       <section className="rounded-4xl border border-black/10 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-neutral-950/70 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
@@ -289,7 +289,7 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
                           variant="subtle"
                           button={{
                             text: copy.detail,
-                            icon: <ArrowRightIcon className="h-4 w-4" />,
+                            icon: <EyeIcon className="h-4 w-4" />,
                             onClick: () => undefined,
                           }}
                         />
@@ -353,149 +353,119 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
         </div>
       ) : null}
 
-      {panelOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/45 px-3 pb-4 pt-32 backdrop-blur-sm sm:px-4 sm:items-center sm:py-6"
-          onClick={closeCreatePanel}
-        >
-          <div
-            className="flex max-h-[min(88vh,900px)] w-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-2xl dark:border-white/10 dark:bg-neutral-950"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3 border-b border-black/10 px-4 py-3 dark:border-white/10 sm:gap-4 sm:px-6 sm:py-4">
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                  {createdSecret ? copy.createResultTitle : copy.createPanelTitle}
-                </h2>
-                <InfoTooltip
-                  content={createdSecret ? copy.createResultDescription : copy.createPanelDescription}
-                  desktopSide="bottom"
+      <OuterClientActionModal
+        open={panelOpen}
+        title={createdSecret ? copy.createResultTitle : copy.createPanelTitle}
+        description={createdSecret ? copy.createResultDescription : copy.createPanelDescription}
+        closeLabel={copy.closePanel}
+        onClose={closeCreatePanel}
+        formContent={
+          <section className="rounded-3xl border border-black/10 bg-neutral-50/80 p-3.5 dark:border-white/10 dark:bg-neutral-900/60 sm:rounded-[1.75rem] sm:p-4">
+            <div className="space-y-4">
+              <label className="grid gap-1.5 text-sm">
+                <span className="font-medium text-slate-700 dark:text-slate-200">{copy.nameLabel}</span>
+                <input
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder={copy.namePlaceholder}
+                  className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-black/20 dark:border-white/10 dark:bg-neutral-950 dark:text-white"
+                />
+              </label>
+
+              <div className="rounded-2xl border border-black/10 bg-white p-2.5 dark:border-white/10 dark:bg-neutral-950 sm:p-3">
+                <XFormPills
+                  label={<span className="text-sm font-medium text-slate-700 dark:text-slate-200">{copy.expiresInLabel}</span>}
+                  value={expiresIn}
+                  options={expiresInOptions}
+                  onChange={(value) => setExpiresIn(value as OuterClientExpiryOption)}
+                  emptyLabel={copy.expiresInEmpty}
                 />
               </div>
-              <button
-                type="button"
-                onClick={closeCreatePanel}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:bg-neutral-900 dark:text-slate-200 dark:hover:bg-white/5"
-                aria-label={copy.closePanel}
-                title={copy.closePanel}
-              >
-                <XIcon className="h-4 w-4" />
-              </button>
+
+              <label className="grid gap-1.5 text-sm">
+                <span className="font-medium text-slate-700 dark:text-slate-200">{copy.remarkLabel}</span>
+                <input
+                  value={remark}
+                  onChange={(event) => setRemark(event.target.value)}
+                  placeholder={copy.remarkPlaceholder}
+                  className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-black/20 dark:border-white/10 dark:bg-neutral-950 dark:text-white"
+                />
+              </label>
+
+              <div className="flex flex-col-reverse gap-3 border-t border-black/10 pt-4 dark:border-white/10 sm:flex-row sm:justify-end">
+                <XButton
+                  type="single"
+                  variant="subtle"
+                  button={{
+                    text: copy.cancel,
+                    icon: false,
+                    onClick: closeCreatePanel,
+                  }}
+                />
+                <XButton
+                  type="single"
+                  variant="subtle"
+                  button={{
+                    text: creating ? copy.creating : copy.createButton,
+                    icon: <PlusIcon className="h-4 w-4" />,
+                    disabled: creating || !name.trim(),
+                    onClick: () => void handleCreate(),
+                  }}
+                />
+              </div>
             </div>
+          </section>
+        }
+        resultContent={
+          <section className="rounded-3xl border border-amber-200 bg-amber-50/90 p-3.5 dark:border-amber-400/20 dark:bg-amber-500/10 sm:rounded-[1.75rem] sm:p-4">
+            {!createdSecret ? (
+              <div className="flex h-full min-h-48 items-center justify-center rounded-3xl border border-dashed border-amber-300/80 px-4 text-center text-sm leading-6 text-slate-600 dark:border-amber-400/25 dark:text-slate-300 sm:min-h-56 sm:px-6">
+                {copy.createResultDescription}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <InfoPill label={copy.clientId} value={createdSecret.clientId} />
+                  <InfoPill label={copy.environment} value={createdSecret.environment} />
+                  <InfoPill label={copy.keyCount} value="1" />
+                </div>
 
-            <div className="overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
-              <div className="grid gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-                <section className="rounded-[1.5rem] border border-black/10 bg-neutral-50/80 p-3.5 dark:border-white/10 dark:bg-neutral-900/60 sm:rounded-[1.75rem] sm:p-4">
-                  <div className="space-y-4">
-                    <label className="grid gap-1.5 text-sm">
-                      <span className="font-medium text-slate-700 dark:text-slate-200">{copy.nameLabel}</span>
-                      <input
-                        value={name}
-                        onChange={(event) => setName(event.target.value)}
-                        placeholder={copy.namePlaceholder}
-                        className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-black/20 dark:border-white/10 dark:bg-neutral-950 dark:text-white"
-                      />
-                    </label>
-
-                    <div className="rounded-2xl border border-black/10 bg-white p-2.5 dark:border-white/10 dark:bg-neutral-950 sm:p-3">
-                      <XFormPills
-                        label={<span className="text-sm font-medium text-slate-700 dark:text-slate-200">{copy.expiresInLabel}</span>}
-                        value={expiresIn}
-                        options={expiresInOptions}
-                        onChange={(value) => setExpiresIn(value as OuterClientExpiryOption)}
-                        emptyLabel={copy.expiresInEmpty}
-                      />
+                <div className="rounded-3xl border border-black/10 bg-white/90 p-4 dark:border-white/10 dark:bg-neutral-950/85">
+                  <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {copy.copyEnvBlock}
                     </div>
-
-                    <label className="grid gap-1.5 text-sm">
-                      <span className="font-medium text-slate-700 dark:text-slate-200">{copy.remarkLabel}</span>
-                      <input
-                        value={remark}
-                        onChange={(event) => setRemark(event.target.value)}
-                        placeholder={copy.remarkPlaceholder}
-                        className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-black/20 dark:border-white/10 dark:bg-neutral-950 dark:text-white"
-                      />
-                    </label>
-
-                    <div className="flex flex-col-reverse gap-3 border-t border-black/10 pt-4 dark:border-white/10 sm:flex-row sm:justify-end">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowSecret((value) => !value)}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:bg-neutral-900 dark:text-slate-200 dark:hover:bg-white/5"
+                        aria-label={showSecret ? copy.hideSecret : copy.showSecret}
+                        title={showSecret ? copy.hideSecret : copy.showSecret}
+                      >
+                        {showSecret ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                      </button>
                       <XButton
                         type="single"
                         variant="subtle"
                         button={{
-                          text: copy.cancel,
-                          icon: false,
-                          onClick: closeCreatePanel,
-                        }}
-                      />
-                      <XButton
-                        type="single"
-                        variant="subtle"
-                        button={{
-                          text: creating ? copy.creating : copy.createButton,
-                          icon: <PlusIcon className="h-4 w-4" />,
-                          disabled: creating || !name.trim(),
-                          onClick: () => void handleCreate(),
+                          text: copiedField === 'env' ? copy.copied : copy.copyEnvBlock,
+                          icon: <CopyIcon className="h-4 w-4" />,
+                          onClick: () => void copyEnvBlock(),
                         }}
                       />
                     </div>
                   </div>
-                </section>
 
-                <section className="rounded-[1.5rem] border border-amber-200 bg-amber-50/90 p-3.5 dark:border-amber-400/20 dark:bg-amber-500/10 sm:rounded-[1.75rem] sm:p-4">
-                  {!createdSecret ? (
-                    <div className="flex h-full min-h-48 items-center justify-center rounded-3xl border border-dashed border-amber-300/80 px-4 text-center text-sm leading-6 text-slate-600 dark:border-amber-400/25 dark:text-slate-300 sm:min-h-56 sm:px-6">
-                      {copy.createResultDescription}
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        <InfoPill label={copy.clientId} value={createdSecret.clientId} />
-                        <InfoPill label={copy.environment} value={createdSecret.environment} />
-                        <InfoPill label={copy.keyCount} value="1" />
-                      </div>
-
-                      <div className="rounded-3xl border border-black/10 bg-white/90 p-4 dark:border-white/10 dark:bg-neutral-950/85">
-                        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                              {copy.copyEnvBlock}
-                            </div>
-                            <InfoTooltip content={copy.createResultDescription} desktopSide="bottom" />
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setShowSecret((value) => !value)}
-                              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:bg-neutral-900 dark:text-slate-200 dark:hover:bg-white/5"
-                              aria-label={showSecret ? copy.hideSecret : copy.showSecret}
-                              title={showSecret ? copy.hideSecret : copy.showSecret}
-                            >
-                              {showSecret ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                            </button>
-                            <XButton
-                              type="single"
-                              variant="subtle"
-                              button={{
-                                text: copiedField === 'env' ? copy.copied : copy.copyEnvBlock,
-                                icon: <CopyIcon className="h-4 w-4" />,
-                                onClick: () => void copyEnvBlock(),
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="rounded-2xl bg-neutral-100 p-4 font-mono text-xs leading-6 text-slate-800 dark:bg-neutral-900 dark:text-slate-200 break-all whitespace-pre-wrap">
-                          {envBlock}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </section>
+                  <div className="rounded-2xl bg-neutral-100 p-4 font-mono text-xs leading-6 text-slate-800 dark:bg-neutral-900 dark:text-slate-200 break-all whitespace-pre-wrap">
+                    {envBlock}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+            )}
+          </section>
+        }
+      />
     </div>
   );
 }
