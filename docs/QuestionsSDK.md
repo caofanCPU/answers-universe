@@ -170,6 +170,7 @@ client_xxx
 当前缓存链路至少涉及以下配置：
 
 - `NEXT_PUBLIC_QSTASH_CACHE_TASK_URL`
+- `WINDRUN_HUAIIN_FAQ_OUTER_CACHE_ENABLED`
 - `QSTASH_TOKEN`
 - `QSTASH_CURRENT_SIGNING_KEY`
 - `QSTASH_NEXT_SIGNING_KEY`
@@ -190,6 +191,26 @@ NEXT_PUBLIC_QSTASH_CACHE_TASK_URL=https://your-domain.com/api/internal/questions
 
 - 重建单题详情缓存
 - 删除单题详情缓存
+
+#### `WINDRUN_HUAIIN_FAQ_OUTER_CACHE_ENABLED`
+
+控制 outer 题目缓存链路是否启用。
+
+示例：
+
+```env
+WINDRUN_HUAIIN_FAQ_OUTER_CACHE_ENABLED=false
+```
+
+说明：
+
+- 只有配置为 `true` 时才启用缓存。
+- 未配置或其他值都视为关闭。
+- 关闭时 outer ids 查询直接走 DB，不读 Redis。
+- 关闭时不会投递 QStash 缓存重建任务。
+- 关闭时 QStash rebuild 回调即使被历史消息触发，也不会写 Redis。
+- 开发环境建议保持 `false`，避免消耗 Upstash 调用次数和存储。
+- 生产环境可根据成本、性能和命中率观察结果决定是否开启。
 
 #### `QSTASH_TOKEN`
 
@@ -216,10 +237,11 @@ FAQ Base 内部 webhook 在接收 QStash 回调时，用于验签。
 
 本地或测试环境联调缓存链路时，建议最少确认以下几点：
 
-1. `NEXT_PUBLIC_QSTASH_CACHE_TASK_URL` 指向当前 FAQ 服务可访问地址。
-2. `QSTASH_TOKEN` 已配置，确保服务端可以成功发布任务。
-3. `QSTASH_CURRENT_SIGNING_KEY` 和 `QSTASH_NEXT_SIGNING_KEY` 已配置，确保 webhook 可以验签。
-4. Redis 配置已可用，否则即使任务成功执行，也无法真正落缓存。
+1. `WINDRUN_HUAIIN_FAQ_OUTER_CACHE_ENABLED=true`，确认当前环境确实需要启用缓存。
+2. `NEXT_PUBLIC_QSTASH_CACHE_TASK_URL` 指向当前 FAQ 服务可访问地址。
+3. `QSTASH_TOKEN` 已配置，确保服务端可以成功发布任务。
+4. `QSTASH_CURRENT_SIGNING_KEY` 和 `QSTASH_NEXT_SIGNING_KEY` 已配置，确保 webhook 可以验签。
+5. Redis 配置已可用，否则即使任务成功执行，也无法真正落缓存。
 
 ## 5. SDK 初始化
 

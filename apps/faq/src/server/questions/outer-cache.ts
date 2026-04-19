@@ -3,6 +3,7 @@ import { deleteKey, getJson, mgetJson, publishMessage, setJson } from '@windrun-
 
 const OUTER_QUESTION_DETAIL_CACHE_KEY_PREFIX = 'outer:v1:question:detail';
 const OUTER_QUESTION_DETAIL_CACHE_TTL_SECONDS = 60 * 60 * 24;
+const OUTER_QUESTION_CACHE_ENABLED_ENV = 'WINDRUN_HUAIIN_FAQ_OUTER_CACHE_ENABLED';
 
 export type OuterQuestionCacheRebuildPayload = {
   questionId: string;
@@ -12,6 +13,10 @@ export type OuterQuestionCacheRebuildPayload = {
 
 function buildQuestionDetailCacheKey(questionId: string): string {
   return `${OUTER_QUESTION_DETAIL_CACHE_KEY_PREFIX}:${questionId}`;
+}
+
+export function isOuterQuestionCacheEnabled(): boolean {
+  return process.env[OUTER_QUESTION_CACHE_ENABLED_ENV] === 'true';
 }
 
 function resolveAppBaseUrl(): string | null {
@@ -26,12 +31,20 @@ function resolveAppBaseUrl(): string | null {
 }
 
 export async function getOuterQuestionDetailCache(questionId: string): Promise<OuterQuestionDetailDto | null> {
+  if (!isOuterQuestionCacheEnabled()) {
+    return null;
+  }
+
   return getJson<OuterQuestionDetailDto>(buildQuestionDetailCacheKey(questionId));
 }
 
 export async function getOuterQuestionDetailCacheMap(
   questionIds: string[]
 ): Promise<Map<string, OuterQuestionDetailDto>> {
+  if (!isOuterQuestionCacheEnabled()) {
+    return new Map();
+  }
+
   const uniqueQuestionIds = Array.from(new Set(questionIds));
 
   if (uniqueQuestionIds.length === 0) {
@@ -56,16 +69,28 @@ export async function setOuterQuestionDetailCache(
   questionId: string,
   value: OuterQuestionDetailDto
 ): Promise<boolean> {
+  if (!isOuterQuestionCacheEnabled()) {
+    return false;
+  }
+
   return setJson(buildQuestionDetailCacheKey(questionId), value, OUTER_QUESTION_DETAIL_CACHE_TTL_SECONDS);
 }
 
 export async function deleteOuterQuestionDetailCache(questionId: string): Promise<boolean> {
+  if (!isOuterQuestionCacheEnabled()) {
+    return false;
+  }
+
   return deleteKey(buildQuestionDetailCacheKey(questionId));
 }
 
 export async function enqueueOuterQuestionDetailCacheRebuild(
   payload: OuterQuestionCacheRebuildPayload
 ): Promise<string | null> {
+  if (!isOuterQuestionCacheEnabled()) {
+    return null;
+  }
+
   const url = resolveAppBaseUrl();
 
   if (!url) {
@@ -84,5 +109,6 @@ export async function enqueueOuterQuestionDetailCacheRebuild(
 export const outerQuestionDetailCacheKey = {
   prefix: OUTER_QUESTION_DETAIL_CACHE_KEY_PREFIX,
   ttlSeconds: OUTER_QUESTION_DETAIL_CACHE_TTL_SECONDS,
+  enabledEnv: OUTER_QUESTION_CACHE_ENABLED_ENV,
   build: buildQuestionDetailCacheKey,
 } as const;

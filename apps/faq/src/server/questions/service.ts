@@ -33,6 +33,7 @@ import {
   enqueueOuterQuestionDetailCacheRebuild,
   getOuterQuestionDetailCache,
   getOuterQuestionDetailCacheMap,
+  isOuterQuestionCacheEnabled,
   outerQuestionDetailCacheKey,
   setOuterQuestionDetailCache,
 } from './outer-cache';
@@ -574,6 +575,23 @@ export async function getQuestionExportList(params: Partial<QuestionListParams>)
   return records.map(buildQuestionExportItemDto);
 }
 
+async function findOuterQuestionDetailsByIds(ids: bigint[]): Promise<OuterQuestionBaseItemDto[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const records = await prisma.usb.findMany({
+    where: {
+      deleted: 0,
+      id: {
+        in: ids,
+      },
+    },
+  });
+
+  return records.map(buildQuestionDetailDto);
+}
+
 export async function getOuterQuestionBaseByIds(
   params: Partial<OuterQuestionBaseQueryParams>
 ): Promise<OuterQuestionBaseResult> {
@@ -585,6 +603,20 @@ export async function getOuterQuestionBaseByIds(
     };
   }
 
+  if (!isOuterQuestionCacheEnabled()) {
+    const records = await findOuterQuestionDetailsByIds(ids.map((id) => BigInt(id)));
+    const itemsById = new Map(records.map((record) => [record.id, record]));
+    const items = ids
+      .map((id) => itemsById.get(id) ?? null)
+      .filter((item): item is OuterQuestionBaseItemDto => item !== null);
+
+    return {
+      items,
+    };
+  }
+
+  let cachedCount = 0;
+  let missedCount = 0;
   const chunks = chunkArray(ids, OUTER_IDS_CHUNK_SIZE);
   const chunkResults = await mapWithConcurrency(chunks, OUTER_IDS_PARALLELISM, async (chunkIds) => {
     const cachedItems = new Map<string, OuterQuestionBaseItemDto>();
@@ -596,24 +628,19 @@ export async function getOuterQuestionBaseByIds(
 
       if (cached) {
         cachedItems.set(id, cached);
+        cachedCount += 1;
         continue;
       }
 
       missedIds.push(BigInt(id));
     }
 
-    if (missedIds.length > 0) {
-      const records = await prisma.usb.findMany({
-        where: {
-          deleted: 0,
-          id: {
-            in: missedIds,
-          },
-        },
-      });
+    missedCount += missedIds.length;
 
-      for (const record of records) {
-        const detail = buildQuestionDetailDto(record);
+    if (missedIds.length > 0) {
+      const records = await findOuterQuestionDetailsByIds(missedIds);
+
+      for (const detail of records) {
         cachedItems.set(detail.id, detail);
 
         void enqueueOuterQuestionDetailCacheRebuild({
@@ -636,6 +663,12 @@ export async function getOuterQuestionBaseByIds(
   const items = ids
     .map((id) => itemsById.get(id) ?? null)
     .filter((item): item is OuterQuestionBaseItemDto => item !== null);
+
+  console.log('[Outer Question Cache] getByIds cache hit', `${cachedCount}/${ids.length}`, {
+    cached: cachedCount,
+    missed: missedCount,
+    hitRate: `${((cachedCount / ids.length) * 100).toFixed(2)}%`,
+  });
 
   return {
     items,
@@ -959,7 +992,13 @@ export async function importQuestions(
   };
 }
 
-export async function rebuildOuterQuestionDetailCache(questionId: bigint): Promise<'rebuilt' | 'deleted' | 'missing'> {
+export async function rebuildOuterQuestionDetailCache(
+  questionId: bigint
+): Promise<'rebuilt' | 'deleted' | 'missing' | 'skipped_cache_disabled'> {
+  if (!isOuterQuestionCacheEnabled()) {
+    return 'skipped_cache_disabled';
+  }
+
   const result = await getQuestionById(questionId);
 
   if (!result) {

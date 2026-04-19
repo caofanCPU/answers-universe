@@ -3,6 +3,7 @@ import { verifyQstashSignature } from '@windrun-huaiin/backend-core/lib';
 import { z } from 'zod';
 import {
   deleteOuterQuestionDetailCache,
+  isOuterQuestionCacheEnabled,
 } from '@/server/questions/outer-cache';
 import { rebuildOuterQuestionDetailCache } from '@/server/questions/service';
 
@@ -69,6 +70,13 @@ export async function POST(req: NextRequest) {
     const payload = envelope.payload;
 
     const questionId = z.coerce.bigint().positive().parse(payload.questionId);
+
+    if (!isOuterQuestionCacheEnabled()) {
+      return NextResponse.json({
+        ok: true,
+        status: 'skipped_cache_disabled',
+      });
+    }
 
     if (payload.deleteOnly) {
       await deleteOuterQuestionDetailCache(payload.questionId);
