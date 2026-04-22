@@ -25,10 +25,9 @@
     "dj": "pnpm run easy-changeset && pnpm changeset status",
     "djv": "pnpm changeset version",
     "djvp": "pnpm changeset publish",
-    "web:dev": "turbo dev --filter=@windrun-huaiin/faq",
-    "web:build": "turbo build --filter=@windrun-huaiin/faq",
-    "web:build:prod": "turbo build:prod --filter=@windrun-huaiin/faq",
-    "web:start": "pnpm --filter=@windrun-huaiin/faq start",
+    "faq:dev": "turbo dev --filter=@windrun-huaiin/faq",
+    "faq:build": "turbo build --filter=@windrun-huaiin/faq",
+    "faq:build:prod": "turbo build:prod --filter=@windrun-huaiin/faq",
     "contracts:build": "turbo build --filter=@windrun-huaiin/faq-contracts",
     "sdk:build": "turbo build --filter=@windrun-huaiin/faq-sdk"
   },

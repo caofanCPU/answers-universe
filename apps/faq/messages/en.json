@@ -23,7 +23,7 @@
       {
         "title": "Collect questions your way",
         "description": "Add one question at a time in the editor or paste a full JSON batch for validation. You can start small, import in bulk, or mix both as your library grows.",
-        "iconKey": "SquarePen"
+        "iconKey": "Pencil"
       },
       {
         "title": "Review before anything goes live",
@@ -33,7 +33,7 @@
       {
         "title": "Reuse across operations",
         "description": "Browse the question base, open detail pages, generate date-based random sets, and expose structured question data through API endpoints. AI-assisted duplicate and quality checks are planned next.",
-        "iconKey": "Layers3"
+        "iconKey": "Eye"
       }
     ]
   },
@@ -233,17 +233,17 @@
       {
         "title": "Editor and Preview in One Workflow",
         "description": "Write or revise a question, check the rendered result immediately, and submit only when the content is ready. Editing and confirmation stay connected instead of split across disconnected tools.",
-        "iconKey": "FilePenLine"
+        "iconKey": "Pencil"
       },
       {
         "title": "Batch Import with a Real Repair Loop",
         "description": "Upload or paste JSON, validate the whole batch, inspect failed items, fix them in context, recheck, and import only when the batch is clean. That is the difference between bulk upload and bulk control.",
-        "iconKey": "Files"
+        "iconKey": "Json"
       },
       {
         "title": "Daily Random Sets with Guardrails",
         "description": "Generate question sets by date with first-question rules, category distribution logic, and complete diagnostics when the pool is not enough. It is designed to help operators act on gaps instead of guessing.",
-        "iconKey": "CalendarRange"
+        "iconKey": "ListTodo"
       },
       {
         "title": "Structured Question Data Ready for Reuse",
@@ -407,5 +407,76 @@
     "copyMarkdown": "Copy page as Markdown",
     "copyMarkdownDone": "Copied!",
     "editOnGithub": "Edit this page on GitHub"
+  },
+  "fingerprint": {
+    "panel": {
+      "toggleAriaLabel": "Fingerprint panel",
+      "title": "Fingerprint Panel",
+      "testModeLabel": "Test",
+      "closeAriaLabel": "Close fingerprint panel"
+    },
+    "sections": {
+      "user": "User",
+      "creditsInfo": "Credits Info",
+      "subscription": "Subscription",
+      "concurrentBaseInfo": "Concurrent Base Info"
+    },
+    "labels": {
+      "userId": "UserID",
+      "nickName": "NickName",
+      "fingerprintId": "FingerprintID",
+      "clerkUserId": "ClerkUserID",
+      "email": "Email",
+      "stripeCusId": "StripeCusID",
+      "createdAt": "CreatedAt",
+      "plan": "Plan",
+      "period": "Period",
+      "allocated": "Allocated",
+      "subId": "SubID",
+      "orderId": "OrderID",
+      "priceId": "PriceID",
+      "realBrowser": "Real Browser",
+      "testOverride": "Test Override"
+    },
+    "creditBuckets": {
+      "paid": "Paid",
+      "oneTimePaid": "OneTimePaid",
+      "free": "Free"
+    },
+    "placeholders": {
+      "subscriptionStatusNever": "Never",
+      "subscriptionPeriodUnavailable": "Unavailable",
+      "noCreditsYet": "No Credits Yet",
+      "noRecords": "No records",
+      "noTestExecutedYet": "No test executed yet.",
+      "none": "None",
+      "unknownError": "Unknown error"
+    },
+    "status": {
+      "pending": "pending",
+      "idle": "idle"
+    },
+    "actions": {
+      "frontendPreventionTest": "Frontend Prevention Test",
+      "backendIdempotencyTest": "Backend Idempotency Test",
+      "generateNewTestFingerprintAriaLabel": "Generate new test fingerprint",
+      "dismissErrorAriaLabel": "Dismiss error"
+    },
+    "messages": {
+      "testFingerprintNotReady": "Test fingerprint override is not ready yet.",
+      "runningFrontendPreventionTest": "Running Frontend Prevention Test with fingerprint: {fingerprintId}",
+      "frontendPreventionTestFinished": "Frontend Prevention Test finished. Active test fingerprint: {fingerprintId}",
+      "frontendPreventionTestFailed": "Frontend Prevention Test failed: {error}",
+      "failedToInitializeAnonymousUser": "Failed to initialize anonymous user",
+      "runningBackendIdempotencyTest": "Running Backend Idempotency Test with fingerprint: {fingerprintId}",
+      "backendIdempotencyTestDone": "Backend Idempotency Test done.",
+      "backendIdempotencyTestFailed": "Backend Idempotency Test failed: {error}",
+      "generatedTestFingerprintOverride": "Generated test fingerprint override: {fingerprintId}",
+      "createdCount": "created={count}",
+      "reusedCount": "reused={count}",
+      "failedCount": "failed={count}",
+      "createdUserIds": "createdUserIds=[{value}]",
+      "failedStatuses": "failedStatuses=[{value}]"
+    }
   }
 }
