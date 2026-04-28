@@ -994,7 +994,7 @@ export async function importQuestions(
 
 export async function rebuildOuterQuestionDetailCache(
   questionId: bigint
-): Promise<'rebuilt' | 'deleted' | 'missing' | 'skipped_cache_disabled'> {
+): Promise<'rebuilt' | 'missing' | 'skipped_cache_disabled'> {
   if (!isOuterQuestionCacheEnabled()) {
     return 'skipped_cache_disabled';
   }
@@ -1006,7 +1006,6 @@ export async function rebuildOuterQuestionDetailCache(
       questionId: questionId.toString(),
       cacheKey: outerQuestionDetailCacheKey.build(questionId.toString()),
     });
-    await deleteOuterQuestionDetailCache(questionId.toString());
     return 'missing';
   }
 
