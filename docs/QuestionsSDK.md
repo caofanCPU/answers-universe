@@ -171,6 +171,7 @@ client_xxx
 
 - `NEXT_PUBLIC_QSTASH_CACHE_TASK_URL`
 - `WINDRUN_HUAIIN_FAQ_OUTER_CACHE_ENABLED`
+- `WINDRUN_HUAIIN_FAQ_OUTER_CACHE_TTL_DAYS`
 - `QSTASH_TOKEN`
 - `QSTASH_CURRENT_SIGNING_KEY`
 - `QSTASH_NEXT_SIGNING_KEY`
@@ -212,6 +213,22 @@ WINDRUN_HUAIIN_FAQ_OUTER_CACHE_ENABLED=false
 - 开发环境建议保持 `false`，避免消耗 Upstash 调用次数和存储。
 - 生产环境可根据成本、性能和命中率观察结果决定是否开启。
 
+#### `WINDRUN_HUAIIN_FAQ_OUTER_CACHE_TTL_DAYS`
+
+控制 outer 单题详情缓存 TTL，单位是天。
+
+示例：
+
+```env
+WINDRUN_HUAIIN_FAQ_OUTER_CACHE_TTL_DAYS=30
+```
+
+说明：
+
+- 未配置时默认 `30` 天。
+- 只接受正整数天数。
+- 非法值、`0` 或负数都会回退到默认 `30` 天。
+
 #### `QSTASH_TOKEN`
 
 FAQ Base 服务端向 QStash 发布消息时使用的 token。
@@ -239,9 +256,10 @@ FAQ Base 内部 webhook 在接收 QStash 回调时，用于验签。
 
 1. `WINDRUN_HUAIIN_FAQ_OUTER_CACHE_ENABLED=true`，确认当前环境确实需要启用缓存。
 2. `NEXT_PUBLIC_QSTASH_CACHE_TASK_URL` 指向当前 FAQ 服务可访问地址。
-3. `QSTASH_TOKEN` 已配置，确保服务端可以成功发布任务。
-4. `QSTASH_CURRENT_SIGNING_KEY` 和 `QSTASH_NEXT_SIGNING_KEY` 已配置，确保 webhook 可以验签。
-5. Redis 配置已可用，否则即使任务成功执行，也无法真正落缓存。
+3. `WINDRUN_HUAIIN_FAQ_OUTER_CACHE_TTL_DAYS` 已按环境成本和命中率预期配置；不配置时默认 `30` 天。
+4. `QSTASH_TOKEN` 已配置，确保服务端可以成功发布任务。
+5. `QSTASH_CURRENT_SIGNING_KEY` 和 `QSTASH_NEXT_SIGNING_KEY` 已配置，确保 webhook 可以验签。
+6. Redis 配置已可用，否则即使任务成功执行，也无法真正落缓存。
 
 ## 5. SDK 初始化
 

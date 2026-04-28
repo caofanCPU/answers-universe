@@ -2,8 +2,10 @@ import type { OuterQuestionDetailDto } from '@windrun-huaiin/faq-contracts/outer
 import { deleteKey, getJson, mgetJson, publishMessage, setJson } from '@windrun-huaiin/backend-core/lib';
 
 const OUTER_QUESTION_DETAIL_CACHE_KEY_PREFIX = 'outer:v1:question:detail';
-const OUTER_QUESTION_DETAIL_CACHE_TTL_SECONDS = 60 * 60 * 24;
+const DEFAULT_OUTER_QUESTION_DETAIL_CACHE_TTL_DAYS = 30;
+const SECONDS_PER_DAY = 60 * 60 * 24;
 const OUTER_QUESTION_CACHE_ENABLED_ENV = 'WINDRUN_HUAIIN_FAQ_OUTER_CACHE_ENABLED';
+const OUTER_QUESTION_CACHE_TTL_DAYS_ENV = 'WINDRUN_HUAIIN_FAQ_OUTER_CACHE_TTL_DAYS';
 
 export type OuterQuestionCacheRebuildPayload = {
   questionId: string;
@@ -13,6 +15,22 @@ export type OuterQuestionCacheRebuildPayload = {
 
 function buildQuestionDetailCacheKey(questionId: string): string {
   return `${OUTER_QUESTION_DETAIL_CACHE_KEY_PREFIX}:${questionId}`;
+}
+
+function resolveOuterQuestionDetailCacheTtlSeconds(): number {
+  const rawValue = process.env[OUTER_QUESTION_CACHE_TTL_DAYS_ENV]?.trim();
+
+  if (!rawValue) {
+    return DEFAULT_OUTER_QUESTION_DETAIL_CACHE_TTL_DAYS * SECONDS_PER_DAY;
+  }
+
+  const parsedDays = Number(rawValue);
+
+  if (!Number.isInteger(parsedDays) || parsedDays <= 0) {
+    return DEFAULT_OUTER_QUESTION_DETAIL_CACHE_TTL_DAYS * SECONDS_PER_DAY;
+  }
+
+  return parsedDays * SECONDS_PER_DAY;
 }
 
 export function isOuterQuestionCacheEnabled(): boolean {
@@ -73,7 +91,7 @@ export async function setOuterQuestionDetailCache(
     return false;
   }
 
-  return setJson(buildQuestionDetailCacheKey(questionId), value, OUTER_QUESTION_DETAIL_CACHE_TTL_SECONDS);
+  return setJson(buildQuestionDetailCacheKey(questionId), value, resolveOuterQuestionDetailCacheTtlSeconds());
 }
 
 export async function deleteOuterQuestionDetailCache(questionId: string): Promise<boolean> {
@@ -108,7 +126,8 @@ export async function enqueueOuterQuestionDetailCacheRebuild(
 
 export const outerQuestionDetailCacheKey = {
   prefix: OUTER_QUESTION_DETAIL_CACHE_KEY_PREFIX,
-  ttlSeconds: OUTER_QUESTION_DETAIL_CACHE_TTL_SECONDS,
+  ttlSeconds: resolveOuterQuestionDetailCacheTtlSeconds(),
   enabledEnv: OUTER_QUESTION_CACHE_ENABLED_ENV,
+  ttlDaysEnv: OUTER_QUESTION_CACHE_TTL_DAYS_ENV,
   build: buildQuestionDetailCacheKey,
 } as const;
