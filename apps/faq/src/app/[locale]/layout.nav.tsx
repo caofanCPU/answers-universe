@@ -109,7 +109,7 @@ export async function levelNavLinks(locale: string): Promise<SiteNavItemConfig[]
       path: '/questions',
       prefetch: false,
       landing: {
-        text: 'I ❤️ Travia',
+        text: 'I ❤️ Trivia',
         description: "The universe's question AI can answer YOU.",
         path: '/questions/random',
         prefetch: false,
