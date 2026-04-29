@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookCheckIcon, ChevronLeftIcon, ChevronRightIcon, CircleStopIcon, CopyIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import { cn } from '@windrun-huaiin/lib/utils';
-import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
-import { XButton, XToggleButton } from '@windrun-huaiin/third-ui/main';
+import { GradientButton, XButton, XToggleButton } from '@windrun-huaiin/third-ui/main/buttons';
 import { buildReadonlyAnswerOptions } from './question-answer-options';
 import { QuestionDetail } from './question-detail';
 import type {

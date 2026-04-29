@@ -1,4 +1,4 @@
-import { withRedis } from '@windrun-huaiin/backend-core/lib';
+import { withRedis } from '@windrun-huaiin/backend-core/upstash/server';
 
 const OUTER_V1_NONCE_KEY_PREFIX = 'answers_universe:outer:v1:nonce';
 const OUTER_V1_NONCE_TTL_SECONDS = 10 * 60;

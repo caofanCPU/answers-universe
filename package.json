@@ -28,7 +28,7 @@
     "faq:dev": "turbo dev --filter=@windrun-huaiin/faq",
     "faq:build": "turbo build --filter=@windrun-huaiin/faq",
     "faq:build:prod": "turbo build:prod --filter=@windrun-huaiin/faq",
-    "contracts:build": "turbo build --filter=@windrun-huaiin/faq-contracts",
+    "rule:build": "turbo build --filter=@windrun-huaiin/faq-contracts",
     "sdk:build": "turbo build --filter=@windrun-huaiin/faq-sdk"
   },
   "pnpm": {

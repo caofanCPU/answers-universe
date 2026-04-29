@@ -1,10 +1,3 @@
-// Fix BigInt serialization issue globally
- 
-(BigInt.prototype as any).toJSON = function () {
-  return this.toString();
-};
-
-
 import { appConfig } from "@/lib/appConfig";
 import { buildProtectedPageRoutePatterns, handleAuthMiddleware } from "@windrun-huaiin/backend-core/auth/middleware";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
@@ -63,9 +56,15 @@ export default clerkMiddleware(
   async (auth, req: NextRequest) => {
     const { defaultLocale, locales } = appConfig.i18n;
     const pathname = req.nextUrl.pathname;
+    const isWellKnownPath =
+      pathname === '/.well-known' || pathname.startsWith('/.well-known/');
     const hasLocalePrefix = locales.some(
       (loc) => pathname === `/${loc}` || pathname.startsWith(`/${loc}/`)
     );
+
+    if (isWellKnownPath) {
+      return NextResponse.next();
+    }
 
     const authResponse = await handleAuthMiddleware(auth, req, {
       protectedPageRoutes,
@@ -84,12 +83,8 @@ export default clerkMiddleware(
       url.pathname = `/${defaultLocale}${pathname}`;
 
       if (appConfig.i18n.localePrefixAsNeeded) {
-        // as-needed: 内部rewrite，用户URL保持无前缀
-        console.log('[middleware rewrite]', { from: pathname, to: url.pathname });
         return NextResponse.rewrite(url);
       } else {
-        // always: 重定向给用户，让他们看到前缀URL
-        console.log('[middleware redirect]', { from: pathname, to: url.pathname });
         return NextResponse.redirect(url);
       }
     }
@@ -112,7 +107,7 @@ export default clerkMiddleware(
 export const config = {
   matcher: [
     // Skip Next.js internals and all static files, but include API routes
-    "/((?!_next|sitemap.xml?|robots.txt?|[^?]*.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|txt|webmanifest)).*)",
+    "/((?!_next|\\.well-known|sitemap.xml?|robots.txt?|[^?]*.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     // Include API routes explicitly
     "/api/(.*)",
   ],

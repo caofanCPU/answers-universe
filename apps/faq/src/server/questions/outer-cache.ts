@@ -1,5 +1,5 @@
 import type { OuterQuestionDetailDto } from '@windrun-huaiin/faq-contracts/outer/v1';
-import { deleteKey, getJson, mgetJson, publishMessage, setJson } from '@windrun-huaiin/backend-core/lib';
+import { deleteKey, getJson, mgetJson, publishMessage, setJson } from '@windrun-huaiin/backend-core/upstash/server';
 
 const OUTER_QUESTION_DETAIL_CACHE_KEY_PREFIX = 'outer:v1:question:detail';
 const DEFAULT_OUTER_QUESTION_DETAIL_CACHE_TTL_DAYS = 30;

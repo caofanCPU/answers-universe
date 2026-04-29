@@ -1,4 +1,4 @@
-import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
+import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import { QuestionPageShell } from '@/components/question-page-shell';
 import { OuterClientsClient } from '@/components/outer-clients-client';
 import { getOuterClientsPageCopy } from '@/components/outer-client-copy';

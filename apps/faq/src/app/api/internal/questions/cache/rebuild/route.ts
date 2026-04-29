@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyQstashSignature } from '@windrun-huaiin/backend-core/lib';
+import { verifyQstashSignature } from '@windrun-huaiin/backend-core/upstash/server';
 import { z } from 'zod';
 import {
   deleteOuterQuestionDetailCache,

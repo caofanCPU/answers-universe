@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronLeftIcon, ChevronRightIcon } from '@windrun-huaiin/base-ui/icons';
-import { XButton } from '@windrun-huaiin/third-ui/main';
+import { XButton } from '@windrun-huaiin/third-ui/main/buttons';
 import type { QuestionImportValidationItem } from '@/server/questions/types';
 import { buildAnswerOptionDrafts, type QuestionAnswerOptionDraft } from './question-answer-options';
 import type { QuestionFormCopy, QuestionImportCopy } from './question-copy';

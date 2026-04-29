@@ -1,8 +1,8 @@
 import { getTranslations } from 'next-intl/server'
 import { BookOpenIcon } from '@windrun-huaiin/base-ui/icons'
-import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
-import { GradientButton } from "@windrun-huaiin/third-ui/fuma/mdx"
-import { HeroMedia, HeroSection } from "@windrun-huaiin/third-ui/main";
+import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
+import { GradientButton } from '@windrun-huaiin/third-ui/main/buttons'
+import { HeroMedia, HeroSection } from '@windrun-huaiin/third-ui/main/hero';
 import { themeHeroEyesOnClass } from '@windrun-huaiin/base-ui/lib'
 import { cn } from '@windrun-huaiin/lib/utils';
 

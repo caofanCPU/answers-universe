@@ -2,9 +2,9 @@
 
 import { useRef, useState } from 'react';
 import { CheckLineIcon, CopyIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
-import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
-import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
-import { XButton } from '@windrun-huaiin/third-ui/main';
+import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
+import { GradientButton } from '@windrun-huaiin/third-ui/main/buttons';
+import { XButton } from '@windrun-huaiin/third-ui/main/buttons';
 import type { QuestionListItemCopy } from './question-copy';
 import { saveQuestionGroupContext } from './question-group-context';
 import type { QuestionListItemDto } from '@/server/questions/types';

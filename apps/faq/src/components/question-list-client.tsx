@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { FileDownIcon, SettingsIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
-import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
-import { XButton } from '@windrun-huaiin/third-ui/main';
+import { GradientButton, XButton } from '@windrun-huaiin/third-ui/main/buttons';
 import type { QuestionListItemCopy } from './question-copy';
 import { QuestionList } from './question-list';
 import { QuestionListFilters } from './question-list-filters';

@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { CopyIcon, EyeIcon, EyeOffIcon, PlusIcon, Trash2Icon, XIcon } from '@windrun-huaiin/base-ui/icons';
-import { XButton } from '@windrun-huaiin/third-ui/main';
+import { XButton } from '@windrun-huaiin/third-ui/main/buttons';
 import { XFormPills } from '@windrun-huaiin/third-ui/main/pill-select';
-import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
+import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import type { OuterClientExpiryOption, OuterClientKeyIssueResult, OuterClientListItemDto } from '@/server/outer-clients/types';
 import type { OuterClientsPageCopy } from './outer-client-copy';
 import { OuterClientActionModal } from './outer-client-action-modal';

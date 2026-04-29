@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import { BookmarkCheckIcon, BookmarkXIcon, ChartColumnStackedIcon, CheckCheckIcon, DatabaseZapIcon, JsonIcon, RotateCcwIcon, ScanSearchIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
-import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
+import { GradientButton } from '@windrun-huaiin/third-ui/main/buttons';
 import type {
   QuestionImportCommitResult,
   QuestionImportValidationItem,

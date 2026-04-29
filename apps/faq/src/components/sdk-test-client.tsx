@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import type { OuterQuestionBaseResult } from '@windrun-huaiin/faq-contracts/outer/v1';
-import { XButton } from '@windrun-huaiin/third-ui/main';
+import { XButton } from '@windrun-huaiin/third-ui/main/buttons';
 import { XTokenInput } from '@windrun-huaiin/third-ui/main/pill-select';
 
 type SdkTestResult = {

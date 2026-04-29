@@ -1,5 +1,5 @@
-import { prisma } from '@windrun-huaiin/backend-core/prisma';
-import type { Prisma, Usb } from '@prisma/client';
+import { prisma } from '@/server/prisma';
+import type { Prisma, Usb } from '@app-prisma';
 import { buildQuestionDetailDto } from '@/server/questions/service';
 import type {
   RandomQuestionAnalysisResult,

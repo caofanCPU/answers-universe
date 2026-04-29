@@ -1,18 +1,21 @@
-import { baseOptions, homeNavLinks, levelNavLinks } from '@/app/[locale]/layout.config';
-import { showBanner } from '@/lib/appConfig';
-import { fingerprintConfig } from '@windrun-huaiin/backend-core/lib';
+import { baseOptions } from '@/app/[locale]/layout.config';
+import { levelNavLinks, primaryNavLinks } from '@/app/[locale]/layout.nav';
+import { homeHeavyItems } from './layout.heavy';
+import { showBanner, localePrefixAsNeeded, defaultLocale } from '@/lib/appConfig';
+import { i18n } from '@/lib/i18n-base';
+import { fingerprintConfig } from '@windrun-huaiin/backend-core/config/fingerprint';
 import { FingerprintProvider } from '@windrun-huaiin/third-ui/fingerprint';
-import { CustomHomeLayout } from '@windrun-huaiin/third-ui/fuma/base';
-import { type HomeLayoutProps } from 'fumadocs-ui/layouts/home';
+import { SiteHomeLayout, type SiteHomeLayoutConfig } from '@windrun-huaiin/third-ui/fuma/base/site-home-layout';
 import type { ReactNode } from 'react';
 
-async function homeOptions(locale: string): Promise<HomeLayoutProps> {
+async function homeOptions(locale: string): Promise<SiteHomeLayoutConfig> {
   return {
-    ...(await baseOptions(locale)),
-    links: [
-      ...(await levelNavLinks(locale)),
-      ...(await homeNavLinks(locale)),
-    ]
+      ...(await baseOptions(locale)),
+      links: [
+        ...(await levelNavLinks(locale)),
+        ...(await primaryNavLinks(locale)),
+        ...(await homeHeavyItems(locale)),
+      ]
   };
 }
 
@@ -25,8 +28,9 @@ export default async function Layout({
 }) {
   const { locale } = await params;
   const customeOptions = await homeOptions(locale);
-  const homeLayoutOptions: HomeLayoutProps = {
+  const homeLayoutOptions: SiteHomeLayoutConfig = {
     ...customeOptions,
+    i18n,
     searchToggle: {
       enabled: false,
     },
@@ -38,20 +42,23 @@ export default async function Layout({
 
   return (
     <FingerprintProvider config={fingerprintConfig}>
-      <CustomHomeLayout
+      <SiteHomeLayout
         locale={locale}
-        options={homeLayoutOptions}
-        showBanner={showBanner}
-        floatingNav={true}
-        actionOrders={{
-          desktop: ['search', 'theme', 'github', 'i18n', 'secondary'],
-          mobileBar: ['search', 'pinned', 'menu'],
-          mobileMenu: ['theme', 'i18n', 'separator', 'secondary', 'github'],
+        config={{
+          ...homeLayoutOptions,
+          localePrefixAsNeeded,
+          defaultLocale,
+          showBanner,
+          floatingNav: true,
+          actionOrders: {
+            desktop: ['search', 'theme', 'github', 'i18n', 'secondary'],
+            mobileBar: ['search', 'pinned', 'menu'],
+            mobileMenu: ['theme', 'i18n', 'separator', 'secondary', 'github'],
+          },
         }}
       >
         {children}
-      </CustomHomeLayout>
+      </SiteHomeLayout>
     </FingerprintProvider>
   );
 }
-

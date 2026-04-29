@@ -1,4 +1,4 @@
-import { GradientButton } from "@windrun-huaiin/third-ui/fuma/mdx";
+import { GradientButton } from '@windrun-huaiin/third-ui/main/buttons';
 import { InfoTooltip } from '@windrun-huaiin/third-ui/main';
 
 type ShellAction = {

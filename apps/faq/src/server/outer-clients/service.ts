@@ -1,4 +1,4 @@
-import { prisma } from '@windrun-huaiin/backend-core/prisma';
+import { prisma } from '@/server/prisma';
 import { randomBytes } from 'node:crypto';
 import { generateOuterClientKeyPair } from './keygen';
 import type {

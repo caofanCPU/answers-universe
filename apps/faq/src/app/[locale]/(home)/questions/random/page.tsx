@@ -1,4 +1,4 @@
-import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
+import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import { RandomQuestionBoardClient } from '@/components/random-question-board-client';
 import { getRandomQuestionsPageCopy } from '@/components/question-copy';
 import { QuestionPageShell } from '@/components/question-page-shell';

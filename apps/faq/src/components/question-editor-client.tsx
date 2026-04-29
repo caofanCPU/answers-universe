@@ -4,9 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { BookCheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, EyeOffIcon } from '@windrun-huaiin/base-ui/icons';
-import { GradientButton } from '@windrun-huaiin/third-ui/fuma/mdx';
-import { XButton, XToggleButton } from '@windrun-huaiin/third-ui/main';
-import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib';
+import { GradientButton, XButton, XToggleButton } from '@windrun-huaiin/third-ui/main/buttons';
+import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import { QUESTION_DEFAULT_DIFFICULTY } from '@/server/questions/constants';
 import { loadQuestionGroupContext } from './question-group-context';
 import {
