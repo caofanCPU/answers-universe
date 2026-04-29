@@ -101,7 +101,11 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
   }, []);
 
   useEffect(() => {
-    void loadClients();
+    async function run() {
+      await loadClients();
+    }
+
+    void run();
   }, [loadClients]);
 
   useEffect(() => {

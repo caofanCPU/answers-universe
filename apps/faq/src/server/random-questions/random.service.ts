@@ -14,6 +14,7 @@ import type {
   RandomQuestionReason,
   RandomQuestionStoredItem,
 } from './types';
+import { selectBestRandomQuestionSet } from '@/lib/random-question-planner';
 
 const DEFAULT_RANDOM_QUESTION_COUNT = 5;
 
@@ -94,28 +95,7 @@ async function attachQuestionDetails(items: RandomQuestionDraftItem[]): Promise<
   }));
 }
 
-function createStableNumberSeed(input: string): number {
-  let hash = 0;
-
-  for (let index = 0; index < input.length; index += 1) {
-    hash = (hash * 31 + input.charCodeAt(index)) >>> 0;
-  }
-
-  return hash;
-}
-
-function orderRecordsForStableSelection<T extends { id: bigint }>(records: T[], seedSource: string): T[] {
-  return [...records].sort((left, right) => {
-    const leftSeed = createStableNumberSeed(`${seedSource}-${left.id.toString()}`);
-    const rightSeed = createStableNumberSeed(`${seedSource}-${right.id.toString()}`);
-
-    if (leftSeed !== rightSeed) {
-      return leftSeed - rightSeed;
-    }
-
-    return left.id < right.id ? -1 : 1;
-  });
-}
+type RandomQuestionSelectionRecord = Pick<Usb, 'id' | 'questionUuid' | 'asFirst' | 'category'>;
 
 async function getUsedQuestionIds(excludeShowDate?: string): Promise<bigint[]> {
   const records = await prisma.randomUsb.findMany({
@@ -134,86 +114,101 @@ async function getUsedQuestionIds(excludeShowDate?: string): Promise<bigint[]> {
   return [...new Set(records.map((record) => record.questionId.toString()))].map((value) => BigInt(value));
 }
 
-async function getFirstQuestion(usedQuestionIds: bigint[], showDate: string): Promise<Pick<Usb, 'id' | 'questionUuid' | 'asFirst' | 'category'> | null> {
-  const records = await prisma.usb.findMany({
-    where: {
-      deleted: 0,
-      asFirst: 1,
-      ...(usedQuestionIds.length > 0
-        ? {
-            id: {
-              notIn: usedQuestionIds,
-            },
-          }
-        : {}),
-    },
-    select: {
-      id: true,
-      questionUuid: true,
-      asFirst: true,
-      category: true,
-    },
+async function getBestQuestionSet(
+  usedQuestionIds: bigint[],
+  showDate: string
+): Promise<ReturnType<typeof selectBestRandomQuestionSet<RandomQuestionSelectionRecord>>> {
+  const baseWhere: Prisma.UsbWhereInput = {
+    deleted: 0,
+    ...(usedQuestionIds.length > 0
+      ? {
+          id: {
+            notIn: usedQuestionIds,
+          },
+        }
+      : {}),
+  };
+  const [firstQuestions, normalQuestions] = await Promise.all([
+    prisma.usb.findMany({
+      where: {
+        ...baseWhere,
+        asFirst: 1,
+      },
+      select: {
+        id: true,
+        questionUuid: true,
+        asFirst: true,
+        category: true,
+      },
+    }),
+    prisma.usb.findMany({
+      where: {
+        ...baseWhere,
+        asFirst: 0,
+      },
+      select: {
+        id: true,
+        questionUuid: true,
+        asFirst: true,
+        category: true,
+      },
+    }),
+  ]);
+
+  return selectBestRandomQuestionSet({
+    firstQuestions,
+    normalQuestions,
+    showDate,
+    targetTotal: getRandomQuestionTargetCount(),
   });
-
-  if (records.length === 0) {
-    return null;
-  }
-
-  return orderRecordsForStableSelection(records, `first-${showDate}`)[0] ?? null;
 }
 
-async function getNormalQuestions(
-  usedQuestionIds: bigint[],
-  showDate: string,
-  firstQuestion: Pick<Usb, 'id' | 'questionUuid' | 'asFirst' | 'category'>
-): Promise<Array<Pick<Usb, 'id' | 'questionUuid' | 'asFirst' | 'category'>>> {
-  const records = await prisma.usb.findMany({
-    where: {
-      deleted: 0,
-      asFirst: 0,
-      category: {
-        not: firstQuestion.category,
-      },
-      ...(usedQuestionIds.length > 0
-        ? {
-            id: {
-              notIn: usedQuestionIds,
-            },
-          }
-        : {}),
-    },
-    select: {
-      id: true,
-      questionUuid: true,
-      asFirst: true,
-      category: true,
-    },
-  });
+function estimateNewDaysWithPlanner({
+  firstQuestions,
+  normalQuestions,
+  targetCount,
+}: {
+  firstQuestions: RandomQuestionSelectionRecord[];
+  normalQuestions: RandomQuestionSelectionRecord[];
+  targetCount: number;
+}): number {
+  const remainingFirstQuestions = [...firstQuestions];
+  const remainingNormalQuestions = [...normalQuestions];
+  let estimatedDays = 0;
 
-  const groupedByCategory = new Map<string, Array<Pick<Usb, 'id' | 'questionUuid' | 'asFirst' | 'category'>>>();
+  while (remainingFirstQuestions.length > 0 && remainingNormalQuestions.length >= Math.max(targetCount - 1, 0)) {
+    const candidateSet = selectBestRandomQuestionSet({
+      firstQuestions: remainingFirstQuestions,
+      normalQuestions: remainingNormalQuestions,
+      showDate: `analysis-${estimatedDays + 1}`,
+      targetTotal: targetCount,
+    });
 
-  for (const record of records) {
-    const existing = groupedByCategory.get(record.category) ?? [];
-    existing.push(record);
-    groupedByCategory.set(record.category, existing);
-  }
-
-  const targetNormalCount = Math.max(getRandomQuestionTargetCount() - 1, 0);
-  const categoryEntries = [...groupedByCategory.entries()].sort(([left], [right]) => {
-    const leftSeed = createStableNumberSeed(`${showDate}-category-${left}`);
-    const rightSeed = createStableNumberSeed(`${showDate}-category-${right}`);
-
-    if (leftSeed !== rightSeed) {
-      return leftSeed - rightSeed;
+    if (!candidateSet || candidateSet.normalQuestions.length < Math.max(targetCount - 1, 0)) {
+      break;
     }
 
-    return left.localeCompare(right);
-  });
+    const usedIds = new Set([
+      candidateSet.firstQuestion.id.toString(),
+      ...candidateSet.normalQuestions.map((question) => question.id.toString()),
+    ]);
 
-  return categoryEntries
-    .slice(0, targetNormalCount)
-    .map(([, categoryRecords]) => orderRecordsForStableSelection(categoryRecords, `normal-${showDate}`)[0])
-    .filter((record): record is Pick<Usb, 'id' | 'questionUuid' | 'asFirst' | 'category'> => Boolean(record));
+    for (let index = remainingFirstQuestions.length - 1; index >= 0; index -= 1) {
+      if (usedIds.has(remainingFirstQuestions[index].id.toString())) {
+        remainingFirstQuestions.splice(index, 1);
+      }
+    }
+
+    for (let index = remainingNormalQuestions.length - 1; index >= 0; index -= 1) {
+      if (usedIds.has(remainingNormalQuestions[index].id.toString())) {
+        remainingNormalQuestions.splice(index, 1);
+      }
+    }
+
+    estimatedDays += 1;
+  }
+
+  return estimatedDays;
 }
 
 export async function previewRandomQuestionSet(
@@ -225,9 +220,9 @@ export async function previewRandomQuestionSet(
   const targetCount = getRandomQuestionTargetCount();
   const usedQuestionIds = await getUsedQuestionIds(options?.excludeShowDate);
   const reasons: RandomQuestionReason[] = [];
-  const firstQuestion = await getFirstQuestion(usedQuestionIds, showDate);
+  const candidateSet = await getBestQuestionSet(usedQuestionIds, showDate);
 
-  if (!firstQuestion) {
+  if (!candidateSet) {
     reasons.push('NO_FIRST_QUESTION_AVAILABLE');
     return {
       showDate,
@@ -240,10 +235,9 @@ export async function previewRandomQuestionSet(
     };
   }
 
-  const normalQuestions = await getNormalQuestions([...usedQuestionIds, firstQuestion.id], showDate, firstQuestion);
   const items = [
-    buildDraftItem(firstQuestion, 1),
-    ...normalQuestions.map((item, index) => buildDraftItem(item, index + 2)),
+    buildDraftItem(candidateSet.firstQuestion, 1),
+    ...candidateSet.normalQuestions.map((item, index) => buildDraftItem(item, index + 2)),
   ];
   const stats = buildPreviewStats(items);
 
@@ -403,7 +397,7 @@ export async function getRandomQuestionAnalysis(): Promise<RandomQuestionAnalysi
       : {}),
   };
 
-  const [remainingQuestions, availableFirstQuestions] = await Promise.all([
+  const [remainingQuestions, availableFirstQuestions, plannerRecords] = await Promise.all([
     prisma.usb.count({
       where: remainingWhere,
     }),
@@ -413,13 +407,23 @@ export async function getRandomQuestionAnalysis(): Promise<RandomQuestionAnalysi
         asFirst: 1,
       },
     }),
+    prisma.usb.findMany({
+      where: remainingWhere,
+      select: {
+        id: true,
+        questionUuid: true,
+        asFirst: true,
+        category: true,
+      },
+    }),
   ]);
 
   const targetCount = getRandomQuestionTargetCount();
-  const estimatedNewDays = Math.min(
-    availableFirstQuestions,
-    Math.floor(remainingQuestions / Math.max(targetCount, 1))
-  );
+  const estimatedNewDays = estimateNewDaysWithPlanner({
+    firstQuestions: plannerRecords.filter((record) => record.asFirst === 1),
+    normalQuestions: plannerRecords.filter((record) => record.asFirst === 0),
+    targetCount,
+  });
 
   return {
     ...dateList,

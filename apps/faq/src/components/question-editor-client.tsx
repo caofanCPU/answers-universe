@@ -173,7 +173,16 @@ export function QuestionEditorClient({
   const [saving, setSaving] = useState(false);
   const [submitSucceeded, setSubmitSucceeded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [groupIds, setGroupIds] = useState<string[]>([]);
+  const groupIds = useMemo(() => {
+    if (!id) {
+      return [];
+    }
+
+    const context = loadQuestionGroupContext();
+    const nextGroupIds = context?.groupIds ?? [];
+
+    return nextGroupIds.includes(id) ? nextGroupIds : [];
+  }, [id]);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -183,22 +192,6 @@ export function QuestionEditorClient({
       }
     };
   }, []);
-
-  useEffect(() => {
-    setActiveView(initialPreviewOpen ? 'preview' : 'edit');
-  }, [initialPreviewOpen]);
-
-  useEffect(() => {
-    if (!id) {
-      setGroupIds([]);
-      return;
-    }
-
-    const context = loadQuestionGroupContext();
-    const nextGroupIds = context?.groupIds ?? [];
-
-    setGroupIds(nextGroupIds.includes(id) ? nextGroupIds : []);
-  }, [id]);
 
   useEffect(() => {
     if (mode !== 'edit' || !id) {

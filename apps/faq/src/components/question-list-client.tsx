@@ -191,23 +191,29 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
     normalizedPageInput.length > 0 &&
     (!/^\d+$/.test(normalizedPageInput) || Number(normalizedPageInput) < 1 || Number(normalizedPageInput) > maxPage);
 
-  useEffect(() => {
+  function resetPageAndExportError() {
     setPage(1);
-  }, [question, correctAnswer, createdAtFrom, createdAtTo, id, uuid, asFirst, category, subCategory, difficulty]);
-
-  useEffect(() => {
-    setPageInput(String(page));
-  }, [page]);
-
-  useEffect(() => {
+    setPageInput('1');
     setExportError(null);
-  }, [question, correctAnswer, createdAtFrom, createdAtTo, id, uuid, asFirst, category, subCategory, difficulty, selectedExportColumns]);
+  }
+
+  function changePage(nextPage: number) {
+    const safePage = Math.max(1, Math.min(maxPage, nextPage));
+    setPage(safePage);
+    setPageInput(String(safePage));
+  }
+
+  function updateFilter(update: () => void) {
+    update();
+    resetPageAndExportError();
+  }
 
   function toggleExportColumn(column: ExportColumn) {
     if (REQUIRED_EXPORT_COLUMN_SET.has(column)) {
       return;
     }
 
+    setExportError(null);
     setSelectedExportColumns((current) =>
       current.includes(column) ? current.filter((item) => item !== column) : [...current, column]
     );
@@ -224,7 +230,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
     setCategory('');
     setSubCategory('');
     setDifficulty('');
-    setPage(1);
+    resetPageAndExportError();
   }
 
   async function handleExport() {
@@ -310,7 +316,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
     if (!hasInvalidPageInput) {
       const nextPage = Number(normalizedPageInput);
       if (nextPage !== page) {
-        setPage(nextPage);
+        changePage(nextPage);
         return;
       }
     }
@@ -327,24 +333,24 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
   ];
 
   useEffect(() => {
-    if (hasInvalidId || hasInvalidUuid) {
-      setState({
-        items: [],
-        pagination: {
-          page: 1,
-          pageSize: 20,
-          total: 0,
-          totalPages: 0,
-        },
-        loading: false,
-        error: null,
-      });
-      return;
-    }
-
     const controller = new AbortController();
 
     async function run() {
+      if (hasInvalidId || hasInvalidUuid) {
+        setState({
+          items: [],
+          pagination: {
+            page: 1,
+            pageSize: 20,
+            total: 0,
+            totalPages: 0,
+          },
+          loading: false,
+          error: null,
+        });
+        return;
+      }
+
       setState((prev) => ({ ...prev, loading: true, error: null }));
       try {
         const response = await fetch(`/api/questions?${queryString}`, {
@@ -426,16 +432,16 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
           subCategory={subCategory}
           difficulty={difficulty}
           copy={copy.filters}
-          onQuestionChange={setQuestion}
-          onCorrectAnswerChange={setCorrectAnswer}
-          onCreatedAtFromChange={setCreatedAtFrom}
-          onCreatedAtToChange={setCreatedAtTo}
-          onIdChange={setId}
-          onUuidChange={setUuid}
-          onAsFirstChange={setAsFirst}
-          onCategoryChange={setCategory}
-          onSubCategoryChange={setSubCategory}
-          onDifficultyChange={setDifficulty}
+          onQuestionChange={(value) => updateFilter(() => setQuestion(value))}
+          onCorrectAnswerChange={(value) => updateFilter(() => setCorrectAnswer(value))}
+          onCreatedAtFromChange={(value) => updateFilter(() => setCreatedAtFrom(value))}
+          onCreatedAtToChange={(value) => updateFilter(() => setCreatedAtTo(value))}
+          onIdChange={(value) => updateFilter(() => setId(value))}
+          onUuidChange={(value) => updateFilter(() => setUuid(value))}
+          onAsFirstChange={(value) => updateFilter(() => setAsFirst(value))}
+          onCategoryChange={(value) => updateFilter(() => setCategory(value))}
+          onSubCategoryChange={(value) => updateFilter(() => setSubCategory(value))}
+          onDifficultyChange={(value) => updateFilter(() => setDifficulty(value))}
           onClearAll={clearAllFilters}
         />
       </div>
@@ -481,7 +487,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
                 button={{
                   icon: false,
                   text: copy.pagination.previous,
-                  onClick: () => setPage((current) => Math.max(1, current - 1)),
+                  onClick: () => changePage(page - 1),
                   disabled: state.pagination.page <= 1,
                 }}
               />
@@ -508,7 +514,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
                 <span>/</span>
                 <button
                   type="button"
-                  onClick={() => setPage(maxPage)}
+                  onClick={() => changePage(maxPage)}
                   className="rounded-md px-1.5 py-0.5 text-sm transition hover:bg-black/5 hover:text-slate-900 dark:hover:bg-white/5 dark:hover:text-white"
                   title={copy.pagination.jumpToLast}
                 >
@@ -526,7 +532,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
                 button={{
                   icon: false,
                   text: copy.pagination.next,
-                  onClick: () => setPage((current) => Math.min(state.pagination.totalPages || 1, current + 1)),
+                  onClick: () => changePage(page + 1),
                   disabled: state.pagination.totalPages <= 1 || state.pagination.page >= state.pagination.totalPages,
                 }}
               />

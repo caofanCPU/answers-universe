@@ -109,7 +109,11 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
   }, [clientId]);
 
   useEffect(() => {
-    void loadDetail();
+    async function run() {
+      await loadDetail();
+    }
+
+    void run();
   }, [loadDetail]);
 
   useEffect(() => {
