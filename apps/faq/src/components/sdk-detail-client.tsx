@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowLeftIcon, BookmarkPlusIcon, CoinsIcon, CopyIcon, EyeIcon, EyeOffIcon, Trash2Icon, XIcon } from '@windrun-huaiin/base-ui/icons';
+import { ArrowLeftIcon, BookmarkPlusIcon, CoinsIcon, CopyIcon, CopyCheckIcon, EyeIcon, EyeClosedIcon, Trash2Icon, XIcon } from '@windrun-huaiin/base-ui/icons';
+import { ConfirmDialog, UndoableConfirmDialog } from '@windrun-huaiin/third-ui/main/alert-dialog';
 import { XButton } from '@windrun-huaiin/third-ui/main/buttons';
 import { XFormPills } from '@windrun-huaiin/third-ui/main/pill-select';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
@@ -13,8 +14,8 @@ import type {
   OuterClientKeyIssueResult,
   OuterClientKeySummaryDto,
 } from '@/server/outer-clients/types';
-import type { OuterClientDetailPageCopy } from './outer-client-copy';
-import { OuterClientActionModal } from './outer-client-action-modal';
+import type { OuterClientDetailPageCopy } from './sdk-copy';
+import { OuterClientActionModal } from './sdk-action-modal';
 
 type OuterClientDetailClientProps = {
   locale: string;
@@ -23,11 +24,8 @@ type OuterClientDetailClientProps = {
 };
 
 type SecretState = OuterClientKeyIssueResult | null;
-type PendingLeaveAction =
-  | { kind: 'dismiss-secret' }
-  | { kind: 'navigate'; href: string }
-  | { kind: 'delete-active-key'; keyVersion: string }
-  | null;
+type PendingLeaveAction = { kind: 'navigate'; href: string } | null;
+type PendingDeleteKey = { keyVersion: string; status: string } | null;
 
 function getEnvVariableNames() {
   return {
@@ -75,6 +73,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
   const [showSecret, setShowSecret] = useState(false);
   const [copiedField, setCopiedField] = useState<'env' | null>(null);
   const [pendingLeaveAction, setPendingLeaveAction] = useState<PendingLeaveAction>(null);
+  const [pendingDeleteKey, setPendingDeleteKey] = useState<PendingDeleteKey>(null);
 
   const backHref = getAsNeededLocalizedUrl(locale, '/questions/clients');
 
@@ -195,7 +194,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
         throw new Error(`HTTP ${response.status}`);
       }
 
-      setPendingLeaveAction(null);
+      setPendingDeleteKey(null);
       await loadDetail();
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : 'Unknown error');
@@ -246,8 +245,8 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
   }
 
   const activeSecretMask = useMemo(
-    () => (oneTimeSecret ? maskSecret(oneTimeSecret.privateKey) : copy.secretMasked),
-    [copy.secretMasked, oneTimeSecret]
+    () => (oneTimeSecret ? maskSecret(oneTimeSecret.privateKey) : ''),
+    [oneTimeSecret]
   );
 
   const envBlock = useMemo(() => {
@@ -317,19 +316,6 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
       return;
     }
 
-    if (pendingLeaveAction.kind === 'dismiss-secret') {
-      setOneTimeSecret(null);
-      setShowSecret(false);
-      setCopiedField(null);
-      setPendingLeaveAction(null);
-      return;
-    }
-
-    if (pendingLeaveAction.kind === 'delete-active-key') {
-      void handleDeleteKey(pendingLeaveAction.keyVersion);
-      return;
-    }
-
     const href = pendingLeaveAction.href;
     setOneTimeSecret(null);
     setShowSecret(false);
@@ -339,7 +325,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
   }
 
   return (
-    <div className="flex flex-col gap-5 sm:gap-6">
+    <div className="flex min-h-[80vh] flex-col gap-5 sm:gap-6">
       <div className="flex justify-end">
         <Link
           href={backHref}
@@ -424,7 +410,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
                   }))
                 }
                 onExtend={() => void handleExtendKey(activeKey.keyVersion)}
-                onDelete={() => setPendingLeaveAction({ kind: 'delete-active-key', keyVersion: activeKey.keyVersion })}
+                onDelete={() => setPendingDeleteKey({ keyVersion: activeKey.keyVersion, status: activeKey.status })}
                 extending={extendingKeyVersion === activeKey.keyVersion}
                 deleting={deletingKeyVersion === activeKey.keyVersion}
               />
@@ -455,7 +441,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
                         }))
                       }
                       onExtend={() => void handleExtendKey(key.keyVersion)}
-                      onDelete={() => void handleDeleteKey(key.keyVersion)}
+                      onDelete={() => setPendingDeleteKey({ keyVersion: key.keyVersion, status: key.status })}
                       extending={extendingKeyVersion === key.keyVersion}
                       deleting={deletingKeyVersion === key.keyVersion}
                     />
@@ -470,7 +456,9 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
       <OuterClientActionModal
         open={issuingPanelOpen}
         title={oneTimeSecret ? copy.generatedKeyTitle : copy.generateKeyTitle}
+        titleMeta={oneTimeSecret ? <EnvPill value={oneTimeSecret.environment} /> : null}
         description={oneTimeSecret ? copy.generatedKeyDescription : copy.generateKeyDescription}
+        resultOnly={Boolean(oneTimeSecret)}
         closeLabel={copy.closeSecret}
         onClose={closeIssuePanel}
         formContent={
@@ -522,39 +510,36 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  <InfoPill label={copy.summary.clientId} value={oneTimeSecret.clientId} />
-                  <InfoPill label={copy.keys.environment} value={oneTimeSecret.environment} />
-                  <InfoPill label={copy.keys.keyVersion} value={oneTimeSecret.keyVersion} />
-                </div>
-
                 <div className="rounded-3xl border border-black/10 bg-white/90 p-4 dark:border-white/10 dark:bg-neutral-950/85">
-                  <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="mb-4 flex items-center justify-between gap-3">
                     <div className="space-y-1">
                       <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        {copy.envBlockTitle}
+                        {copy.copyEnvBlock}
                       </div>
-                      <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">{copy.envBlockDescription}</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2">
                       <button
                         type="button"
                         onClick={() => setShowSecret((value) => !value)}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:bg-neutral-900 dark:text-slate-200 dark:hover:bg-white/5"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-700 transition hover:bg-black/5 dark:bg-neutral-900 dark:text-slate-200 dark:hover:bg-white/5"
                         aria-label={showSecret ? copy.hideSecret : copy.showSecret}
                         title={showSecret ? copy.hideSecret : copy.showSecret}
                       >
-                        {showSecret ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                        {showSecret ? <EyeIcon className="h-4 w-4" /> : <EyeClosedIcon className="h-4 w-4" />}
                       </button>
-                      <XButton
-                        type="single"
-                        variant="subtle"
-                        button={{
-                          text: copiedField === 'env' ? copy.copied : copy.copyEnvBlock,
-                          icon: <CopyIcon className="h-4 w-4" />,
-                          onClick: () => void copyText(copyableEnvBlock),
-                        }}
-                      />
+                      <button
+                        type="button"
+                        onClick={() => void copyText(copyableEnvBlock)}
+                        className={`inline-flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-black/5 dark:hover:bg-white/5 ${
+                          copiedField === 'env'
+                            ? 'scale-110 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200'
+                            : 'bg-white text-slate-700 dark:bg-neutral-900 dark:text-slate-200'
+                        }`}
+                        aria-label={copiedField === 'env' ? copy.copied : copy.copyEnvBlock}
+                        title={copiedField === 'env' ? copy.copied : copy.copyEnvBlock}
+                      >
+                        {copiedField === 'env' ? <CopyCheckIcon className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}
+                      </button>
                     </div>
                   </div>
 
@@ -562,14 +547,51 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
                     {envBlock}
                   </div>
 
-                  {!showSecret ? (
-                    <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">{copy.secretMasked}</p>
-                  ) : null}
                 </div>
               </div>
             )}
           </section>
         }
+      />
+
+      <UndoableConfirmDialog
+        open={pendingDeleteKey?.status === 'active'}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDeleteKey(null);
+          }
+        }}
+        title={copy.deleteActiveKeyTitle}
+        description={copy.deleteActiveKeyDescription}
+        pendingTitle={copy.deleteKeyPendingTitle}
+        pendingDescription={copy.deleteKeyPendingDescription}
+        cancelText={copy.cancel}
+        confirmText={copy.deleteKey}
+        undoText={copy.undo}
+        onConfirm={async () => {
+          if (pendingDeleteKey) {
+            await handleDeleteKey(pendingDeleteKey.keyVersion);
+          }
+        }}
+      />
+
+      <ConfirmDialog
+        open={Boolean(pendingDeleteKey && pendingDeleteKey.status !== 'active')}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDeleteKey(null);
+          }
+        }}
+        type="danger"
+        title={copy.deleteKeyTitle}
+        description={copy.deleteKeyDescription}
+        cancelText={copy.cancel}
+        confirmText={copy.deleteKey}
+        onConfirm={() => {
+          if (pendingDeleteKey) {
+            void handleDeleteKey(pendingDeleteKey.keyVersion);
+          }
+        }}
       />
 
       {pendingLeaveAction ? (
@@ -583,12 +605,8 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
           >
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-2">
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                  {pendingLeaveAction.kind === 'delete-active-key' ? copy.deleteActiveKeyTitle : copy.unsavedLeaveTitle}
-                </h2>
-                <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-                  {pendingLeaveAction.kind === 'delete-active-key' ? copy.deleteActiveKeyDescription : copy.unsavedLeaveDescription}
-                </p>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{copy.unsavedLeaveTitle}</h2>
+                <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{copy.unsavedLeaveDescription}</p>
               </div>
               <button
                 type="button"
@@ -614,29 +632,15 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
                 type="single"
                 variant="subtle"
                 button={{
-                  text:
-                    pendingLeaveAction.kind === 'delete-active-key' && deletingKeyVersion === pendingLeaveAction.keyVersion
-                      ? copy.deleting
-                      : copy.confirm,
+                  text: copy.confirm,
                   icon: <Trash2Icon className="h-4 w-4" />,
                   onClick: confirmLeaveAction,
-                  disabled:
-                    pendingLeaveAction.kind === 'delete-active-key' && deletingKeyVersion === pendingLeaveAction.keyVersion,
                 }}
               />
             </div>
           </div>
         </div>
       ) : null}
-    </div>
-  );
-}
-
-function InfoPill({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-black/10 bg-white/90 px-4 py-3 dark:border-white/10 dark:bg-neutral-950/80">
-      <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</div>
-      <div className="mt-1 break-all text-sm font-medium text-slate-900 dark:text-white">{value}</div>
     </div>
   );
 }
@@ -756,7 +760,7 @@ function KeyCard({
                 }}
               />
             </div>
-            <div className="shrink-0">
+            <div className="shrink-0 rounded-full border border-red-300 dark:border-red-700">
               <XButton
                 type="single"
                 variant="subtle"

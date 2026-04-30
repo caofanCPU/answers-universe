@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { CopyIcon, EyeIcon, EyeOffIcon, PlusIcon, Trash2Icon, XIcon } from '@windrun-huaiin/base-ui/icons';
+import { CopyIcon, CopyCheckIcon, EyeIcon, EyeClosedIcon, PlusIcon, Trash2Icon } from '@windrun-huaiin/base-ui/icons';
+import { UndoableConfirmDialog } from '@windrun-huaiin/third-ui/main/alert-dialog';
 import { XButton } from '@windrun-huaiin/third-ui/main/buttons';
 import { XFormPills } from '@windrun-huaiin/third-ui/main/pill-select';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import type { OuterClientExpiryOption, OuterClientKeyIssueResult, OuterClientListItemDto } from '@/server/outer-clients/types';
-import type { OuterClientsPageCopy } from './outer-client-copy';
-import { OuterClientActionModal } from './outer-client-action-modal';
+import type { OuterClientsPageCopy } from './sdk-copy';
+import { OuterClientActionModal } from './sdk-action-modal';
 
 type OuterClientsClientProps = {
   locale: string;
@@ -275,7 +276,7 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                      <div className="shrink-0">
+                      <div className="shrink-0 rounded-full border border-red-300 dark:border-red-700">
                         <XButton
                           type="single"
                           variant="subtle"
@@ -307,60 +308,33 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
         )}
       </section>
 
-      {pendingDeleteClientId ? (
-        <div
-          className="fixed inset-0 z-50 mt-24 flex items-end justify-center bg-slate-950/45 px-4 pb-4 pt-10 backdrop-blur-sm sm:items-center sm:pb-0"
-          onClick={() => setPendingDeleteClientId(null)}
-        >
-          <div
-            className="w-full max-w-lg rounded-4xl border border-black/10 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-neutral-950 sm:p-6"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-2">
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{copy.deleteClientTitle}</h2>
-                <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{copy.deleteClientDescription}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPendingDeleteClientId(null)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:bg-neutral-900 dark:text-slate-200 dark:hover:bg-white/5"
-                aria-label={copy.closePanel}
-                title={copy.closePanel}
-              >
-                <XIcon className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <XButton
-                type="single"
-                variant="subtle"
-                button={{
-                  text: copy.cancel,
-                  icon: false,
-                  onClick: () => setPendingDeleteClientId(null),
-                }}
-              />
-              <XButton
-                type="single"
-                variant="subtle"
-                button={{
-                  text: deletingClientId === pendingDeleteClientId ? copy.deleting : copy.confirm,
-                  icon: <Trash2Icon className="h-4 w-4" />,
-                  disabled: deletingClientId === pendingDeleteClientId,
-                  onClick: () => void handleDelete(pendingDeleteClientId),
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <UndoableConfirmDialog
+        open={Boolean(pendingDeleteClientId)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDeleteClientId(null);
+          }
+        }}
+        title={copy.deleteClientTitle}
+        description={copy.deleteClientDescription}
+        pendingTitle={copy.deleteClientPendingTitle}
+        pendingDescription={copy.deleteClientPendingDescription}
+        cancelText={copy.cancel}
+        confirmText={copy.delete}
+        undoText={copy.undo}
+        onConfirm={async () => {
+          if (pendingDeleteClientId) {
+            await handleDelete(pendingDeleteClientId);
+          }
+        }}
+      />
 
       <OuterClientActionModal
         open={panelOpen}
         title={createdSecret ? copy.createResultTitle : copy.createPanelTitle}
+        titleMeta={createdSecret ? <EnvPill value={createdSecret.environment} /> : null}
         description={createdSecret ? copy.createResultDescription : copy.createPanelDescription}
+        resultOnly={Boolean(createdSecret)}
         closeLabel={copy.closePanel}
         onClose={closeCreatePanel}
         formContent={
@@ -428,36 +402,34 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  <InfoPill label={copy.clientId} value={createdSecret.clientId} />
-                  <InfoPill label={copy.environment} value={createdSecret.environment} />
-                  <InfoPill label={copy.keyCount} value="1" />
-                </div>
-
                 <div className="rounded-3xl border border-black/10 bg-white/90 p-4 dark:border-white/10 dark:bg-neutral-950/85">
-                  <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="mb-4 flex items-center justify-between gap-3">
                     <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       {copy.copyEnvBlock}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2">
                       <button
                         type="button"
                         onClick={() => setShowSecret((value) => !value)}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:bg-neutral-900 dark:text-slate-200 dark:hover:bg-white/5"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-700 transition hover:bg-black/5 dark:bg-neutral-900 dark:text-slate-200 dark:hover:bg-white/5"
                         aria-label={showSecret ? copy.hideSecret : copy.showSecret}
                         title={showSecret ? copy.hideSecret : copy.showSecret}
                       >
-                        {showSecret ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                        {showSecret ? <EyeIcon className="h-4 w-4" /> : <EyeClosedIcon className="h-4 w-4" />}
                       </button>
-                      <XButton
-                        type="single"
-                        variant="subtle"
-                        button={{
-                          text: copiedField === 'env' ? copy.copied : copy.copyEnvBlock,
-                          icon: <CopyIcon className="h-4 w-4" />,
-                          onClick: () => void copyEnvBlock(),
-                        }}
-                      />
+                      <button
+                        type="button"
+                        onClick={() => void copyEnvBlock()}
+                        className={`inline-flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-black/5 dark:hover:bg-white/5 ${
+                          copiedField === 'env'
+                            ? 'scale-110 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200'
+                            : 'bg-white text-slate-700 dark:bg-neutral-900 dark:text-slate-200'
+                        }`}
+                        aria-label={copiedField === 'env' ? copy.copied : copy.copyEnvBlock}
+                        title={copiedField === 'env' ? copy.copied : copy.copyEnvBlock}
+                      >
+                        {copiedField === 'env' ? <CopyCheckIcon className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}
+                      </button>
                     </div>
                   </div>
 
@@ -470,15 +442,6 @@ export function OuterClientsClient({ locale, copy }: OuterClientsClientProps) {
           </section>
         }
       />
-    </div>
-  );
-}
-
-function InfoPill({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-black/10 bg-white/90 px-4 py-3 dark:border-white/10 dark:bg-neutral-950/80">
-      <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</div>
-      <div className="mt-1 break-all text-sm font-medium text-slate-900 dark:text-white">{value}</div>
     </div>
   );
 }

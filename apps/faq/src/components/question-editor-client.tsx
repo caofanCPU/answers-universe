@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BookCheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, EyeOffIcon } from '@windrun-huaiin/base-ui/icons';
+import { BadgeAlertIcon, BookCheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, EyeClosedIcon, PencilIcon } from '@windrun-huaiin/base-ui/icons';
 import { GradientButton, XButton, XToggleButton } from '@windrun-huaiin/third-ui/main/buttons';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import { QUESTION_DEFAULT_DIFFICULTY } from '@/server/questions/constants';
@@ -397,7 +397,7 @@ export function QuestionEditorClient({
           {activeView === 'edit' ? (
             <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex min-w-0 items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                <EyeOffIcon className="h-4 w-4 shrink-0" />
+                <BadgeAlertIcon className="h-4 w-4 shrink-0" />
                 <span className="min-w-0 wrap-break-word">{usb.preview.draftHint}</span>
               </div>
               <div className="flex min-w-0 items-center justify-end gap-2">
@@ -406,7 +406,7 @@ export function QuestionEditorClient({
                   aria-label={activeStatusText}
                   title={activeStatusText}
                 >
-                  <EyeOffIcon className="h-4 w-4" />
+                  <PencilIcon className="h-4 w-4" />
                   <span className="truncate">{activeStatusText}</span>
                 </div>
                 <XButton
@@ -450,7 +450,7 @@ export function QuestionEditorClient({
                     aria-label={previewAsPlayer ? usb.preview.showFullPreview : usb.preview.switchToPlayerView}
                     title={previewAsPlayer ? usb.preview.showFullPreview : usb.preview.switchToPlayerView}
                   >
-                    {previewAsPlayer ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                    {previewAsPlayer ? <EyeClosedIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                   </button>
                   <div className="min-w-0 px-2 text-center text-xs font-medium text-slate-600 dark:text-slate-300 sm:px-3">
                     <span className="truncate">{activeStatusText}</span>

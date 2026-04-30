@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { cn } from '@windrun-huaiin/lib/utils';
 import { XToggleButton } from '@windrun-huaiin/third-ui/main/buttons';
-import { EyeIcon, EyeOffIcon } from '@windrun-huaiin/base-ui/icons';
+import { ChevronDownIcon, ChevronUpIcon } from '@windrun-huaiin/base-ui/icons';
 import { themeButtonGradientClass, themeButtonGradientHoverClass, themeIconColor } from '@windrun-huaiin/base-ui/lib';
 import { selectBestRandomQuestionSet, type RandomQuestionPlannerRecord } from '@/lib/random-question-planner';
 
@@ -302,7 +302,7 @@ export function RandomQuestionPlannerTestClient() {
             onClick={() => setShowInput((current) => !current)}
             className="inline-flex h-9 items-center gap-2 rounded-full border border-black/10 px-3 text-xs font-semibold text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
           >
-            {showInput ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+            {showInput ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
             {showInput ? 'Hide input' : 'Show input'}
           </button>
         </div>

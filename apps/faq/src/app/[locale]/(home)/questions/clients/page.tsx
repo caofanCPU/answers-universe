@@ -1,7 +1,7 @@
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import { QuestionPageShell } from '@/components/question-page-shell';
-import { OuterClientsClient } from '@/components/outer-clients-client';
-import { getOuterClientsPageCopy } from '@/components/outer-client-copy';
+import { OuterClientsClient } from '@/components/sdk-list-client';
+import { getOuterClientsPageCopy } from '@/components/sdk-copy';
 
 export default async function OuterClientsPage({
   params,

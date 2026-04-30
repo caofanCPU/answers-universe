@@ -4,6 +4,7 @@ import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import { GradientButton } from '@windrun-huaiin/third-ui/main/buttons'
 import { HeroMedia, HeroSection } from '@windrun-huaiin/third-ui/main/hero';
 import { themeHeroEyesOnClass } from '@windrun-huaiin/base-ui/lib'
+import { CornerDownRightIcon } from '@windrun-huaiin/base-ui/icons'
 import { cn } from '@windrun-huaiin/lib/utils';
 
 export async function Hero({ locale }: { locale: string }) {
@@ -23,6 +24,9 @@ export async function Hero({ locale }: { locale: string }) {
           </p>
           <GradientButton
             title={t('button')}
+            icon={<CornerDownRightIcon className="text-white"/>}
+            iconForcePosition='left'
+            variant='default'
             href={viewQuestionsListHref}
             openInNewTab={false}
             align="center"

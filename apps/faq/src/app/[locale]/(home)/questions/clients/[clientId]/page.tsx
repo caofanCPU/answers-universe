@@ -1,6 +1,6 @@
 import { QuestionPageShell } from '@/components/question-page-shell';
-import { OuterClientDetailClient } from '@/components/outer-client-detail-client';
-import { getOuterClientDetailPageCopy } from '@/components/outer-client-copy';
+import { OuterClientDetailClient } from '@/components/sdk-detail-client';
+import { getOuterClientDetailPageCopy } from '@/components/sdk-copy';
 
 export default async function OuterClientDetailPage({
   params,

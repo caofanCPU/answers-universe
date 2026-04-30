@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { CheckIcon, CircleIcon, EyeIcon, EyeOffIcon, GripVerticalIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
+import { CheckIcon, CircleIcon, EyeIcon, EyeClosedIcon, GripVerticalIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import { themeBorderColor, themeIconColor } from '@windrun-huaiin/base-ui/lib';
 import { cn } from '@windrun-huaiin/lib/utils';
 
@@ -229,7 +229,7 @@ export function QuestionAnswerOptions({
               className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-black/5 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
               aria-label={collapsed ? copy.expand : copy.collapse}
             >
-              {collapsed ? <EyeIcon className="h-4 w-4" /> : <EyeOffIcon className="h-4 w-4" />}
+              {collapsed ? <EyeClosedIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
             </button>
           </div>
         ) : null}
