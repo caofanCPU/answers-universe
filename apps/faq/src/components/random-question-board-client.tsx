@@ -649,17 +649,22 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                       setSelectedDate(dayString);
                       setCalendarMonth(new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), 1)));
                     }}
-                    className={`relative flex h-11 items-center justify-center rounded-2xl text-sm transition ${
+                    className={cn(
+                      'relative flex h-11 items-center justify-center rounded-2xl border text-sm transition',
                       isSelected
-                        ? 'border border-black/20 bg-black text-white dark:border-white/20 dark:bg-white dark:text-slate-950'
-                        : isGenerated
-                          ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-200'
-                          : 'border border-black/10 text-slate-700 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5'
-                    } ${isCurrentMonth ? '' : 'opacity-45'}`}
+                        ? 'bg-black text-white dark:bg-white dark:text-slate-950'
+                        : 'text-slate-700 hover:bg-black/5 dark:text-slate-200 dark:hover:bg-white/5',
+                      isGenerated
+                        ? 'border-emerald-300 dark:border-emerald-400'
+                        : isSelected
+                          ? 'border-black/20 dark:border-white/20'
+                          : 'border-black/10 dark:border-white/10',
+                      isCurrentMonth ? '' : 'opacity-45'
+                    )}
                     title={isGenerated ? `${dayString} has a saved set` : `Open ${dayString}`}
                   >
                     <span>{day.getUTCDate()}</span>
-                    {isGenerated && !isSelected ? (
+                    {isGenerated ? (
                       <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-300" />
                     ) : null}
                   </button>
