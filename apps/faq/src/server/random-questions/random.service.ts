@@ -3,6 +3,7 @@ import type { Prisma, Usb } from '@app-prisma';
 import { buildQuestionDetailDto } from '@/server/questions/service';
 import type {
   RandomQuestionAnalysisResult,
+  RandomQuestionCategoryInventory,
   RandomQuestionCommitResult,
   RandomQuestionDateListResult,
   RandomQuestionDateSummary,
@@ -209,6 +210,36 @@ function estimateNewDaysWithPlanner({
   }
 
   return estimatedDays;
+}
+
+function buildCategoryInventory(records: RandomQuestionSelectionRecord[]): RandomQuestionCategoryInventory[] {
+  const inventoryByCategory = new Map<string, RandomQuestionCategoryInventory>();
+
+  for (const record of records) {
+    const existing = inventoryByCategory.get(record.category) ?? {
+      category: record.category,
+      firstCount: 0,
+      normalCount: 0,
+      totalCount: 0,
+    };
+
+    if (record.asFirst === 1) {
+      existing.firstCount += 1;
+    } else {
+      existing.normalCount += 1;
+    }
+
+    existing.totalCount += 1;
+    inventoryByCategory.set(record.category, existing);
+  }
+
+  return [...inventoryByCategory.values()].sort((left, right) => {
+    if (left.totalCount !== right.totalCount) {
+      return right.totalCount - left.totalCount;
+    }
+
+    return left.category.localeCompare(right.category);
+  });
 }
 
 export async function previewRandomQuestionSet(
@@ -424,6 +455,7 @@ export async function getRandomQuestionAnalysis(): Promise<RandomQuestionAnalysi
     normalQuestions: plannerRecords.filter((record) => record.asFirst === 0),
     targetCount,
   });
+  const categoryInventory = buildCategoryInventory(plannerRecords);
 
   return {
     ...dateList,
@@ -432,6 +464,7 @@ export async function getRandomQuestionAnalysis(): Promise<RandomQuestionAnalysi
     remainingQuestions,
     availableFirstQuestions,
     estimatedNewDays,
+    categoryInventory,
   };
 }
 

@@ -66,6 +66,14 @@ export type RandomQuestionAnalysisResult = RandomQuestionDateListResult & {
   remainingQuestions: number;
   availableFirstQuestions: number;
   estimatedNewDays: number;
+  categoryInventory: RandomQuestionCategoryInventory[];
+};
+
+export type RandomQuestionCategoryInventory = {
+  category: string;
+  firstCount: number;
+  normalCount: number;
+  totalCount: number;
 };
 
 export type RandomQuestionCommitResult = {

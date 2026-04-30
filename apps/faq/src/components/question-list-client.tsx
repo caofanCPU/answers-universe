@@ -6,6 +6,7 @@ import { GradientButton, XButton } from '@windrun-huaiin/third-ui/main/buttons';
 import type { QuestionListItemCopy } from './question-copy';
 import { QuestionList } from './question-list';
 import { QuestionListFilters } from './question-list-filters';
+import { QuestionListSkeleton } from './question-skeleton-blocks';
 import type { QuestionListItemDto, QuestionListResult } from '@/server/questions/types';
 
 type QuestionListClientProps = {
@@ -416,7 +417,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
   }, [hasInvalidId, hasInvalidUuid, queryString, reloadKey]);
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-[calc(100vh-18rem)] flex-col gap-4">
       <div className="mb-4 sm:mb-5">
         <QuestionListFilters
           question={question}
@@ -446,121 +447,119 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
         />
       </div>
 
-      {state.loading ? (
-        <div className="rounded-3xl border border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
-          {copy.loading}
-        </div>
-      ) : null}
+      <div className="flex flex-1 flex-col gap-4">
+        {state.loading ? <QuestionListSkeleton label={copy.loading} /> : null}
 
-      {state.error ? (
-        <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-5 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
-          {copy.loadFailed}
-          {state.error}
-        </div>
-      ) : null}
+        {state.error ? (
+          <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-5 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
+            {copy.loadFailed}
+            {state.error}
+          </div>
+        ) : null}
 
-      {!state.loading && !state.error ? (
-        <QuestionList
-          locale={locale}
-          items={state.items}
-          copy={copy.item}
-          onDeleted={() => setReloadKey((current) => current + 1)}
-        />
-      ) : null}
+        {!state.loading && !state.error ? (
+          <QuestionList
+            locale={locale}
+            items={state.items}
+            copy={copy.item}
+            onDeleted={() => setReloadKey((current) => current + 1)}
+          />
+        ) : null}
 
-      {!state.loading && !state.error ? (
-        <div className="space-y-3">
-          {exportError ? (
-            <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
-              {copy.export.failed}
-              {exportError}
-            </div>
-          ) : null}
-          <div className="grid gap-3 rounded-3xl border border-black/10 px-3 py-3 text-xs text-slate-600 dark:border-white/10 dark:text-slate-300 sm:px-4 sm:text-sm lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center">
-            <div className="hidden lg:block" />
-            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-              <XButton
-                type="single"
-                variant="subtle"
-                minWidth="min-w-0"
-                className="px-3 py-1.5"
-                button={{
-                  icon: false,
-                  text: copy.pagination.previous,
-                  onClick: () => changePage(page - 1),
-                  disabled: state.pagination.page <= 1,
-                }}
-              />
-              <div className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-300">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={pageInput}
-                  onChange={(event) => handlePageInputChange(event.target.value)}
-                  onBlur={normalizePageInput}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      normalizePageInput();
-                    }
+        {!state.loading && !state.error ? (
+          <div className="space-y-3">
+            {exportError ? (
+              <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
+                {copy.export.failed}
+                {exportError}
+              </div>
+            ) : null}
+            <div className="grid gap-3 rounded-3xl border border-black/10 px-3 py-3 text-xs text-slate-600 dark:border-white/10 dark:text-slate-300 sm:px-4 sm:text-sm lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center">
+              <div className="hidden lg:block" />
+              <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+                <XButton
+                  type="single"
+                  variant="subtle"
+                  minWidth="min-w-0"
+                  className="px-3 py-1.5"
+                  button={{
+                    icon: false,
+                    text: copy.pagination.previous,
+                    onClick: () => changePage(page - 1),
+                    disabled: state.pagination.page <= 1,
                   }}
-                  aria-label={copy.pagination.enterPage}
-                  title={copy.pagination.enterPageHint}
-                  className={`h-8 w-14 rounded-lg bg-transparent px-2 text-center text-sm outline-none transition ${
-                    hasInvalidPageInput
-                      ? 'border border-red-300 focus:border-red-400 hover:border-red-400 dark:border-red-400/60 dark:hover:border-red-400 dark:focus:border-red-400'
-                      : 'border border-black/10 hover:border-black/20 focus:border-black/20 dark:border-white/10 dark:hover:border-white/20 dark:focus:border-white/20'
-                  }`}
                 />
-                <span>/</span>
+                <div className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-300">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={pageInput}
+                    onChange={(event) => handlePageInputChange(event.target.value)}
+                    onBlur={normalizePageInput}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        normalizePageInput();
+                      }
+                    }}
+                    aria-label={copy.pagination.enterPage}
+                    title={copy.pagination.enterPageHint}
+                    className={`h-8 w-14 rounded-lg bg-transparent px-2 text-center text-sm outline-none transition ${
+                      hasInvalidPageInput
+                        ? 'border border-red-300 focus:border-red-400 hover:border-red-400 dark:border-red-400/60 dark:hover:border-red-400 dark:focus:border-red-400'
+                        : 'border border-black/10 hover:border-black/20 focus:border-black/20 dark:border-white/10 dark:hover:border-white/20 dark:focus:border-white/20'
+                    }`}
+                  />
+                  <span>/</span>
+                  <button
+                    type="button"
+                    onClick={() => changePage(maxPage)}
+                    className="rounded-md px-1.5 py-0.5 text-sm transition hover:bg-black/5 hover:text-slate-900 dark:hover:bg-white/5 dark:hover:text-white"
+                    title={copy.pagination.jumpToLast}
+                  >
+                    {maxPage}
+                  </button>
+                  <span className="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
+                    {copy.pagination.total.replace('{total}', String(state.pagination.total))}
+                  </span>
+                </div>
+                <XButton
+                  type="single"
+                  variant="subtle"
+                  minWidth="min-w-0"
+                  className="px-3 py-1.5"
+                  button={{
+                    icon: false,
+                    text: copy.pagination.next,
+                    onClick: () => changePage(page + 1),
+                    disabled: state.pagination.totalPages <= 1 || state.pagination.page >= state.pagination.totalPages,
+                  }}
+                />
+              </div>
+              <div className="flex items-center justify-center gap-2 lg:justify-end">
                 <button
                   type="button"
-                  onClick={() => changePage(maxPage)}
-                  className="rounded-md px-1.5 py-0.5 text-sm transition hover:bg-black/5 hover:text-slate-900 dark:hover:bg-white/5 dark:hover:text-white"
-                  title={copy.pagination.jumpToLast}
+                  onClick={() => setDialogOpen(true)}
+                  disabled={hasInvalidId || hasInvalidUuid}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                  aria-label={copy.export.settingsAriaLabel}
+                  title={copy.export.settingsAriaLabel}
                 >
-                  {maxPage}
+                  <SettingsIcon className="h-4 w-4" />
                 </button>
-                <span className="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
-                  {copy.pagination.total.replace('{total}', String(state.pagination.total))}
-                </span>
+                <GradientButton
+                  onClick={() => void handleExport()}
+                  disabled={hasInvalidId || hasInvalidUuid || exporting}
+                  title={copy.export.buttonLabel}
+                  loadingText={copy.export.loadingLabel}
+                  align="center"
+                  icon=<FileDownIcon/>
+                  className="sm:w-auto"
+                />
               </div>
-              <XButton
-                type="single"
-                variant="subtle"
-                minWidth="min-w-0"
-                className="px-3 py-1.5"
-                button={{
-                  icon: false,
-                  text: copy.pagination.next,
-                  onClick: () => changePage(page + 1),
-                  disabled: state.pagination.totalPages <= 1 || state.pagination.page >= state.pagination.totalPages,
-                }}
-              />
-            </div>
-            <div className="flex items-center justify-center gap-2 lg:justify-end">
-              <button
-                type="button"
-                onClick={() => setDialogOpen(true)}
-                disabled={hasInvalidId || hasInvalidUuid}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-                aria-label={copy.export.settingsAriaLabel}
-                title={copy.export.settingsAriaLabel}
-              >
-                <SettingsIcon className="h-4 w-4" />
-              </button>
-              <GradientButton
-                onClick={() => void handleExport()}
-                disabled={hasInvalidId || hasInvalidUuid || exporting}
-                title={copy.export.buttonLabel}
-                loadingText={copy.export.loadingLabel}
-                align="center"
-                icon=<FileDownIcon/>
-                className="sm:w-auto"
-              />
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       {dialogOpen ? (
         <div

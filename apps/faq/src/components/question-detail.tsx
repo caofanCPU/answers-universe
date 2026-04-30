@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { CheckIcon } from '@windrun-huaiin/base-ui/icons';
-import { themeBgColor, themeBorderColor, themeIconColor } from '@windrun-huaiin/base-ui/lib';
+import { themeBgColor, themeIconColor } from '@windrun-huaiin/base-ui/lib';
 import { cn } from '@windrun-huaiin/lib/utils';
 import type { QuestionAnswerOptionDraft } from './question-answer-options';
 import type { QuestionPreviewCopy } from './question-copy';
@@ -38,7 +38,7 @@ export function QuestionDetail({
     );
 
   return (
-    <div className="w-full min-w-0 space-y-6 rounded-3xl border border-black/10 p-6 dark:border-white/10">
+    <div className="w-full min-w-0 space-y-5 rounded-3xl border border-black/10 p-6 dark:border-white/10">
       <div className="min-w-0 space-y-3">
         <div className="flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
           {question.category ? <span className={metaPillClassName}>{question.category}</span> : null}
@@ -51,22 +51,19 @@ export function QuestionDetail({
           ) : null}
         </div>
         <h2 className="min-w-0 wrap-break-word text-2xl font-semibold text-slate-900 dark:text-white">{question.question}</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {copy.previewDescription}
-        </p>
       </div>
 
-      <div className="space-y-3">
-        <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-          {copy.options}
-        </div>
-        <div className="grid gap-3">
+      <div>
+        <div className="grid items-stretch gap-3 md:grid-cols-2">
           {options.map((option, index) => (
             <div
               key={option.id}
               className={cn(
-                'flex min-w-0 items-center gap-3 rounded-2xl border border-black/10 px-4 py-4 text-sm text-slate-700 dark:border-white/10 dark:text-slate-200',
-                !previewAsPlayer && option.isCorrect && [themeBorderColor, themeIconColor]
+                'flex h-full min-h-14 min-w-0 items-center gap-3 rounded-2xl border border-black/10 px-4 py-2 text-base leading-6 text-slate-700 dark:border-white/10 dark:text-slate-200',
+                !previewAsPlayer && option.isCorrect && [
+                  'border-emerald-300/80 bg-emerald-50/70 dark:border-emerald-400/50 dark:bg-emerald-500/10',
+                  themeIconColor,
+                ]
               )}
             >
               <span
@@ -96,7 +93,7 @@ export function QuestionDetail({
           <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
             {copy.explanation}
           </div>
-          <div className="min-w-0 wrap-break-word rounded-2xl border border-black/10 px-4 py-4 text-sm leading-7 text-slate-700 dark:border-white/10 dark:text-slate-200">
+          <div className="min-w-0 wrap-break-word rounded-2xl border border-black/10 px-4 py-3 text-base leading-7 text-slate-700 dark:border-white/10 dark:text-slate-200">
             {question.explanation}
           </div>
         </div>
@@ -124,10 +121,7 @@ export function QuestionDetail({
       ) : null}
 
       {!previewAsPlayer && question.tags.length > 0 ? (
-        <div className="space-y-3">
-          <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            {copy.tags}
-          </div>
+        <div>
           <div className="flex flex-wrap gap-2">
             {question.tags.map((tag) => (
               <span key={tag} className={metaPillClassName}>

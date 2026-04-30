@@ -8,6 +8,7 @@ import { buildReadonlyAnswerOptions } from './question-answer-options';
 import { QuestionDetail } from './question-detail';
 import type {
   RandomQuestionAnalysisResult,
+  RandomQuestionCategoryInventory,
   RandomQuestionDetailResult,
   RandomQuestionDraftItem,
   RandomQuestionPreviewResult,
@@ -23,7 +24,7 @@ type RequestState<T> = {
   error: string | null;
 };
 
-type TopPanelKey = 'status' | 'details' | 'stats';
+type TopPanelKey = 'status' | 'details' | 'stats' | 'info';
 
 const DEFAULT_TARGET_TOTAL = 5;
 
@@ -231,6 +232,116 @@ function AnalysisPanel({
             <div className={cn('mt-2 text-3xl font-bold tracking-tight sm:text-4xl', metric.valueClassName)}>
               {loading ? '--' : String(metric.value)}
             </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function InfoPanel({
+  inventory,
+  loading,
+}: {
+  inventory: RandomQuestionCategoryInventory[];
+  loading: boolean;
+}) {
+  const displayInventory = inventory;
+  const leftInventory = displayInventory.slice(0, 6);
+  const rightInventory = displayInventory.slice(6, 12);
+
+  return (
+    <div>
+      {loading ? (
+        <div className="grid gap-3 md:grid-cols-2">
+          <InventoryTableSkeleton rows={12} className="md:hidden" />
+          <InventoryTableSkeleton rows={6} className="hidden md:block" />
+          <InventoryTableSkeleton rows={6} className="hidden md:block" />
+        </div>
+      ) : displayInventory.length > 0 ? (
+        <div>
+          <InventoryTable items={displayInventory} className="md:hidden" />
+          <div className="hidden gap-3 md:grid md:grid-cols-2">
+            <InventoryTable items={leftInventory} />
+            {rightInventory.length > 0 ? <InventoryTable items={rightInventory} /> : null}
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl bg-slate-50/80 p-4 text-sm text-slate-500 dark:bg-white/5 dark:text-slate-400">
+          No remaining inventory available.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InventoryTable({ items, className }: { items: RandomQuestionCategoryInventory[]; className?: string }) {
+  return (
+    <div className={cn('overflow-hidden rounded-2xl bg-slate-50/80 dark:bg-white/5', className)}>
+      <InventoryTableHeader />
+      <div className="divide-y divide-black/5 dark:divide-white/10">
+        {items.map((item) => (
+          <InventoryTableRow key={item.category} item={item} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function InventoryTableHeader() {
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_3rem_3rem_3rem] gap-2 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <div>Category</div>
+      <div className="text-center">Total</div>
+      <div className="text-center">First</div>
+      <div className="text-center">Normal</div>
+    </div>
+  );
+}
+
+function InventoryTableRow({ item }: { item: RandomQuestionCategoryInventory }) {
+  return (
+    <div
+      className="grid grid-cols-[minmax(0,1fr)_3rem_3rem_3rem] items-center gap-2 px-3 py-2.5"
+      title={`${item.category}: total ${item.totalCount}, first ${item.firstCount}, normal ${item.normalCount}`}
+    >
+      <div className="truncate text-xs font-semibold text-slate-900 dark:text-white">{item.category}</div>
+      <InventoryValue value={item.totalCount} />
+      <InventoryValue value={item.firstCount} tone="first" />
+      <InventoryValue value={item.normalCount} tone="normal" />
+    </div>
+  );
+}
+
+function InventoryValue({ value, tone = 'total' }: { value: number; tone?: 'first' | 'normal' | 'total' }) {
+  return (
+    <div
+      className={cn(
+        'text-center text-sm font-semibold',
+        tone === 'total' && 'text-slate-900 dark:text-white',
+        tone === 'first' && 'text-amber-700 dark:text-amber-200',
+        tone === 'normal' && 'text-sky-700 dark:text-sky-200'
+      )}
+    >
+      {value}
+    </div>
+  );
+}
+
+function InventoryTableSkeleton({ rows, className }: { rows: number; className?: string }) {
+  return (
+    <div className={cn('overflow-hidden rounded-2xl bg-slate-50/80 dark:bg-white/5', className)}>
+      <InventoryTableHeader />
+      <div className="divide-y divide-black/5 dark:divide-white/10">
+        {Array.from({ length: rows }, (_, index) => (
+          <div
+            key={index}
+            className="grid grid-cols-[minmax(0,1fr)_3rem_3rem_3rem] items-center gap-2 px-3 py-2.5"
+          >
+            <div className="h-4 w-3/4 rounded-full bg-slate-200 dark:bg-white/10" />
+            <div className="h-7 rounded-full bg-slate-200 dark:bg-white/10" />
+            <div className="h-7 rounded-full bg-slate-200 dark:bg-white/10" />
+            <div className="h-7 rounded-full bg-slate-200 dark:bg-white/10" />
           </div>
         ))}
       </div>
@@ -477,12 +588,13 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
     { key: 'status' as const, label: 'Status' },
     { key: 'details' as const, label: 'Details' },
     { key: 'stats' as const, label: 'Analysis' },
+    { key: 'info' as const, label: 'Info' },
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-6 xl:items-start xl:grid-cols-[24rem_minmax(0,1fr)]">
-        <div className="rounded-3xl border border-black/10 p-4 dark:border-white/10">
+    <div className="min-h-[calc(100vh-18rem)] space-y-6">
+      <div className="grid gap-6 xl:items-stretch xl:grid-cols-[24rem_minmax(0,1fr)]">
+        <div className="rounded-3xl border border-black/10 p-4 dark:border-white/10 xl:self-stretch">
           <div className="flex flex-col">
             <div className="flex items-center justify-between gap-3">
               <button
@@ -583,7 +695,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
               />
             </div>
 
-            <div className="flex-1 rounded-2xl border border-black/10 p-4 dark:border-white/10">
+            <div className="min-h-[22rem] flex-1 rounded-2xl border border-black/10 p-4 dark:border-white/10">
               {activeTopPanel === 'status' ? (
                 <div className="space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -635,9 +747,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                     </div>
                   </div>
 
-                  <div className="rounded-2xl bg-slate-50/80 p-4 dark:bg-white/5">
-                    <StatsPanel stats={displayStats} />
-                  </div>
+                  <StatsPanel stats={displayStats} />
 
                 </div>
               ) : null}
@@ -672,6 +782,13 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
 
               {activeTopPanel === 'stats' ? (
                 <AnalysisPanel analysis={analysisState.data} loading={analysisState.loading} />
+              ) : null}
+
+              {activeTopPanel === 'info' ? (
+                <InfoPanel
+                  inventory={analysisState.data?.categoryInventory ?? []}
+                  loading={analysisState.loading}
+                />
               ) : null}
             </div>
 
@@ -830,7 +947,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
             </div>
           </div>
         ) : (
-          <div className="rounded-3xl border border-dashed border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
+          <div className="flex min-h-[28rem] items-center justify-center rounded-3xl border border-dashed border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
             {detailState.loading ? 'Loading...' : 'No questions to display for this date yet.'}
           </div>
         )}

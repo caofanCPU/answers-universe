@@ -16,6 +16,7 @@ import {
 import { QuestionDetail } from './question-detail';
 import { QuestionForm } from './question-form';
 import type { QuestionEditorCopy } from './question-copy';
+import { QuestionDetailSkeleton, QuestionEditorSkeleton } from './question-skeleton-blocks';
 import type { QuestionDetailDto, QuestionMutationResult, QuestionUpsertInput } from '@/server/questions/types';
 import type { QuestionFormValues, QuestionViewModel } from './question-ui-types';
 
@@ -319,7 +320,7 @@ export function QuestionEditorClient({
         : usb.preview.preview;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl min-w-0 flex-col gap-4 pb-32">
+    <div className="mx-auto flex min-h-[calc(100vh-18rem)] w-full max-w-6xl min-w-0 flex-col gap-4 pb-32">
       <div className="sticky top-4 z-20 w-full">
         <div className="rounded-[1.75rem] border border-black/10 p-3 dark:border-white/10">
           <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 lg:grid-cols-[12rem_minmax(0,1fr)_12rem]">
@@ -363,8 +364,8 @@ export function QuestionEditorClient({
         </div>
       </div>
       {loading ? (
-        <div className="rounded-3xl border border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
-          {usb.loading}
+        <div className="min-h-[560px]" aria-busy="true" aria-live="polite" aria-label={usb.loading}>
+          {activeView === 'preview' ? <QuestionDetailSkeleton /> : <QuestionEditorSkeleton mode={mode} />}
         </div>
       ) : activeView === 'edit' ? (
         <>
