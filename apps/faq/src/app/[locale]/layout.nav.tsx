@@ -61,6 +61,14 @@ export async function primaryNavLinks(locale: string): Promise<SiteNavItemConfig
       },
       context,
     ),
+    createLocalizedNavLink(
+      {
+        text: t1('test'),
+        path: '/test',
+        prefetch: false,
+      },
+      context,
+    ),
   ];
 }
 
@@ -78,9 +86,17 @@ export async function levelNavLinks(locale: string): Promise<SiteNavItemConfig[]
       className: 'lg:col-start-2 lg:row-start-1',
     },
     {
-      text: 'Edit Question',
-      description: '创建题目',
-      path: '/questions/new',
+      text: 'Random Mode',
+      description: '随机生题模式',
+      path: '/questions/random',
+      prefetch: false,
+      icon: <BrainCircuitIcon />,
+      className: 'lg:col-start-3 lg:row-start-2',
+    },
+    {
+      text: 'Manage Client',
+      description: '题库客户端',
+      path: '/questions/clients',
       prefetch: false,
       icon: <PencilIcon />,
       className: 'lg:col-start-2 lg:row-start-2',
@@ -92,14 +108,6 @@ export async function levelNavLinks(locale: string): Promise<SiteNavItemConfig[]
       prefetch: false,
       icon: <JsonIcon />,
       className: 'lg:col-start-3 lg:row-start-1',
-    },
-    {
-      text: 'Random Mode',
-      description: '随机生题模式',
-      path: '/questions/random',
-      prefetch: false,
-      icon: <BrainCircuitIcon />,
-      className: 'lg:col-start-3 lg:row-start-2',
     },
   ];
   
