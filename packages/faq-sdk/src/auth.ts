@@ -19,8 +19,8 @@ function unwrapPlatformPrivateKey(value: string): string {
   return decoded.trim();
 }
 
-function isAuthDebugEnabled(): boolean {
-  return process.env.WINDRUN_HUAIIN_SDK_DEBUG === 'true';
+function isSignatureDebugEnabled(): boolean {
+  return process.env.WINDRUN_HUAIIN_SDK_DEBUG === 'true' && process.env.WINDRUN_HUAIIN_SDK_SIGNATURE_DEBUG === 'true';
 }
 
 export function buildAuthHeaders(_options: AnswersUniverseResolvedOptions, _request: {
@@ -46,7 +46,7 @@ export function buildAuthHeaders(_options: AnswersUniverseResolvedOptions, _requ
 
   const signature = sign(null, Buffer.from(payload, 'utf8'), unwrapPlatformPrivateKey(_options.privateKey)).toString('base64url');
 
-  if (isAuthDebugEnabled()) {
+  if (isSignatureDebugEnabled()) {
     console.debug('[FAQ SDK Auth] Built request signature', {
       ...(_request.traceId ? { traceId: _request.traceId } : {}),
       clientId: _options.clientId,

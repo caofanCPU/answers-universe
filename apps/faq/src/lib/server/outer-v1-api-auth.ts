@@ -40,6 +40,10 @@ function isOuterAuthDebugEnabled(): boolean {
   return process.env.WINDRUN_HUAIIN_SDK_DEBUG === 'true';
 }
 
+function isOuterSignatureDebugEnabled(): boolean {
+  return process.env.WINDRUN_HUAIIN_SDK_DEBUG === 'true' && process.env.WINDRUN_HUAIIN_SDK_SIGNATURE_DEBUG === 'true';
+}
+
 function withTraceId(traceId?: string): { traceId: string } | Record<string, never> {
   return traceId ? { traceId } : {};
 }
@@ -144,7 +148,7 @@ export async function requireOuterV1ApiAuth(
     query: req.nextUrl.searchParams.toString(),
   });
 
-  if (debugEnabled) {
+  if (isOuterSignatureDebugEnabled()) {
     console.debug('[Outer V1 Auth] Rebuilt request payload', {
       ...withTraceId(options.traceId),
       clientId,

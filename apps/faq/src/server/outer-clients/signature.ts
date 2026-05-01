@@ -19,8 +19,8 @@ export function unwrapPlatformPublicKey(value: string): string {
   return decoded.trim();
 }
 
-function isOuterAuthDebugEnabled(): boolean {
-  return process.env.WINDRUN_HUAIIN_SDK_DEBUG === 'true';
+function isOuterSignatureDebugEnabled(): boolean {
+  return process.env.WINDRUN_HUAIIN_SDK_DEBUG === 'true' && process.env.WINDRUN_HUAIIN_SDK_SIGNATURE_DEBUG === 'true';
 }
 
 function buildKeyFingerprint(publicKey: string): string {
@@ -66,7 +66,7 @@ export function verifyOuterV1Signature(params: {
   const normalizedSignature = Buffer.from(params.signature, 'base64url');
   const valid = verify(null, Buffer.from(params.payload, 'utf8'), normalizedPublicKey, normalizedSignature);
 
-  if (isOuterAuthDebugEnabled()) {
+  if (isOuterSignatureDebugEnabled()) {
     console.debug('[Outer V1 Auth] Verified request signature', {
       ...(params.traceId ? { traceId: params.traceId } : {}),
       algorithm: normalizedAlgorithm,
