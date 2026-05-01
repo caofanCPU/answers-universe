@@ -2,7 +2,7 @@ import 'server-only';
 
 import { NextRequest } from 'next/server';
 import { reserveOuterV1Nonce } from '@/server/outer-clients/nonce';
-import { getActiveOuterClientKey, touchOuterClientKeyLastUsedAt } from '@/server/outer-clients/service';
+import { getActiveOuterClientKey } from '@/server/outer-clients/service';
 import { buildOuterV1SignaturePayload, verifyOuterV1Signature } from '@/server/outer-clients/signature';
 
 const OUTER_CLIENT_ID_HEADER = 'x-au-client-id';
@@ -179,9 +179,6 @@ export async function requireOuterV1ApiAuth(
     throw new Error('UNAUTHORIZED');
   }
 
-  const touchStartedAt = Date.now();
-  await touchOuterClientKeyLastUsedAt(clientId, keyVersion);
-  debugAuthStep(debugEnabled, options.traceId, 'touch_last_used_at', touchStartedAt);
   debugAuthStep(debugEnabled, options.traceId, 'total', authStartedAt, {
     clientId,
     keyVersion,

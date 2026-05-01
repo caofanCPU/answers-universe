@@ -82,13 +82,11 @@ export async function getActiveOuterClientKey(
   clientId: string,
   keyVersion: string
 ): Promise<OuterClientKeyRecord | null> {
-  const record = await prisma.outerClientKey.findFirst({
+  const record = await prisma.outerClientKey.findUnique({
     where: {
-      clientId,
-      keyVersion,
-      status: ACTIVE_KEY_STATUS,
-      client: {
-        status: ACTIVE_CLIENT_STATUS,
+      clientId_keyVersion: {
+        clientId,
+        keyVersion,
       },
     },
     select: {
@@ -97,10 +95,25 @@ export async function getActiveOuterClientKey(
       algorithm: true,
       publicKey: true,
       status: true,
+      client: {
+        select: {
+          status: true,
+        },
+      },
     },
   });
 
-  return record ?? null;
+  if (!record || record.status !== ACTIVE_KEY_STATUS || record.client.status !== ACTIVE_CLIENT_STATUS) {
+    return null;
+  }
+
+  return {
+    clientId: record.clientId,
+    keyVersion: record.keyVersion,
+    algorithm: record.algorithm,
+    publicKey: record.publicKey,
+    status: record.status,
+  };
 }
 
 export async function touchOuterClientKeyLastUsedAt(clientId: string, keyVersion: string) {
