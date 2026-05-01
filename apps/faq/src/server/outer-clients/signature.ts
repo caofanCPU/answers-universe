@@ -54,6 +54,7 @@ export function verifyOuterV1Signature(params: {
   payload: string;
   signature: string;
   algorithm: string;
+  traceId?: string;
 }): boolean {
   const normalizedAlgorithm = params.algorithm.toLowerCase();
 
@@ -67,6 +68,7 @@ export function verifyOuterV1Signature(params: {
 
   if (isOuterAuthDebugEnabled()) {
     console.debug('[Outer V1 Auth] Verified request signature', {
+      ...(params.traceId ? { traceId: params.traceId } : {}),
       algorithm: normalizedAlgorithm,
       publicKeyFingerprint: buildKeyFingerprint(normalizedPublicKey),
       payload: params.payload,

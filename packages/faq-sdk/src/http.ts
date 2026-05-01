@@ -1,12 +1,22 @@
 import type { OuterApiError } from '@windrun-huaiin/faq-contracts/outer/v1';
+import { randomUUID } from 'node:crypto';
 import { buildAuthHeaders } from './auth.js';
 import { AnswersUniverseApiError, AnswersUniverseSdkError, isOuterApiError } from './errors.js';
 import type { AnswersUniverseResolvedOptions } from './types.js';
 
 const REQUEST_TIMEOUT_MS = 10_000;
+const OUTER_V1_TRACE_ID_HEADER = 'x-windrun-huaiin-faq-outer-v1-trace-id';
 
 function isSdkDebugEnabled(): boolean {
   return process.env.WINDRUN_HUAIIN_SDK_DEBUG === 'true';
+}
+
+function withTraceId(traceId?: string): { traceId: string } | Record<string, never> {
+  return traceId ? { traceId } : {};
+}
+
+function createTraceId(): string {
+  return `TID:${randomUUID().replace(/-/g, '')}`;
 }
 
 export async function requestJson<TResponse>(
@@ -29,6 +39,7 @@ export async function requestJson<TResponse>(
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   const body = init?.body === undefined ? undefined : JSON.stringify(init.body);
   const startedAt = Date.now();
+  const traceId = createTraceId();
 
   try {
     const authHeaders = buildAuthHeaders(options, {
@@ -36,6 +47,7 @@ export async function requestJson<TResponse>(
       path: url.pathname,
       query: url.searchParams.toString(),
       body,
+      traceId,
     });
 
     const response = await options.fetch(url, {
@@ -43,6 +55,7 @@ export async function requestJson<TResponse>(
       headers: {
         accept: 'application/json',
         ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+        [OUTER_V1_TRACE_ID_HEADER]: traceId,
         ...authHeaders,
       },
       body,
@@ -55,14 +68,13 @@ export async function requestJson<TResponse>(
 
     if (isSdkDebugEnabled()) {
       console.debug('[FAQ SDK HTTP] Request completed', {
+        ...withTraceId(traceId),
         method,
         path: url.pathname,
         query: url.searchParams.toString(),
         status: response.status,
         ok: response.ok,
         durationMs,
-        requestBytes: body?.length ?? 0,
-        responseBytes: text.length,
       });
     }
 
@@ -86,6 +98,7 @@ export async function requestJson<TResponse>(
 
     if (isSdkDebugEnabled()) {
       console.debug('[FAQ SDK HTTP] Request failed', {
+        ...withTraceId(traceId),
         method,
         path: url.pathname,
         query: url.searchParams.toString(),

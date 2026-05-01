@@ -48,6 +48,10 @@ function isSdkDebugEnabled(): boolean {
   return process.env.WINDRUN_HUAIIN_SDK_DEBUG === 'true';
 }
 
+function withTraceId(traceId?: string): { traceId: string } | Record<string, never> {
+  return traceId ? { traceId } : {};
+}
+
 function normalizePage(value?: number): number {
   if (!value || value < 1) {
     return DEFAULT_PAGE;
@@ -597,7 +601,8 @@ async function findOuterQuestionDetailsByIds(ids: bigint[]): Promise<OuterQuesti
 }
 
 export async function getOuterQuestionBaseByIds(
-  params: Partial<OuterQuestionBaseQueryParams>
+  params: Partial<OuterQuestionBaseQueryParams>,
+  context: { traceId?: string } = {}
 ): Promise<OuterQuestionBaseResult> {
   const startedAt = Date.now();
   const debugEnabled = isSdkDebugEnabled();
@@ -606,6 +611,7 @@ export async function getOuterQuestionBaseByIds(
   if (ids.length === 0) {
     if (debugEnabled) {
       console.debug('[Outer Question Query] getByIds completed', {
+        ...withTraceId(context.traceId),
         ids: 0,
         chunks: 0,
         cacheEnabled: isOuterQuestionCacheEnabled(),
@@ -631,6 +637,7 @@ export async function getOuterQuestionBaseByIds(
 
       if (debugEnabled) {
         console.debug('[Outer Question Query] DB chunk completed', {
+          ...withTraceId(context.traceId),
           chunkIndex,
           ids: chunkIds.length,
           records: records.length,
@@ -649,6 +656,7 @@ export async function getOuterQuestionBaseByIds(
 
     if (debugEnabled) {
       console.debug('[Outer Question Query] getByIds completed', {
+        ...withTraceId(context.traceId),
         ids: ids.length,
         chunks: chunks.length,
         chunkSize: OUTER_IDS_CHUNK_SIZE,
@@ -711,6 +719,7 @@ export async function getOuterQuestionBaseByIds(
 
     if (debugEnabled) {
       console.debug('[Outer Question Query] Cache chunk completed', {
+        ...withTraceId(context.traceId),
         chunkIndex,
         ids: chunkIds.length,
         cached: cachedDetails.size,
@@ -739,6 +748,7 @@ export async function getOuterQuestionBaseByIds(
 
   if (debugEnabled) {
     console.debug('[Outer Question Query] getByIds completed', {
+      ...withTraceId(context.traceId),
       ids: ids.length,
       chunks: chunks.length,
       chunkSize: OUTER_IDS_CHUNK_SIZE,

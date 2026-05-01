@@ -28,6 +28,7 @@ export function buildAuthHeaders(_options: AnswersUniverseResolvedOptions, _requ
   path: string;
   query: string;
   body?: string;
+  traceId?: string;
 }): Record<string, string> {
   const timestamp = new Date().toISOString();
   const nonce = randomUUID();
@@ -47,6 +48,7 @@ export function buildAuthHeaders(_options: AnswersUniverseResolvedOptions, _requ
 
   if (isAuthDebugEnabled()) {
     console.debug('[FAQ SDK Auth] Built request signature', {
+      ...(_request.traceId ? { traceId: _request.traceId } : {}),
       clientId: _options.clientId,
       keyVersion: _options.keyVersion,
       method: _request.method.toUpperCase(),

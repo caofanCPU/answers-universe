@@ -1,5 +1,14 @@
 # @windrun-huaiin/faq
 
+## 2.1.2
+
+### Patch Changes
+
+- feat(sdk): add time log debug
+- Updated dependencies
+  - @windrun-huaiin/faq-contracts@11.1.0
+  - @windrun-huaiin/faq-sdk@11.1.2
+
 ## 2.1.1
 
 ### Patch Changes
