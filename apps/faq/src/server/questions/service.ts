@@ -42,7 +42,11 @@ const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 const OUTER_IDS_CHUNK_SIZE = 100;
-const OUTER_IDS_PARALLELISM = 5;
+const OUTER_IDS_PARALLELISM = 3;
+
+function isSdkDebugEnabled(): boolean {
+  return process.env.WINDRUN_HUAIIN_SDK_DEBUG === 'true';
+}
 
 function normalizePage(value?: number): number {
   if (!value || value < 1) {
@@ -595,20 +599,66 @@ async function findOuterQuestionDetailsByIds(ids: bigint[]): Promise<OuterQuesti
 export async function getOuterQuestionBaseByIds(
   params: Partial<OuterQuestionBaseQueryParams>
 ): Promise<OuterQuestionBaseResult> {
+  const startedAt = Date.now();
+  const debugEnabled = isSdkDebugEnabled();
   const ids = Array.from(new Set((params.ids ?? []).map((item) => item.toString())));
 
   if (ids.length === 0) {
+    if (debugEnabled) {
+      console.debug('[Outer Question Query] getByIds completed', {
+        ids: 0,
+        chunks: 0,
+        cacheEnabled: isOuterQuestionCacheEnabled(),
+        durationMs: Date.now() - startedAt,
+      });
+    }
+
     return {
       items: [],
     };
   }
 
-  if (!isOuterQuestionCacheEnabled()) {
-    const records = await findOuterQuestionDetailsByIds(ids.map((id) => BigInt(id)));
+  const chunks = chunkArray(ids, OUTER_IDS_CHUNK_SIZE);
+  const cacheEnabled = isOuterQuestionCacheEnabled();
+
+  if (!cacheEnabled) {
+    let dbDurationMs = 0;
+    const chunkResults = await mapWithConcurrency(chunks, OUTER_IDS_PARALLELISM, async (chunkIds, chunkIndex) => {
+      const dbStartedAt = Date.now();
+      const records = await findOuterQuestionDetailsByIds(chunkIds.map((id) => BigInt(id)));
+      const chunkDbDurationMs = Date.now() - dbStartedAt;
+      dbDurationMs += chunkDbDurationMs;
+
+      if (debugEnabled) {
+        console.debug('[Outer Question Query] DB chunk completed', {
+          chunkIndex,
+          ids: chunkIds.length,
+          records: records.length,
+          durationMs: chunkDbDurationMs,
+          cacheEnabled: false,
+        });
+      }
+
+      return records;
+    });
+    const records = chunkResults.flat();
     const itemsById = new Map(records.map((record) => [record.id, record]));
     const items = ids
       .map((id) => itemsById.get(id) ?? null)
       .filter((item): item is OuterQuestionBaseItemDto => item !== null);
+
+    if (debugEnabled) {
+      console.debug('[Outer Question Query] getByIds completed', {
+        ids: ids.length,
+        chunks: chunks.length,
+        chunkSize: OUTER_IDS_CHUNK_SIZE,
+        parallelism: OUTER_IDS_PARALLELISM,
+        cacheEnabled: false,
+        returned: items.length,
+        dbDurationMs,
+        durationMs: Date.now() - startedAt,
+      });
+    }
 
     return {
       items,
@@ -617,11 +667,17 @@ export async function getOuterQuestionBaseByIds(
 
   let cachedCount = 0;
   let missedCount = 0;
-  const chunks = chunkArray(ids, OUTER_IDS_CHUNK_SIZE);
-  const chunkResults = await mapWithConcurrency(chunks, OUTER_IDS_PARALLELISM, async (chunkIds) => {
+  let cacheDurationMs = 0;
+  let dbDurationMs = 0;
+  const chunkResults = await mapWithConcurrency(chunks, OUTER_IDS_PARALLELISM, async (chunkIds, chunkIndex) => {
+    const chunkStartedAt = Date.now();
     const cachedItems = new Map<string, OuterQuestionBaseItemDto>();
     const missedIds: bigint[] = [];
+    const cacheStartedAt = Date.now();
     const cachedDetails = await getOuterQuestionDetailCacheMap(chunkIds);
+    const chunkCacheDurationMs = Date.now() - cacheStartedAt;
+    cacheDurationMs += chunkCacheDurationMs;
+    let chunkDbDurationMs = 0;
 
     for (const id of chunkIds) {
       const cached = cachedDetails.get(id);
@@ -638,7 +694,10 @@ export async function getOuterQuestionBaseByIds(
     missedCount += missedIds.length;
 
     if (missedIds.length > 0) {
+      const dbStartedAt = Date.now();
       const records = await findOuterQuestionDetailsByIds(missedIds);
+      chunkDbDurationMs = Date.now() - dbStartedAt;
+      dbDurationMs += chunkDbDurationMs;
 
       for (const detail of records) {
         cachedItems.set(detail.id, detail);
@@ -648,6 +707,20 @@ export async function getOuterQuestionBaseByIds(
           reason: 'read_miss',
         });
       }
+    }
+
+    if (debugEnabled) {
+      console.debug('[Outer Question Query] Cache chunk completed', {
+        chunkIndex,
+        ids: chunkIds.length,
+        cached: cachedDetails.size,
+        missed: missedIds.length,
+        records: cachedItems.size,
+        cacheDurationMs: chunkCacheDurationMs,
+        dbDurationMs: chunkDbDurationMs,
+        durationMs: Date.now() - chunkStartedAt,
+        cacheEnabled: true,
+      });
     }
 
     return cachedItems;
@@ -664,11 +737,22 @@ export async function getOuterQuestionBaseByIds(
     .map((id) => itemsById.get(id) ?? null)
     .filter((item): item is OuterQuestionBaseItemDto => item !== null);
 
-  console.log('[Outer Question Cache] getByIds cache hit', `${cachedCount}/${ids.length}`, {
-    cached: cachedCount,
-    missed: missedCount,
-    hitRate: `${((cachedCount / ids.length) * 100).toFixed(2)}%`,
-  });
+  if (debugEnabled) {
+    console.debug('[Outer Question Query] getByIds completed', {
+      ids: ids.length,
+      chunks: chunks.length,
+      chunkSize: OUTER_IDS_CHUNK_SIZE,
+      parallelism: OUTER_IDS_PARALLELISM,
+      cacheEnabled: true,
+      cached: cachedCount,
+      missed: missedCount,
+      returned: items.length,
+      hitRate: `${((cachedCount / ids.length) * 100).toFixed(2)}%`,
+      cacheDurationMs,
+      dbDurationMs,
+      durationMs: Date.now() - startedAt,
+    });
+  }
 
   return {
     items,

@@ -52,8 +52,8 @@ catalogs:
       specifier: ^8.56.1
       version: 8.59.1
     '@windrun-huaiin/backend-core':
-      specifier: 29.0.2
-      version: 29.0.2
+      specifier: 29.0.3
+      version: 29.0.3
     '@windrun-huaiin/base-ui':
       specifier: 29.0.1
       version: 29.0.1
@@ -163,7 +163,7 @@ importers:
         version: 2.0.13
       '@windrun-huaiin/backend-core':
         specifier: 'catalog:'
-        version: 29.0.2(f946ef42b5102130be6f6b86b84f1fe8)
+        version: 29.0.3(f946ef42b5102130be6f6b86b84f1fe8)
       '@windrun-huaiin/base-ui':
         specifier: 'catalog:'
         version: 29.0.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(clsx@2.1.1)(next-intl@4.11.0(next@16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(next-themes@0.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(next@16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(tailwind-merge@3.5.0)(tailwindcss@4.2.4)
@@ -2207,8 +2207,8 @@ packages:
   '@upstash/redis@1.37.0':
     resolution: {integrity: sha512-LqOJ3+XWPLSZ2rGSed5DYG3ixybxb8EhZu3yQqF7MdZX1wLBG/FRcI6xcUZXHy/SS7mmXWyadrud0HJHkOc+uw==}
 
-  '@windrun-huaiin/backend-core@29.0.2':
-    resolution: {integrity: sha512-6036KgTpyUrSp3ZD2PDp5x2cSCMAjuf5Vrb3XXjKyh/N01wVfRk0Sgy+P4VjS7n+xSdGyg2aWJa6hCzFaAGkdQ==}
+  '@windrun-huaiin/backend-core@29.0.3':
+    resolution: {integrity: sha512-wrsV5eGi688bxKY1wZVC1yPuvYnTeI+tTXD6KYahBNE9rw4r6vbd1FtUExpSiqC/KqCWLy8nrJ84pyIUgsumKA==}
     peerDependencies:
       '@clerk/nextjs': ^7.0.5
       '@prisma/client': ^7.8.0
@@ -7037,7 +7037,7 @@ snapshots:
     dependencies:
       uncrypto: 0.1.3
 
-  '@windrun-huaiin/backend-core@29.0.2(f946ef42b5102130be6f6b86b84f1fe8)':
+  '@windrun-huaiin/backend-core@29.0.3(f946ef42b5102130be6f6b86b84f1fe8)':
     dependencies:
       '@clerk/nextjs': 7.2.8(next@16.1.6(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@prisma/client': 7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3)

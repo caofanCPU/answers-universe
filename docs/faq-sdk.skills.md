@@ -102,7 +102,17 @@ SDK 内部会自动完成：
 - 签名鉴权
 - POST body 请求
 
-第三方应用不需要自行拆分 ids，也不需要配置批次、并发或超时策略。这些服务端执行策略由 FAQ Base 的 outer route 控制。
+第三方应用不需要自行拆分 ids，也不需要配置批次、并发或超时策略。这些服务端执行策略由 FAQ Base 的 outer route 进入内部 service 后统一控制。
+
+实际处理流程：
+
+1. 业务方把完整 `ids` 数组传给 `getByIds(ids)`。
+2. SDK 去重、过滤空字符串、签名，并用一次 `POST` body 发送 `{ ids }`。
+3. FAQ Base outer route 鉴权并解析参数。
+4. FAQ Base 内部 questions service 按批处理 `ids`，当前每批 `100` 个 `id`，批次并发数为 `3`。
+5. 缓存开启时，每批先读 Redis，miss 的部分回源 DB。
+6. 缓存关闭时，每批直接回源 DB，仍然保留分批和限并发。
+7. 服务端按请求 `ids` 顺序合并结果后返回。
 
 ## 5. 对象参数查询
 
@@ -149,15 +159,23 @@ import type {
 } from '@windrun-huaiin/faq-contracts/outer/v1';
 ```
 
-## 8. 调试签名问题
+## 8. 调试签名和耗时问题
 
-本地联调时，如果需要查看 SDK 签名和服务端验签日志，可以临时开启：
+本地联调时，如果需要查看 SDK 签名、服务端验签日志和慢请求耗时，可以临时开启：
 
 ```env
 WINDRUN_HUAIIN_SDK_DEBUG=true
 ```
 
 该配置会输出请求签名、验签 payload、签名校验结果等调试信息。
+
+对于 `questionsBase.getByIds(ids)`，还会输出：
+
+- SDK HTTP 请求耗时、状态码、请求/响应字节数
+- FAQ Base 服务端分批处理耗时
+- Redis cache 读取耗时和命中数量
+- DB 回源查询耗时和返回数量
+- 最终返回数量和整体耗时
 
 不要在生产环境长期开启该变量。
 

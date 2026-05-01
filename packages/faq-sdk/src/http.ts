@@ -5,6 +5,10 @@ import type { AnswersUniverseResolvedOptions } from './types.js';
 
 const REQUEST_TIMEOUT_MS = 10_000;
 
+function isSdkDebugEnabled(): boolean {
+  return process.env.WINDRUN_HUAIIN_SDK_DEBUG === 'true';
+}
+
 export async function requestJson<TResponse>(
   options: AnswersUniverseResolvedOptions,
   path: string,
@@ -14,6 +18,7 @@ export async function requestJson<TResponse>(
     body?: unknown;
   }
 ): Promise<TResponse> {
+  const method = init?.method ?? 'GET';
   const url = new URL(path, `${options.baseUrl}/`);
 
   if (init?.query) {
@@ -23,17 +28,18 @@ export async function requestJson<TResponse>(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   const body = init?.body === undefined ? undefined : JSON.stringify(init.body);
+  const startedAt = Date.now();
 
   try {
     const authHeaders = buildAuthHeaders(options, {
-      method: init?.method ?? 'GET',
+      method,
       path: url.pathname,
       query: url.searchParams.toString(),
       body,
     });
 
     const response = await options.fetch(url, {
-      method: init?.method ?? 'GET',
+      method,
       headers: {
         accept: 'application/json',
         ...(body === undefined ? {} : { 'content-type': 'application/json' }),
@@ -45,6 +51,20 @@ export async function requestJson<TResponse>(
 
     const text = await response.text();
     const payload = text ? safeJsonParse(text) : null;
+    const durationMs = Date.now() - startedAt;
+
+    if (isSdkDebugEnabled()) {
+      console.debug('[FAQ SDK HTTP] Request completed', {
+        method,
+        path: url.pathname,
+        query: url.searchParams.toString(),
+        status: response.status,
+        ok: response.ok,
+        durationMs,
+        requestBytes: body?.length ?? 0,
+        responseBytes: text.length,
+      });
+    }
 
     if (!response.ok) {
       if (isOuterApiError(payload)) {
@@ -62,6 +82,17 @@ export async function requestJson<TResponse>(
   } catch (error) {
     if (error instanceof AnswersUniverseSdkError) {
       throw error;
+    }
+
+    if (isSdkDebugEnabled()) {
+      console.debug('[FAQ SDK HTTP] Request failed', {
+        method,
+        path: url.pathname,
+        query: url.searchParams.toString(),
+        durationMs: Date.now() - startedAt,
+        errorName: error instanceof Error ? error.name : 'UnknownError',
+        errorMessage: error instanceof Error ? error.message : 'Unknown request error',
+      });
     }
 
     if (error instanceof Error && error.name === 'AbortError') {

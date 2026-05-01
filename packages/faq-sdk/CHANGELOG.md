@@ -1,5 +1,13 @@
 # @windrun-huaiin/faq-sdk
 
+## 11.1.1
+
+### Patch Changes
+
+- feat(sdk): add log debug
+- Updated dependencies
+  - @windrun-huaiin/faq-contracts@11.1.0
+
 ## 11.1.0
 
 ### Minor Changes

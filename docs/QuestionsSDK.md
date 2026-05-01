@@ -315,7 +315,7 @@ SDK 内部会自动完成：
 当前返回结果就是一组 `items`，不再附带分页结构，因为：
 
 - `Outer` 现在只支持按 `ids` 读取
-- 单次请求规模和服务端执行策略由 FAQ Base 的 outer route 控制
+- 单次请求规模和服务端执行策略由 FAQ Base 的 outer route 进入内部 service 后统一控制
 
 ```ts
 type OuterQuestionBaseResult = {
@@ -324,6 +324,19 @@ type OuterQuestionBaseResult = {
 ```
 
 `OuterQuestionBaseItemDto` 当前等价于完整题目详情 DTO，包含答案、解析、图片、tags、keywords 等字段。
+
+### 6.1.1 大批量 ids 的实际处理流程
+
+业务方传递批量 `ids` 时，职责边界如下：
+
+1. 业务方只调用 `faqClient.v1.questionsBase.getByIds(ids)`，不自行拆批、不自行控制并发。
+2. SDK 对 `ids` 做去重和空字符串过滤，然后用一次 `POST` body 请求发送给 FAQ Base。
+3. FAQ Base outer route 完成签名鉴权和参数解析。
+4. FAQ Base 内部 questions service 对 `ids` 做统一分批和限并发处理。
+5. 当前每批 `100` 个 `id`，批次并发数为 `3`。
+6. 最终结果会按请求 `ids` 的顺序重新合并后返回。
+
+这里的分批限并发是服务端执行策略，不依赖业务方，也不在 SDK 内部实现。
 
 ### 6.2 保留 query 形态
 
@@ -405,15 +418,19 @@ Redis 缓存主要服务 `outer` 读链路，而不是内部后台列表查询�
 - 保证读取稳定
 - 不让同步写缓存拖慢读请求
 
-对外 `questionsBase` 的纯 `ids` 查询也会复用这套 `id` 级缓存，只是当前实现方式是：
+对外 `questionsBase` 的纯 `ids` 查询会先进入统一的分批限并发执行策略。缓存只影响每批内部是先读 Redis 还是直接回源 DB，不影响是否分批。
 
-1. 按 ids 分组
-2. 分组并发读取 Redis 缓存
-3. miss 的部分分组并发回源 DB
-4. 按请求 ids 顺序合并完整题目 DTO
-5. 返回结果后异步投递缓存重建任务
+当前实现方式是：
 
-当前 Redis 读取使用批量 `mget` 能力。
+1. 按 ids 分组，每批 `100` 个 `id`
+2. 批次限并发执行，当前并发数为 `3`
+3. 缓存开启时，每批先用 Redis `mget` 批量读取缓存
+4. 缓存 miss 的部分在该批内回源 DB
+5. 缓存关闭时，每批直接回源 DB，不会把全部 ids 一次性放进单个 DB 查询
+6. 按请求 ids 顺序合并完整题目 DTO
+7. 缓存开启时，返回结果后异步投递缓存重建任务
+
+当前 Redis 读取使用批量 `mget` 能力。缓存关闭时仍然保留分批和限并发，避免大 ids 请求把压力集中到单个 DB 查询。
 
 ### 8.3 写后构建链路
 
@@ -476,6 +493,22 @@ SDK 会自动为每个请求生成签名头，业务方不需要自己拼接。
 1. 正确配置平台下发的 `clientId / keyVersion / publicKey / privateKey`
 2. 只通过 SDK 调用
 
+### 10.1 调试签名和耗时
+
+本地联调或排查慢请求时，可以临时开启：
+
+```env
+WINDRUN_HUAIIN_SDK_DEBUG=true
+```
+
+该开关会同时影响 SDK 和 FAQ Base outer 服务端日志：
+
+- SDK 侧会输出签名 payload、请求路径、HTTP 状态、请求耗时、请求/响应 body 字节数。
+- FAQ Base 服务端会输出验签 payload、签名校验信息。
+- `questionsBase.getByIds(ids)` 会输出服务端分批执行耗时，包括批次数、批大小、并发数、缓存是否开启、Redis cache 耗时、DB 回源耗时、命中/未命中数量、最终返回数量和总耗时。
+
+不要在生产环境长期开启该变量；它用于临时定位签名、网络、Redis 和 DB 查询耗时问题。
+
 ## 11. QuickStart
 
 ```mermaid
@@ -509,7 +542,8 @@ flowchart TD
 
 - 对外能力以 SDK 为唯一接入面
 - DTO 必须保持版本稳定
-- 大批量 ids 的执行策略由 outer route 内部控制
+- 大批量 ids 的执行策略由 outer route 后面的 FAQ Base 内部 service 控制
+- 内部 service 必须在缓存开启和关闭时都保留分批、限并发查询
 - 缓存粒度继续保持题目 `id` 级别
 - 后续协议升级优先通过 SDK 向外平滑演进
 
