@@ -4,7 +4,7 @@
       "title": "Outer Clients",
       "description": "Manage external application clients and prepare credentials for SDK access.",
       "actions": {
-        "backToQuestions": "Back To Lists"
+        "backToQuestions": "Client List"
       },
       "client": {
         "loading": "Loading clients...",

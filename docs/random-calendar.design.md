@@ -1,182 +1,321 @@
-# 随机题日历视图设计
+# 通用日历与范围选择组件设计
 
 ## 1. 设计目标
 
-随机题页面左侧日历不是普通日期选择器。
+当前随机题页面的日历不应继续作为页面内部实现存在。
 
-它后续会承载多种业务状态，例如：
-
-```text
-已保存题组
-计划中题组
-批量生成中的日期
-异常或冲突日期
-```
-
-因此日历视图必须从一开始就区分两类状态：
+它需要抽象成一组通用日历能力，覆盖两类场景：
 
 ```text
-1. 选中状态：用户当前正在查看或操作哪一天。
-2. 业务状态：这一天在随机题业务里处于什么状态。
+1. 简单范围筛选：例如题目列表 createdAtFrom / createdAtTo。
+2. 复杂业务日历：例如随机题按日期生成 plan、逐日审查、单日或批量提交。
 ```
 
-这两类状态不能互相覆盖。
+这两类场景共享日期选择交互，但不共享业务工作流。
 
-## 2. 核心语义
+因此组件必须拆分，避免简单筛选场景引入完整业务日历。
 
-### 2.1 选中状态
+## 2. 组件拆分
 
-选中状态只回答一个问题：
+建议分三层：
 
 ```text
-当前页面右侧正在展示或操作哪一天？
+DateRangePickerCore
+  只负责日期范围选择交互。
+  不包含业务状态、审查状态、提交按钮。
+
+DateRangeField
+  表单字段封装。
+  用于筛选场景，最终只输出 startDate / endDate。
+
+RichCalendarView
+  通用增强日历视图。
+  支持 single / range、activeDate、dayStates、月历视图、滑动范围视图。
+
+RandomCalendarPlanner
+  随机题专用组合层。
+  负责 plan / review / commit 等业务行为。
 ```
 
-选中状态只使用背景色和文字色表达。
-
-建议规则：
+依赖方向：
 
 ```text
-亮色主题：黑色背景 + 白色文字
-暗色主题：白色背景 + 深色文字
+DateRangeField -> DateRangePickerCore
+RichCalendarView -> DateRangePickerCore
+RandomCalendarPlanner -> RichCalendarView
 ```
 
-选中状态不负责表达业务含义。
+## 3. 数据模型边界
 
-### 2.2 业务状态
+范围拖动、滑动、hover 都只是交互过程。
 
-业务状态只回答一个问题：
+业务层最终只应拿到明确结果：
+
+```ts
+type DateRangeValue = {
+  startDate: string | null;
+  endDate: string | null;
+};
+```
+
+组件内部可以维护拖动过程状态，但不要泄漏给业务层：
+
+```ts
+type DragState = {
+  dragging: boolean;
+  anchorDate: string | null;
+  hoverDate: string | null;
+};
+```
+
+随机题场景还需要区分：
 
 ```text
-这个日期在随机题业务中有什么状态？
+range      = 当前批量操作范围
+activeDate = 当前正在查看或审查的日期
 ```
 
-业务状态只使用边框线和底部实心圆点表达。
-
-业务状态不负责表达当前是否选中。
-
-## 3. 状态组合规则
-
-日期单元格至少有两个状态维度：
+例如：
 
 ```text
-selected: boolean
-businessState: none | saved | planned | warning | conflict
+range: 2026-01-10 到 2026-03-15
+activeDate: 2026-02-03
 ```
 
-它们应该是可叠加的，而不是互斥的。
+点击范围内某天应切换 activeDate，不应改变范围。
+
+## 3.1 random 场景交互语义
+
+random 场景必须拆成两条独立交互链路：
+
+```text
+1. 范围行为：用户通过滑动弹窗确定 startDate / endDate。
+2. 单日行为：用户在日历视图中点击某一天查看该日题组详情。
+```
+
+两者不能复用同一个接口语义。
+
+### 范围行为
+
+滑动弹窗只是一个范围确定器。
+
+弹窗内所有拖动、滚动、快捷范围都只是过渡态。
+
+用户点击确认后，业务语义是：
+
+```text
+我已经确定一个日期范围，请基于这个范围生成 planned preview 数据。
+```
+
+这一步对应的是一次明确的后端请求，不是本地拼装，不是单日详情请求。
+
+返回结果应该是：
+
+```ts
+type PlannedRangeResult = {
+  startDate: string;
+  endDate: string;
+  requestedDays: number;
+  plannedDates: Array<{
+    showDate: string;
+    planId: string;
+    canCommit: boolean;
+    stats: ...;
+    items: ...;
+    messages: string[];
+  }>;
+};
+```
+
+前端拿到这个结果后：
+
+```text
+1. 把 plannedDates 标记到日历视图上，显示橙点。
+2. 选中第一个 planned date 作为当前 activeDate。
+3. 右侧展示该 activeDate 对应的 planned preview 详情。
+```
+
+### 单日行为
+
+日历视图点击某一天时，先判断该日期是否有状态。
+
+只有以下两类日期允许继续取详情：
+
+```text
+saved   = 绿点
+planned = 橙点
+```
+
+交互语义如下：
+
+```text
+点击绿点：请求已保存题组详情。
+点击橙点：读取或请求 planned 题组详情。
+点击空日期：只切换 activeDate，不请求详情。
+```
+
+这里要强调：
+
+```text
+单日点击不是生成 planned 的入口。
+范围确认才是生成 planned preview 的入口。
+```
+
+## 3.2 random 场景后端接口职责
+
+random 场景接口需要按职责分层，不能让 analysis 同时负责统计、预览、详情三件事。
+
+推荐语义如下：
+
+### `GET /api/random-questions/analysis`
+
+职责：
+
+```text
+返回全局统计与已保存日期摘要。
+```
+
+它只负责：
+
+```text
+1. 已生成日期列表（用于日历绿点）
+2. total / used / remain / available first / estimated new days
+3. category inventory
+```
+
+它不负责：
+
+```text
+1. 某个范围内的 planned preview
+2. 某一天的题组详情
+```
+
+### `POST /api/random-questions/plan-range`
+
+职责：
+
+```text
+根据 startDate / endDate 生成该范围对应的 planned preview 数据。
+```
+
+它是范围确认后的唯一请求。
+
+返回结果中的 `plannedDates` 由后端直接给出 `showDate` 绑定结果，这样前端只负责展示，不再自行拼接日期。
+
+### `GET /api/random-questions?showDate=YYYY-MM-DD`
+
+职责：
+
+```text
+获取某一天已保存题组详情。
+```
+
+只用于绿点日期。
+
+### `POST /api/random-questions/preview`
+
+职责：
+
+```text
+获取某一个指定日期的 planned preview。
+```
+
+这个接口只保留给“单日生成 preview”场景。
+
+如果页面设计决定后续完全以范围弹窗作为 planned 入口，那么它可以继续保留，但不是主路径。
+
+## 4. 日期状态语义
+
+日期单元格至少有三类状态维度：
+
+```text
+1. selected / active：当前正在查看或操作哪一天。
+2. range：当前范围选择覆盖哪些日期。
+3. businessState：这一天在业务中处于什么状态。
+```
+
+它们必须可叠加，不能互相覆盖。
 
 不要写成：
 
 ```text
-isSelected ? selectedStyle : isGenerated ? generatedStyle : normalStyle
+isSelected ? selectedStyle : isSaved ? savedStyle : normalStyle
 ```
 
-这种写法会导致选中已保存日期时，已保存状态消失。
-
-应该写成：
+应该按维度组合：
 
 ```text
 baseStyle
-+ selectedStyle
++ activeStyle
++ rangeStyle
 + businessStateStyle
 + monthScopeStyle
 ```
 
-## 4. 当前状态定义
+核心类型只需要表达语义，不绑定 random 字段：
 
-### 4.1 普通日期
-
-条件：
-
-```text
-selected = false
-businessState = none
+```ts
+type CalendarDayState = {
+  date: string;
+  businessState?: 'saved' | 'planned' | 'warning' | 'conflict';
+  progress?: 'idle' | 'generating' | 'reviewing' | 'ready' | 'committed';
+  count?: number;
+  disabled?: boolean;
+  title?: string;
+};
 ```
 
-视觉：
+## 5. 视觉规则
+
+### 5.1 Active 状态
+
+Active 只回答：
 
 ```text
-默认背景
-默认边框
-默认文字
-无圆点
+当前页面正在展示或操作哪一天？
 ```
 
-### 4.2 已保存日期
-
-条件：
-
-```text
-businessState = saved
-```
-
-视觉：
-
-```text
-绿色边框线
-底部绿色实心圆点
-```
-
-注意：
-
-```text
-已保存状态不使用浅绿色背景。
-已保存状态不需要额外 hover 背景。
-```
-
-原因：
-
-```text
-背景色留给 selected 状态使用。
-边框线和圆点专门表达业务状态。
-```
-
-### 4.3 选中日期
-
-条件：
-
-```text
-selected = true
-```
-
-视觉：
+建议视觉：
 
 ```text
 亮色主题：黑色背景 + 白色文字
 暗色主题：白色背景 + 深色文字
 ```
 
-如果这个日期同时有业务状态，则继续保留业务状态的边框线和圆点。
+Active 不表达业务含义。
 
-### 4.4 已保存且选中
+### 5.2 Range 状态
 
-条件：
-
-```text
-selected = true
-businessState = saved
-```
-
-视觉：
+Range 只回答：
 
 ```text
-选中背景
-选中文字
-绿色边框线
-底部绿色实心圆点
+当前批量操作覆盖哪些日期？
 ```
 
-也就是说：
+建议视觉：
 
 ```text
-背景色 = 是否选中
-边框线/圆点 = 是否已保存
+范围中间：浅色连续背景
+范围起点/终点：明确的 handle 或更强边界
 ```
 
-## 5. 后续状态扩展
+Range 背景不能覆盖 active 背景，也不能吞掉业务状态边框和圆点。
 
-后续如果支持一段日期批量生成题组，可以增加计划态。
+### 5.3 Business 状态
+
+Business 状态只回答：
+
+```text
+这个日期在业务中有什么状态？
+```
+
+业务状态只使用：
+
+```text
+边框线
+底部实心圆点
+title / aria-label
+```
 
 建议颜色：
 
@@ -190,34 +329,13 @@ conflict: rose / red
 建议语义：
 
 ```text
-saved    = 已正式写入 random_usb
-planned  = 计划中或批量生成待确认
-warning  = 有需要关注的非阻塞问题
-conflict = 日期存在冲突或不可直接提交
+saved    = 已正式写入
+planned  = 临时计划中，待审查或待提交
+warning  = 有非阻塞问题
+conflict = 有冲突，不能直接提交
 ```
 
-每种业务状态仍然只控制：
-
-```text
-边框线颜色
-底部圆点颜色
-title / aria-label 中的状态说明
-```
-
-不要让业务状态控制背景色。
-
-## 6. 优先级
-
-视觉优先级建议：
-
-```text
-1. selected 控制背景和文字。
-2. businessState 控制边框和圆点。
-3. outOfMonth 控制整体透明度。
-4. hover 只用于普通日期的轻微反馈。
-```
-
-如果一个日期同时存在多个业务状态，应在数据层先合成一个最终状态。
+如果一个日期存在多个业务状态，应在数据层合成最终状态。
 
 建议优先级：
 
@@ -225,17 +343,192 @@ title / aria-label 中的状态说明
 conflict > warning > planned > saved > none
 ```
 
+## 6. 简单范围筛选场景
+
+题目列表筛选现在使用两个原生日期输入：
+
+```text
+createdAtFrom
+createdAtTo
+```
+
+这类场景应使用 DateRangeField。
+
+它的职责：
+
+```text
+展示开始日期
+展示截止日期
+展示范围天数
+打开轻量范围选择器
+清空范围
+```
+
+它不需要：
+
+```text
+dayStates
+业务状态图例
+activeDate
+plan / review / commit 行为
+```
+
+对外结果仍然是：
+
+```text
+startDate
+endDate
+```
+
+这样可以直接回填现有筛选参数。
+
+## 7. 移动端范围筛选
+
+移动端不能把桌面月历硬塞进页面。
+
+DateRangeField 在移动端应使用 bottom sheet。
+
+推荐结构：
+
+```text
+顶部：结果栏
+Start: Jan 10   End: Mar 15   65D
+
+中间：横向日期滑动选择器
+支持滑动浏览、按住拖动、范围预览
+
+底部：操作
+Clear   Cancel   Apply
+```
+
+移动端筛选必须使用 draft range。
+
+原因：
+
+```text
+用户拖动时会产生大量临时日期变化。
+筛选列表不应该在拖动过程中连续请求接口。
+```
+
+因此 DateRangeField 应支持提交模式：
+
+```text
+instant = 选择变化立刻提交
+apply   = 先修改 draft，点击 Apply 后提交
+```
+
+筛选场景使用：
+
+```text
+commitMode = apply
+```
+
+随机题场景可以使用：
+
+```text
+commitMode = instant
+```
+
+因为随机题范围选择通常只是本地 plan 输入，不应每次拖动都立即提交后端。
+
+## 8. 滑动范围选择
+
+滑动范围选择是交互手段，不是业务数据模型。
+
+它适合：
+
+```text
+移动端快速选一段连续日期
+跨月范围选择
+批量 plan 的范围输入
+```
+
+基础交互：
+
+```text
+横向滑动：浏览日期
+点日期：设置 start 或 end
+按住拖动：从 anchorDate 预览到 hoverDate
+松手：生成 draft range
+拖动两端 handle：调整 start 或 end
+```
+
+滑动选择器必须始终显示最终结果：
+
+```text
+startDate
+endDate
+range length
+```
+
+不要只用高亮条表达结果。
+
+## 9. 随机题业务场景
+
+随机题页面使用 RichCalendarView + RandomCalendarPlanner。
+
+范围选择在 random 中也是过渡交互。
+
+最终用户必须看到明确结果：
+
+```text
+Plan range
+Start: 2026-01-10
+End: 2026-03-15
+65 days
+```
+
+生成 plan 后，每一天进入 planned 临时状态。
+
+用户需要支持：
+
+```text
+点击某一天审查该日数据
+单独提交当前日期
+批量提交 ready 日期
+单独重生成某一天
+批量重生成未提交日期
+清空未提交 plan
+```
+
+日历上的表达：
+
+```text
+range      = 批量 plan 范围
+activeDate = 当前审查日期
+planned    = 临时计划状态
+saved      = 已正式保存
+conflict   = 不能直接提交
+```
+
+这些状态必须同时可见。
+
 例如：
 
 ```text
-同一天既 saved 又 conflict，则展示 conflict。
+某一天既在 range 中，又是 activeDate，又是 planned。
 ```
 
-## 7. 布局约束
+视觉上应同时保留：
 
-日历卡片与右侧操作区在桌面端应首尾对齐。
+```text
+范围背景
+active 背景
+planned 边框和圆点
+```
 
-当前页面两列布局建议：
+## 10. 桌面端布局
+
+桌面端可使用月历网格作为主视图。
+
+随机题页面建议：
+
+```text
+左侧：RichCalendarView
+右侧：当前 activeDate 的状态、详情、审查和提交操作
+```
+
+两列布局：
 
 ```text
 grid
@@ -243,103 +536,12 @@ xl:grid-cols-[24rem_minmax(0,1fr)]
 xl:items-stretch
 ```
 
-左侧日历卡片：
+日期单元格保持稳定尺寸。
 
-```text
-xl:self-stretch
-```
+不要通过拉伸日期单元格来对齐左右卡片高度。
 
-日期单元格保持固定高度。
+## 11. 后续补充
 
-当前建议：
+本设计文档先定义组件边界、交互规则和状态语义。
 
-```text
-h-11
-```
-
-不要通过拉伸日期单元格来对齐左右边框。
-
-如果右侧 Toggle 内容区高度变化，应通过右侧内容区的 `min-height` 控制抖动，而不是改变日历日期格尺寸。
-
-## 8. 交互规则
-
-点击任意日期：
-
-```text
-1. 更新 selectedDate。
-2. 如果点击的是相邻月份日期，则 calendarMonth 切换到该日期所在月份。
-3. 右侧展示该日期的状态、详情、分析或操作入口。
-```
-
-Hover：
-
-```text
-普通日期可以有轻微 hover 背景。
-已有业务状态的日期不需要额外 hover 背景。
-选中日期不需要额外 hover 背景。
-```
-
-原因：
-
-```text
-业务状态和选中状态已经足够明确。
-hover 不应该制造第三套强视觉状态。
-```
-
-## 9. 可访问性
-
-每个日期按钮应通过 `title` 或 `aria-label` 表达完整状态。
-
-示例：
-
-```text
-2026-04-02, selected, saved random question set
-2026-04-03, planned random question set
-2026-04-04, no random question set
-```
-
-不要只依赖颜色表达业务状态。
-
-后续如果业务状态变多，可以在右侧面板或日历下方增加简短图例。
-
-图例也应遵循同一规则：
-
-```text
-绿色圆点/边框 = 已保存
-黄色圆点/边框 = 计划中
-红色圆点/边框 = 冲突
-```
-
-## 10. 当前实现待调整点
-
-当前实现中，已保存日期和选中日期是互斥样式：
-
-```text
-isSelected ? selectedStyle : isGenerated ? generatedStyle : normalStyle
-```
-
-这会导致：
-
-```text
-选中一个已保存日期时，绿色边框和绿色圆点消失。
-```
-
-应改为叠加式样式：
-
-```text
-base date button style
-+ selected background/text style
-+ saved border/dot style
-+ out-of-month opacity style
-```
-
-当前 `saved` 状态应调整为：
-
-```text
-绿色边框线
-底部绿色实心圆点
-不使用浅绿色背景
-不使用绿色 hover 背景
-```
-
-这样后续 `planned` 等状态可以自然扩展。
+具体使用示例、props 完整类型、测试用例，在组件开发和验证完成后再补充。

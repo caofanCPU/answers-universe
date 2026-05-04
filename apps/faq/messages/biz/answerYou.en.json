@@ -100,7 +100,7 @@
       "title": "Import",
       "description": "",
       "actions": {
-        "backToList": "Back to List"
+        "backToList": "Library"
       },
       "toolbar": {
         "uploadJson": "Upload",
@@ -134,7 +134,7 @@
       "title": "Question Detail #{id}",
       "description": "",
       "actions": {
-        "backToList": "Back to List"
+        "backToList": "Library"
       }
     },
     "questionPreview": {
@@ -148,7 +148,7 @@
       "title": "Create",
       "description": "",
       "actions": {
-        "backToList": "Back to List",
+        "backToList": "Back to Library",
         "submit": "Create"
       },
       "notice": "Create mode is wired to the create API. Successful save will redirect to the detail page.",

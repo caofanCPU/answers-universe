@@ -3,12 +3,16 @@ import type { Prisma, Usb } from '@app-prisma';
 import { buildQuestionDetailDto } from '@/server/questions/service';
 import type {
   RandomQuestionAnalysisResult,
+  RandomQuestionBulkCommitResult,
   RandomQuestionCategoryInventory,
   RandomQuestionCommitResult,
   RandomQuestionDateListResult,
   RandomQuestionDateSummary,
   RandomQuestionDetailResult,
   RandomQuestionDraftItem,
+  RandomQuestionPlanRangeResult,
+  RandomQuestionPlannedDateResult,
+  RandomQuestionPlannedGroup,
   RandomQuestionPreviewItem,
   RandomQuestionPreviewResult,
   RandomQuestionPreviewStats,
@@ -35,6 +39,12 @@ function parseShowDate(showDate: string): Date {
 
 function formatShowDate(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+function addDaysToShowDate(showDate: string, days: number): string {
+  const date = parseShowDate(showDate);
+  date.setUTCDate(date.getUTCDate() + days);
+  return formatShowDate(date);
 }
 
 function buildPreviewStats(items: RandomQuestionDraftItem[]): RandomQuestionPreviewStats {
@@ -93,6 +103,33 @@ async function attachQuestionDetails(items: RandomQuestionDraftItem[]): Promise<
   return items.map((item) => ({
     ...item,
     question: questionMap.get(item.questionId) ?? null,
+  }));
+}
+
+async function attachPlannedGroupDetails(groups: RandomQuestionPlannedGroup[]): Promise<RandomQuestionPlannedGroup[]> {
+  const questionIds = [
+    ...new Set(groups.flatMap((group) => group.items.map((item) => item.questionId))),
+  ];
+
+  if (questionIds.length === 0) {
+    return groups;
+  }
+
+  const questionRecords = await prisma.usb.findMany({
+    where: {
+      id: {
+        in: questionIds.map((value) => BigInt(value)),
+      },
+    },
+  });
+  const questionMap = new Map(questionRecords.map((record) => [record.id.toString(), buildQuestionDetailDto(record)]));
+
+  return groups.map((group) => ({
+    ...group,
+    items: group.items.map((item) => ({
+      ...item,
+      question: questionMap.get(item.questionId) ?? null,
+    })),
   }));
 }
 
@@ -164,7 +201,7 @@ async function getBestQuestionSet(
   });
 }
 
-function estimateNewDaysWithPlanner({
+function buildPlannedGroupsWithPlanner({
   firstQuestions,
   normalQuestions,
   targetCount,
@@ -172,16 +209,17 @@ function estimateNewDaysWithPlanner({
   firstQuestions: RandomQuestionSelectionRecord[];
   normalQuestions: RandomQuestionSelectionRecord[];
   targetCount: number;
-}): number {
+}): RandomQuestionPlannedGroup[] {
   const remainingFirstQuestions = [...firstQuestions];
   const remainingNormalQuestions = [...normalQuestions];
-  let estimatedDays = 0;
+  const plannedGroups: RandomQuestionPlannedGroup[] = [];
 
   while (remainingFirstQuestions.length > 0 && remainingNormalQuestions.length >= Math.max(targetCount - 1, 0)) {
+    const planIndex = plannedGroups.length + 1;
     const candidateSet = selectBestRandomQuestionSet({
       firstQuestions: remainingFirstQuestions,
       normalQuestions: remainingNormalQuestions,
-      showDate: `analysis-${estimatedDays + 1}`,
+      showDate: `plan-${planIndex}`,
       targetTotal: targetCount,
     });
 
@@ -189,10 +227,25 @@ function estimateNewDaysWithPlanner({
       break;
     }
 
-    const usedIds = new Set([
-      candidateSet.firstQuestion.id.toString(),
-      ...candidateSet.normalQuestions.map((question) => question.id.toString()),
-    ]);
+    const items = [
+      buildDraftItem(candidateSet.firstQuestion, 1),
+      ...candidateSet.normalQuestions.map((item, index) => buildDraftItem(item, index + 2)),
+    ];
+    const stats = buildPreviewStats(items);
+    const usedIds = new Set(items.map((item) => item.questionId));
+
+    plannedGroups.push({
+      planId: `plan-${planIndex}`,
+      targetCount,
+      canCommit: stats.actualTotal === stats.targetTotal && stats.actualFirstCount === stats.targetFirstCount,
+      reasons: [],
+      messages: [],
+      stats,
+      items: items.map((item) => ({
+        ...item,
+        question: null,
+      })),
+    });
 
     for (let index = remainingFirstQuestions.length - 1; index >= 0; index -= 1) {
       if (usedIds.has(remainingFirstQuestions[index].id.toString())) {
@@ -205,11 +258,9 @@ function estimateNewDaysWithPlanner({
         remainingNormalQuestions.splice(index, 1);
       }
     }
-
-    estimatedDays += 1;
   }
 
-  return estimatedDays;
+  return plannedGroups;
 }
 
 function buildCategoryInventory(records: RandomQuestionSelectionRecord[]): RandomQuestionCategoryInventory[] {
@@ -356,6 +407,59 @@ export async function commitRandomQuestionSet(
   };
 }
 
+export async function commitRandomQuestionSets(
+  plans: Array<{
+    showDate: string;
+    items: RandomQuestionDraftItem[];
+  }>
+): Promise<RandomQuestionBulkCommitResult> {
+  if (plans.length === 0) {
+    return {
+      saved: true,
+      dates: [],
+    };
+  }
+
+  const showDates = plans.map((plan) => plan.showDate);
+  const uniqueShowDates = new Set(showDates);
+
+  if (uniqueShowDates.size !== showDates.length) {
+    throw new Error('Duplicate showDate in bulk commit request');
+  }
+
+  for (const plan of plans) {
+    validateDraftItems(plan.showDate, plan.items);
+  }
+
+  const existingRecords = await prisma.randomUsb.findMany({
+    where: {
+      showDate: {
+        in: showDates.map(parseShowDate),
+      },
+    },
+    select: {
+      showDate: true,
+    },
+  });
+
+  if (existingRecords.length > 0) {
+    throw new Error(`Random question set already exists for ${formatShowDate(existingRecords[0].showDate)}`);
+  }
+
+  await prisma.randomUsb.createMany({
+    data: plans.flatMap((plan) => buildRandomUsbCreateManyData(plan.showDate, plan.items)),
+  });
+
+  return {
+    saved: true,
+    dates: plans.map((plan) => ({
+      saved: true,
+      showDate: plan.showDate,
+      count: plan.items.length,
+    })),
+  };
+}
+
 export async function regenerateRandomQuestionSet(showDate: string): Promise<RandomQuestionPreviewResult & { saved: boolean }> {
   const preview = await previewRandomQuestionSet(showDate, { excludeShowDate: showDate });
 
@@ -450,11 +554,13 @@ export async function getRandomQuestionAnalysis(): Promise<RandomQuestionAnalysi
   ]);
 
   const targetCount = getRandomQuestionTargetCount();
-  const estimatedNewDays = estimateNewDaysWithPlanner({
-    firstQuestions: plannerRecords.filter((record) => record.asFirst === 1),
-    normalQuestions: plannerRecords.filter((record) => record.asFirst === 0),
+  const firstPlannerRecords = plannerRecords.filter((record) => record.asFirst === 1);
+  const normalPlannerRecords = plannerRecords.filter((record) => record.asFirst === 0);
+  const estimatedNewDays = buildPlannedGroupsWithPlanner({
+    firstQuestions: firstPlannerRecords,
+    normalQuestions: normalPlannerRecords,
     targetCount,
-  });
+  }).length;
   const categoryInventory = buildCategoryInventory(plannerRecords);
 
   return {
@@ -465,6 +571,88 @@ export async function getRandomQuestionAnalysis(): Promise<RandomQuestionAnalysi
     availableFirstQuestions,
     estimatedNewDays,
     categoryInventory,
+  };
+}
+
+export async function planRandomQuestionRange(startDate: string, endDate: string): Promise<RandomQuestionPlanRangeResult> {
+  const normalizedStartDate = startDate <= endDate ? startDate : endDate;
+  const normalizedEndDate = startDate <= endDate ? endDate : startDate;
+  const requestedDays = Math.max(
+    0,
+    Math.floor((parseShowDate(normalizedEndDate).getTime() - parseShowDate(normalizedStartDate).getTime()) / 86400000) + 1
+  );
+
+  if (requestedDays <= 0) {
+    return {
+      startDate: normalizedStartDate,
+      endDate: normalizedEndDate,
+      requestedDays: 0,
+      plannedDates: [],
+    };
+  }
+
+  const [usedQuestionIds, occupiedDates] = await Promise.all([
+    getUsedQuestionIds(),
+    listRandomQuestionDates(),
+  ]);
+
+  const remainingWhere: Prisma.UsbWhereInput = {
+    deleted: 0,
+    ...(usedQuestionIds.length > 0
+      ? {
+          id: {
+            notIn: usedQuestionIds,
+          },
+        }
+      : {}),
+  };
+
+  const plannerPool = await prisma.usb.findMany({
+    where: remainingWhere,
+    select: {
+      id: true,
+      questionUuid: true,
+      asFirst: true,
+      category: true,
+    },
+  });
+
+  const targetCount = getRandomQuestionTargetCount();
+  const plannedGroups = await attachPlannedGroupDetails(buildPlannedGroupsWithPlanner({
+    firstQuestions: plannerPool.filter((record) => record.asFirst === 1),
+    normalQuestions: plannerPool.filter((record) => record.asFirst === 0),
+    targetCount,
+  }));
+
+  const occupiedDateSet = new Set(occupiedDates.dates.map((item) => item.showDate));
+  const plannedDates: RandomQuestionPlannedDateResult[] = [];
+  let cursor = normalizedStartDate;
+  let groupIndex = 0;
+
+  while (plannedDates.length < requestedDays && groupIndex < plannedGroups.length) {
+    if (!occupiedDateSet.has(cursor)) {
+      const group = plannedGroups[groupIndex];
+      plannedDates.push({
+        showDate: cursor,
+        planId: group.planId,
+        targetCount: group.targetCount,
+        canCommit: group.canCommit,
+        reasons: group.reasons,
+        messages: group.messages,
+        stats: group.stats,
+        items: group.items,
+      });
+      groupIndex += 1;
+    }
+
+    cursor = addDaysToShowDate(cursor, 1);
+  }
+
+  return {
+    startDate: normalizedStartDate,
+    endDate: normalizedEndDate,
+    requestedDays,
+    plannedDates,
   };
 }
 

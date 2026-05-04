@@ -10,6 +10,11 @@ export const randomQuestionPreviewBodySchema = z.object({
   showDate: showDateSchema,
 });
 
+export const randomQuestionPlanRangeBodySchema = z.object({
+  startDate: showDateSchema,
+  endDate: showDateSchema,
+});
+
 export const randomQuestionCommitBodySchema = z.object({
   showDate: showDateSchema,
   replaceExisting: z.boolean().optional().default(false),
@@ -22,6 +27,15 @@ export const randomQuestionCommitBodySchema = z.object({
       sortOrder: z.number().int().min(1),
     })
   ),
+});
+
+export const randomQuestionBulkCommitBodySchema = z.object({
+  plans: z.array(
+    z.object({
+      showDate: showDateSchema,
+      items: randomQuestionCommitBodySchema.shape.items,
+    })
+  ).min(1),
 });
 
 export const randomQuestionRegenerateBodySchema = z.object({

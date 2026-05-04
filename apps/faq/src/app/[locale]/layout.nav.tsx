@@ -78,7 +78,7 @@ export async function levelNavLinks(locale: string): Promise<SiteNavItemConfig[]
 
   const libraryLinks: SiteMenuLeafConfig[] = [
     {
-      text: 'Question Libray',
+      text: 'Question Library',
       description: '查看题库',
       path: '/questions',
       prefetch: false,

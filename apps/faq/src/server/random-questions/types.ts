@@ -33,6 +33,14 @@ export type RandomQuestionPreviewResult = {
   items: RandomQuestionPreviewItem[];
 };
 
+export type RandomQuestionPlannedGroup = Omit<RandomQuestionPreviewResult, 'showDate'> & {
+  planId: string;
+};
+
+export type RandomQuestionPlannedDateResult = RandomQuestionPreviewResult & {
+  planId: string;
+};
+
 export type RandomQuestionStoredItem = {
   id: string;
   showDate: string;
@@ -69,6 +77,13 @@ export type RandomQuestionAnalysisResult = RandomQuestionDateListResult & {
   categoryInventory: RandomQuestionCategoryInventory[];
 };
 
+export type RandomQuestionPlanRangeResult = {
+  startDate: string;
+  endDate: string;
+  requestedDays: number;
+  plannedDates: RandomQuestionPlannedDateResult[];
+};
+
 export type RandomQuestionCategoryInventory = {
   category: string;
   firstCount: number;
@@ -80,4 +95,9 @@ export type RandomQuestionCommitResult = {
   saved: boolean;
   showDate: string;
   count: number;
+};
+
+export type RandomQuestionBulkCommitResult = {
+  saved: boolean;
+  dates: RandomQuestionCommitResult[];
 };

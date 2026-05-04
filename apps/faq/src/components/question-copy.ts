@@ -505,7 +505,7 @@ export async function getRandomQuestionsPageCopy(locale: string): Promise<Random
     title: 'Random Question Sets',
     description: 'Generate daily random question sets, inspect saved dates, and regenerate a day when the pool changes.',
     actions: {
-      backToList: 'Back to List',
+      backToList: 'Library',
       create: listT('actions.create'),
       import: importT('title'),
     },

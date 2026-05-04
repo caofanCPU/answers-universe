@@ -15,6 +15,7 @@ import {
 } from '@windrun-huaiin/base-ui/icons';
 import { cn } from '@windrun-huaiin/lib/utils';
 import { GradientButton, XButton, XToggleButton } from '@windrun-huaiin/third-ui/main/buttons';
+import { RandomCalendarView, RandomDateRangeDialog, type RandomCalendarDayState, type RandomCalendarRange } from './random-calendar-view';
 import { buildReadonlyAnswerOptions } from './question-answer-options';
 import { QuestionDetail } from './question-detail';
 import type {
@@ -22,6 +23,7 @@ import type {
   RandomQuestionCategoryInventory,
   RandomQuestionDetailResult,
   RandomQuestionDraftItem,
+  RandomQuestionPlanRangeResult,
   RandomQuestionPreviewResult,
 } from '@/server/random-questions/types';
 
@@ -37,40 +39,16 @@ type RequestState<T> = {
 
 type TopPanelKey = 'status' | 'details' | 'stats' | 'info';
 
+type PlannedDay = {
+  showDate: string;
+  planId: string;
+  preview: RandomQuestionPreviewResult;
+};
+
 const DEFAULT_TARGET_TOTAL = 5;
 
 function getTodayString(): string {
   return new Date().toISOString().slice(0, 10);
-}
-
-function parseDateString(value: string): Date {
-  return new Date(`${value}T00:00:00.000Z`);
-}
-
-function formatDateString(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
-function getMonthTitle(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
-}
-
-function buildMonthDays(currentMonth: Date): Date[] {
-  const year = currentMonth.getUTCFullYear();
-  const month = currentMonth.getUTCMonth();
-  const firstDay = new Date(Date.UTC(year, month, 1));
-  const startWeekday = firstDay.getUTCDay();
-  const gridStart = new Date(Date.UTC(year, month, 1 - startWeekday));
-
-  return Array.from({ length: 42 }, (_, index) => new Date(Date.UTC(
-    gridStart.getUTCFullYear(),
-    gridStart.getUTCMonth(),
-    gridStart.getUTCDate() + index
-  )));
 }
 
 function toDraftItems(items: RandomQuestionPreviewResult['items']): RandomQuestionDraftItem[] {
@@ -363,7 +341,9 @@ function InventoryTableSkeleton({ rows, className }: { rows: number; className?:
 export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientProps) {
   const today = useMemo(() => getTodayString(), []);
   const [selectedDate, setSelectedDate] = useState(today);
-  const [calendarMonth, setCalendarMonth] = useState(() => parseDateString(`${today.slice(0, 7)}-01`));
+  const [rangeSelection, setRangeSelection] = useState<RandomCalendarRange>({ startDate: today, endDate: today });
+  const [rangeDialogOpen, setRangeDialogOpen] = useState(false);
+  const [plannedDays, setPlannedDays] = useState<PlannedDay[]>([]);
   const [analysisState, setAnalysisState] = useState<RequestState<RandomQuestionAnalysisResult>>({
     data: null,
     loading: true,
@@ -391,9 +371,36 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
     () => new Set(analysisState.data?.dates.map((item) => item.showDate) ?? []),
     [analysisState.data]
   );
-  const monthDays = useMemo(() => buildMonthDays(calendarMonth), [calendarMonth]);
+  const plannedDayMap = useMemo(() => new Map(plannedDays.map((item) => [item.showDate, item])), [plannedDays]);
+  const dayStates = useMemo(() => {
+    const states = new Map<string, RandomCalendarDayState>();
+
+    for (const date of generatedDateSet) {
+      states.set(date, {
+        state: 'saved',
+        title: `${date} has a saved set`,
+      });
+    }
+
+    for (const plannedDay of plannedDays) {
+      states.set(plannedDay.showDate, {
+        state: 'planned',
+        title: `${plannedDay.showDate} has a planned set`,
+      });
+    }
+
+    return states;
+  }, [generatedDateSet, plannedDays]);
   const selectedHasSavedSet = generatedDateSet.has(selectedDate);
+  const selectedPlannedDay = plannedDayMap.get(selectedDate) ?? null;
   const guidanceResetKey = previewState.data?.messages.join('|') ?? '';
+
+  function openRangeDialog() {
+    setRangeSelection({ startDate: selectedDate, endDate: selectedDate });
+    setPlannedDays([]);
+    setPreviewState({ data: null, loading: false, error: null });
+    setRangeDialogOpen(true);
+  }
 
   async function loadAnalysis() {
     setAnalysisState((current) => ({ ...current, loading: true, error: null }));
@@ -450,14 +457,19 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   }, []);
 
   useEffect(() => {
-    setPreviewState({ data: null, loading: false, error: null });
+    setPreviewState({ data: selectedPlannedDay?.preview ?? null, loading: false, error: null });
     setPreviewIndex(0);
     setSavedIndex(0);
     setActiveTopPanel('status');
     setReplaceConfirmOpen(false);
     setGuidanceDismissed(false);
-    void loadDetail(selectedDate);
-  }, [selectedDate]);
+    if (selectedHasSavedSet) {
+      void loadDetail(selectedDate);
+      return;
+    }
+
+    setDetailState({ data: null, loading: false, error: null });
+  }, [selectedDate, selectedHasSavedSet, selectedPlannedDay?.planId, selectedPlannedDay?.preview]);
 
   useEffect(() => {
     setPreviewIndex(0);
@@ -472,34 +484,41 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   }, [detailState.data?.showDate, detailState.data?.items.length]);
 
   async function handlePreview() {
-    setPreviewState({ data: null, loading: true, error: null });
+    const response = await fetch('/api/random-questions/preview', {
+      method: 'POST',
+      credentials: 'include',
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        showDate: selectedDate,
+      }),
+    });
 
-    try {
-      const response = await fetch('/api/random-questions/preview', {
-        method: 'POST',
-        credentials: 'include',
-        cache: 'no-store',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          showDate: selectedDate,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
-      }
-
-      const data = (await response.json()) as RandomQuestionPreviewResult;
-      setPreviewState({ data, loading: false, error: null });
-    } catch (error) {
+    if (!response.ok) {
       setPreviewState({
         data: null,
         loading: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: `Request failed with status ${response.status}`,
       });
+      return;
     }
+
+    const preview = (await response.json()) as RandomQuestionPreviewResult;
+    setPreviewState({
+      data: preview,
+      loading: false,
+      error: null,
+    });
+    setPlannedDays((current) => [
+      ...current.filter((item) => item.showDate !== selectedDate),
+      {
+        showDate: selectedDate,
+        planId: `preview-${selectedDate}`,
+        preview,
+      },
+    ]);
   }
 
   async function handleSavePreview(replaceExisting: boolean) {
@@ -531,6 +550,50 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
       await loadAnalysis();
       await loadDetail(selectedDate);
       setPreviewState({ data: null, loading: false, error: null });
+      setPlannedDays((current) => current.filter((item) => item.showDate !== selectedDate));
+    } catch (error) {
+      setPreviewState((current) => ({
+        ...current,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSaveAllPlanned() {
+    const commitReadyPlans = plannedDays.filter((item) => item.preview.canCommit && !generatedDateSet.has(item.showDate));
+
+    if (commitReadyPlans.length === 0 || saving) {
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const response = await fetch('/api/random-questions/commit-bulk', {
+        method: 'POST',
+        credentials: 'include',
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plans: commitReadyPlans.map((item) => ({
+            showDate: item.showDate,
+            items: toDraftItems(item.preview.items),
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      await loadAnalysis();
+      await loadDetail(selectedDate);
+      setPlannedDays([]);
+      setPreviewState({ data: null, loading: false, error: null });
     } catch (error) {
       setPreviewState((current) => ({
         ...current,
@@ -558,6 +621,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   function cancelPreview() {
     setPreviewState({ data: null, loading: false, error: null });
     setPreviewIndex(0);
+    setPlannedDays((current) => current.filter((item) => item.showDate !== selectedDate));
   }
 
   const activeStats = previewState.data?.stats ?? detailState.data?.stats ?? null;
@@ -580,9 +644,9 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   const activeSavedItem = savedItems[safeSavedIndex] ?? null;
   const selectedStatusBadge = previewState.data
     ? {
-        label: 'Preview',
+        label: selectedPlannedDay ? 'Planned' : 'Preview',
         className:
-          'border-red-200 bg-red-50 text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200',
+          'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200',
       }
     : selectedHasSavedSet
       ? {
@@ -605,84 +669,84 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   return (
     <div className="min-h-[calc(100vh-18rem)] min-w-0 space-y-6">
       <div className="grid min-w-0 gap-6 xl:items-stretch xl:grid-cols-[24rem_minmax(0,1fr)]">
-        <div className="min-w-0 overflow-hidden rounded-3xl border border-black/10 p-4 dark:border-white/10 xl:self-stretch">
-          <div className="flex min-w-0 flex-col">
-            <div className="flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() =>
-                  setCalendarMonth(
-                    new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() - 1, 1))
-                  )
-                }
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-                aria-label="Previous month"
-                title="Previous month"
-              >
-                <ChevronLeftIcon className="h-4 w-4" />
-              </button>
-              <div className="text-sm font-semibold text-slate-900 dark:text-white">{getMonthTitle(calendarMonth)}</div>
-              <button
-                type="button"
-                onClick={() =>
-                  setCalendarMonth(
-                    new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() + 1, 1))
-                  )
-                }
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-                aria-label="Next month"
-                title="Next month"
-              >
-                <ChevronRightIcon className="h-4 w-4" />
-              </button>
-            </div>
+        <div className="flex min-w-0 max-w-full flex-col space-y-3 overflow-hidden xl:h-full">
+          <RandomCalendarView
+            selectedDate={selectedDate}
+            range={rangeSelection}
+            dayStates={dayStates}
+            onSelectedDateChange={setSelectedDate}
+            onRangeOpen={openRangeDialog}
+          />
+          <RandomDateRangeDialog
+            open={rangeDialogOpen}
+            value={rangeSelection}
+            anchorDate={selectedDate}
+            onOpenChange={setRangeDialogOpen}
+            onClear={(nextRange) => {
+              setRangeSelection(nextRange);
+              setPlannedDays([]);
+              setPreviewState({ data: null, loading: false, error: null });
+              if (nextRange.startDate) {
+                setSelectedDate(nextRange.startDate);
+              }
+            }}
+            onApply={async (nextRange) => {
+              setRangeSelection(nextRange);
+              if (!nextRange.startDate || !nextRange.endDate) {
+                setPlannedDays([]);
+                setPreviewState({ data: null, loading: false, error: null });
+                return;
+              }
 
-            <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((label) => (
-                <div key={label} className="py-1">
-                  {label}
-                </div>
-              ))}
-            </div>
+              const response = await fetch('/api/random-questions/plan-range', {
+                method: 'POST',
+                credentials: 'include',
+                cache: 'no-store',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  startDate: nextRange.startDate,
+                  endDate: nextRange.endDate,
+                }),
+              });
 
-            <div className="mt-2 grid grid-cols-7 gap-1">
-              {monthDays.map((day) => {
-                const dayString = formatDateString(day);
-                const isCurrentMonth = day.getUTCMonth() === calendarMonth.getUTCMonth();
-                const isSelected = dayString === selectedDate;
-                const isGenerated = generatedDateSet.has(dayString);
+              if (!response.ok) {
+                setPlannedDays([]);
+                setPreviewState({ data: null, loading: false, error: `Request failed with status ${response.status}` });
+                return;
+              }
 
-                return (
-                  <button
-                    key={dayString}
-                    type="button"
-                    onClick={() => {
-                      setSelectedDate(dayString);
-                      setCalendarMonth(new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), 1)));
-                    }}
-                    className={cn(
-                      'relative flex h-11 items-center justify-center rounded-2xl border text-sm transition',
-                      isSelected
-                        ? 'bg-black text-white dark:bg-white dark:text-slate-950'
-                        : 'text-slate-700 hover:bg-black/5 dark:text-slate-200 dark:hover:bg-white/5',
-                      isGenerated
-                        ? 'border-emerald-300 dark:border-emerald-400'
-                        : isSelected
-                          ? 'border-black/20 dark:border-white/20'
-                          : 'border-black/10 dark:border-white/10',
-                      isCurrentMonth ? '' : 'opacity-45'
-                    )}
-                    title={isGenerated ? `${dayString} has a saved set` : `Open ${dayString}`}
-                  >
-                    <span>{day.getUTCDate()}</span>
-                    {isGenerated ? (
-                      <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-300" />
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+              const result = (await response.json()) as RandomQuestionPlanRangeResult;
+              const nextPlannedDays = result.plannedDates.map((item) => ({
+                showDate: item.showDate,
+                planId: item.planId,
+                preview: {
+                  showDate: item.showDate,
+                  targetCount: item.targetCount,
+                  canCommit: item.canCommit,
+                  reasons: item.reasons,
+                  messages: item.messages,
+                  stats: item.stats,
+                  items: item.items,
+                },
+              }));
+
+              if (nextPlannedDays.length === 0) {
+                setPlannedDays([]);
+                setPreviewState({ data: null, loading: false, error: 'No planned groups available for this range.' });
+                return;
+              }
+
+              setPlannedDays((current) => [
+                ...current.filter((item) => !nextPlannedDays.some((nextItem) => nextItem.showDate === item.showDate)),
+                ...nextPlannedDays,
+              ]);
+              setSelectedDate(nextPlannedDays[0].showDate);
+              setPreviewState({ data: nextPlannedDays[0].preview, loading: false, error: null });
+              setActiveTopPanel('status');
+            }}
+          />
         </div>
 
         <div className="min-w-0 overflow-hidden rounded-3xl border border-black/10 p-4 dark:border-white/10 sm:p-5 xl:self-stretch">
@@ -766,6 +830,45 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                   </div>
 
                   <StatsPanel stats={displayStats} />
+                  {plannedDays.length > 0 ? (
+                    <div className="rounded-2xl bg-amber-50/80 p-4 dark:bg-amber-500/10">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-amber-800 dark:text-amber-100">
+                            {`${plannedDays.length} planned day${plannedDays.length === 1 ? '' : 's'}`}
+                          </div>
+                          <div className="mt-1 text-xs text-amber-700/80 dark:text-amber-200/80">
+                            Commit one date or save all planned days together.
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <XButton
+                            type="single"
+                            variant="subtle"
+                            minWidth="min-w-0"
+                            className="px-4 py-2"
+                            button={{
+                              icon: false,
+                              text: 'Clear plans',
+                              onClick: () => {
+                                setPlannedDays([]);
+                                setPreviewState({ data: null, loading: false, error: null });
+                              },
+                            }}
+                          />
+                          <GradientButton
+                            onClick={() => void handleSaveAllPlanned()}
+                            title="Save all"
+                            loadingText="Saving..."
+                            align="center"
+                            icon=<BookCheckIcon/>
+                            className="sm:w-auto"
+                            disabled={saving}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
 
                 </div>
               ) : null}
