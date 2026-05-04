@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, DatabaseZapIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, CoinsIcon, DatabaseZapIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import { cn } from '@windrun-huaiin/lib/utils';
 
 export type RandomCalendarRange = {
@@ -16,10 +16,10 @@ export type RandomCalendarDayState = {
 
 type RandomCalendarViewProps = {
   selectedDate: string;
-  range: RandomCalendarRange;
   dayStates: Map<string, RandomCalendarDayState>;
   onSelectedDateChange: (date: string) => void;
-  onRangeOpen: () => void;
+  onActionOpen: () => void;
+  hasPlannedDays?: boolean;
 };
 
 type RandomDateRangeDialogProps = {
@@ -103,35 +103,6 @@ function buildMonthDays(currentMonth: Date): Date[] {
   )));
 }
 
-function isDateInRange(date: string, range: RandomCalendarRange): boolean {
-  return Boolean(
-    range.startDate &&
-    range.endDate &&
-    compareDateStrings(date, range.startDate) >= 0 &&
-    compareDateStrings(date, range.endDate) <= 0
-  );
-}
-
-function getRangeRole(date: string, range: RandomCalendarRange): 'start' | 'middle' | 'end' | 'single' | null {
-  if (!range.startDate || !range.endDate || !isDateInRange(date, range)) {
-    return null;
-  }
-
-  if (range.startDate === range.endDate && date === range.startDate) {
-    return 'single';
-  }
-
-  if (date === range.startDate) {
-    return 'start';
-  }
-
-  if (date === range.endDate) {
-    return 'end';
-  }
-
-  return 'middle';
-}
-
 function buildTrackRange(referenceDate: string, minDays = TRACK_MIN_DAYS): RandomCalendarRange {
   const startDate = addDays(referenceDate, -Math.floor(minDays / 3));
   const endDate = addDays(startDate, minDays - 1);
@@ -188,10 +159,10 @@ function formatMonthShort(value: string): string {
 
 export function RandomCalendarView({
   selectedDate,
-  range,
   dayStates,
   onSelectedDateChange,
-  onRangeOpen,
+  onActionOpen,
+  hasPlannedDays = false,
 }: RandomCalendarViewProps) {
   const [calendarMonth, setCalendarMonth] = useState(() => parseDateString(`${selectedDate.slice(0, 7)}-01`));
   const monthDays = useMemo(() => buildMonthDays(calendarMonth), [calendarMonth]);
@@ -219,12 +190,12 @@ export function RandomCalendarView({
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
-              onClick={onRangeOpen}
+              onClick={onActionOpen}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-              aria-label="Select date range"
-              title="Select date range"
+              aria-label={hasPlannedDays ? 'Open planned actions' : 'Select date range'}
+              title={hasPlannedDays ? 'Open planned actions' : 'Select date range'}
             >
-              <DatabaseZapIcon className="h-4 w-4" />
+              {hasPlannedDays ? <CoinsIcon className="h-4 w-4" /> : <DatabaseZapIcon className="h-4 w-4" />}
             </button>
             <button
               type="button"
@@ -261,7 +232,6 @@ export function RandomCalendarView({
                 label={String(day.getUTCDate())}
                 currentMonth={day.getUTCMonth() === calendarMonth.getUTCMonth()}
                 selected={date === selectedDate}
-                rangeRole={getRangeRole(date, range)}
                 dayState={dayStates.get(date)}
                 onPress={(nextDate) => {
                   onSelectedDateChange(nextDate);
@@ -693,13 +663,16 @@ export function RandomDateRangeDialog({
               </div>
 
               <div
-                ref={trackRef}
-                className="absolute inset-x-0 top-[3.85rem] h-3 touch-none rounded-full bg-slate-400/30 dark:bg-slate-500/25"
+                className="absolute inset-x-0 top-[3.35rem] h-10 touch-none"
                 onDoubleClick={(event) => {
                   event.stopPropagation();
                   resetReferenceFromClientX(event.clientX);
                 }}
               >
+                <div
+                  ref={trackRef}
+                  className="absolute inset-x-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-slate-400/30 dark:bg-slate-500/25"
+                >
                 <div
                   ref={selectionRef}
                   className="absolute top-1/2 h-4 touch-none -translate-y-1/2 rounded-md border border-sky-500 bg-white dark:border-sky-300 dark:bg-slate-950"
@@ -737,6 +710,7 @@ export function RandomDateRangeDialog({
                   aria-label="Adjust end date"
                 />
               </div>
+              </div>
             </div>
 
           </div>
@@ -751,7 +725,6 @@ function CalendarDayButton({
   label,
   currentMonth,
   selected,
-  rangeRole,
   dayState,
   onPress,
 }: {
@@ -759,13 +732,11 @@ function CalendarDayButton({
   label: string;
   currentMonth: boolean;
   selected: boolean;
-  rangeRole: 'start' | 'middle' | 'end' | 'single' | null;
   dayState?: RandomCalendarDayState;
   onPress: (date: string) => void;
 }) {
   const isSaved = dayState?.state === 'saved';
   const isPlanned = dayState?.state === 'planned';
-  const inRange = Boolean(rangeRole);
 
   return (
     <button
@@ -773,8 +744,6 @@ function CalendarDayButton({
       onClick={() => onPress(date)}
       className={cn(
         'relative flex h-11 select-none items-center justify-center rounded-2xl border text-sm transition',
-        inRange && !selected && 'bg-slate-100 dark:bg-white/10',
-        (rangeRole === 'start' || rangeRole === 'end' || rangeRole === 'single') && !selected && 'bg-slate-200 dark:bg-white/15',
         selected
           ? 'bg-black text-white dark:bg-white dark:text-slate-950'
           : 'text-slate-700 hover:bg-black/5 dark:text-slate-200 dark:hover:bg-white/5',

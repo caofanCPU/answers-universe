@@ -14,6 +14,7 @@ import {
   XIcon,
 } from '@windrun-huaiin/base-ui/icons';
 import { cn } from '@windrun-huaiin/lib/utils';
+import { ConfirmDialog } from '@windrun-huaiin/third-ui/main/alert-dialog';
 import { GradientButton, XButton, XToggleButton } from '@windrun-huaiin/third-ui/main/buttons';
 import { RandomCalendarView, RandomDateRangeDialog, type RandomCalendarDayState, type RandomCalendarRange } from './random-calendar-view';
 import { buildReadonlyAnswerOptions } from './question-answer-options';
@@ -49,6 +50,10 @@ const DEFAULT_TARGET_TOTAL = 5;
 
 function getTodayString(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function createEmptyRange(): RandomCalendarRange {
+  return { startDate: null, endDate: null };
 }
 
 function toDraftItems(items: RandomQuestionPreviewResult['items']): RandomQuestionDraftItem[] {
@@ -341,7 +346,7 @@ function InventoryTableSkeleton({ rows, className }: { rows: number; className?:
 export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientProps) {
   const today = useMemo(() => getTodayString(), []);
   const [selectedDate, setSelectedDate] = useState(today);
-  const [rangeSelection, setRangeSelection] = useState<RandomCalendarRange>({ startDate: today, endDate: today });
+  const [rangeSelection, setRangeSelection] = useState<RandomCalendarRange>(createEmptyRange);
   const [rangeDialogOpen, setRangeDialogOpen] = useState(false);
   const [plannedDays, setPlannedDays] = useState<PlannedDay[]>([]);
   const [analysisState, setAnalysisState] = useState<RequestState<RandomQuestionAnalysisResult>>({
@@ -366,6 +371,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   const [activeTopPanel, setActiveTopPanel] = useState<TopPanelKey>('status');
   const [replaceConfirmOpen, setReplaceConfirmOpen] = useState(false);
   const [guidanceDismissed, setGuidanceDismissed] = useState(false);
+  const [planActionsOpen, setPlanActionsOpen] = useState(false);
   const copyResetTimerRef = useRef<number | null>(null);
   const generatedDateSet = useMemo(
     () => new Set(analysisState.data?.dates.map((item) => item.showDate) ?? []),
@@ -400,6 +406,15 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
     setPlannedDays([]);
     setPreviewState({ data: null, loading: false, error: null });
     setRangeDialogOpen(true);
+  }
+
+  function openCalendarAction() {
+    if (plannedDays.length > 0) {
+      setPlanActionsOpen(true);
+      return;
+    }
+
+    openRangeDialog();
   }
 
   async function loadAnalysis() {
@@ -624,6 +639,11 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
     setPlannedDays((current) => current.filter((item) => item.showDate !== selectedDate));
   }
 
+  const commitReadyPlans = useMemo(
+    () => plannedDays.filter((item) => item.preview.canCommit && !generatedDateSet.has(item.showDate)),
+    [generatedDateSet, plannedDays]
+  );
+
   const activeStats = previewState.data?.stats ?? detailState.data?.stats ?? null;
   const displayStats = activeStats ?? {
     targetTotal: DEFAULT_TARGET_TOTAL,
@@ -672,16 +692,21 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
         <div className="flex min-w-0 max-w-full flex-col space-y-3 overflow-hidden xl:h-full">
           <RandomCalendarView
             selectedDate={selectedDate}
-            range={rangeSelection}
             dayStates={dayStates}
             onSelectedDateChange={setSelectedDate}
-            onRangeOpen={openRangeDialog}
+            onActionOpen={openCalendarAction}
+            hasPlannedDays={plannedDays.length > 0}
           />
           <RandomDateRangeDialog
             open={rangeDialogOpen}
             value={rangeSelection}
             anchorDate={selectedDate}
-            onOpenChange={setRangeDialogOpen}
+            onOpenChange={(open) => {
+              setRangeDialogOpen(open);
+              if (!open) {
+                setRangeSelection(createEmptyRange());
+              }
+            }}
             onClear={(nextRange) => {
               setRangeSelection(nextRange);
               setPlannedDays([]);
@@ -742,6 +767,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                 ...current.filter((item) => !nextPlannedDays.some((nextItem) => nextItem.showDate === item.showDate)),
                 ...nextPlannedDays,
               ]);
+              setRangeSelection(createEmptyRange());
               setSelectedDate(nextPlannedDays[0].showDate);
               setPreviewState({ data: nextPlannedDays[0].preview, loading: false, error: null });
               setActiveTopPanel('status');
@@ -777,7 +803,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
               />
             </div>
 
-            <div className="min-h-88 min-w-0 flex-1 overflow-hidden rounded-2xl border border-black/10 p-3 dark:border-white/10 sm:p-4">
+            <div className="min-w-0 overflow-hidden rounded-2xl border border-black/10 p-3 dark:border-white/10 sm:p-4">
               {activeTopPanel === 'status' ? (
                 <div className="space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -830,46 +856,6 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                   </div>
 
                   <StatsPanel stats={displayStats} />
-                  {plannedDays.length > 0 ? (
-                    <div className="rounded-2xl bg-amber-50/80 p-4 dark:bg-amber-500/10">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-amber-800 dark:text-amber-100">
-                            {`${plannedDays.length} planned day${plannedDays.length === 1 ? '' : 's'}`}
-                          </div>
-                          <div className="mt-1 text-xs text-amber-700/80 dark:text-amber-200/80">
-                            Commit one date or save all planned days together.
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <XButton
-                            type="single"
-                            variant="subtle"
-                            minWidth="min-w-0"
-                            className="px-4 py-2"
-                            button={{
-                              icon: false,
-                              text: 'Clear plans',
-                              onClick: () => {
-                                setPlannedDays([]);
-                                setPreviewState({ data: null, loading: false, error: null });
-                              },
-                            }}
-                          />
-                          <GradientButton
-                            onClick={() => void handleSaveAllPlanned()}
-                            title="Save all"
-                            loadingText="Saving..."
-                            align="center"
-                            icon=<BookCheckIcon/>
-                            className="sm:w-auto"
-                            disabled={saving}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-
                 </div>
               ) : null}
 
@@ -1130,6 +1116,29 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
           </div>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={planActionsOpen}
+        onOpenChange={setPlanActionsOpen}
+        type="normal"
+        title={`${plannedDays.length} planned day${plannedDays.length === 1 ? '' : 's'}`}
+        description={
+          commitReadyPlans.length > 0
+            ? `${commitReadyPlans.length} planned day${commitReadyPlans.length === 1 ? '' : 's'} can be saved now. Clear plans to drop all temporary plan data, or save all commit-ready plans together.`
+            : 'No commit-ready planned days are available right now. You can still clear all temporary plan data.'
+        }
+        cancelText="Clear plans"
+        confirmText="Save all"
+        onCancel={() => {
+          setPlannedDays([]);
+          setPreviewState({ data: null, loading: false, error: null });
+        }}
+        onConfirm={() => {
+          if (commitReadyPlans.length > 0) {
+            void handleSaveAllPlanned();
+          }
+        }}
+      />
     </div>
   );
 }
