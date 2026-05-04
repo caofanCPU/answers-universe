@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  BadgeInfoIcon,
   BookCheckIcon,
   ChartColumnStackedIcon,
   ChevronLeftIcon,
@@ -11,6 +10,7 @@ import {
   CopyIcon,
   InfoIcon,
   ListTodoIcon,
+  RefreshCcwIcon,
   XIcon,
 } from '@windrun-huaiin/base-ui/icons';
 import { cn } from '@windrun-huaiin/lib/utils';
@@ -38,15 +38,13 @@ type RequestState<T> = {
   error: string | null;
 };
 
-type TopPanelKey = 'status' | 'details' | 'stats' | 'info';
+type TopPanelKey = 'details' | 'stats' | 'info';
 
 type PlannedDay = {
   showDate: string;
   planId: string;
   preview: RandomQuestionPreviewResult;
 };
-
-const DEFAULT_TARGET_TOTAL = 5;
 
 function getTodayString(): string {
   return new Date().toISOString().slice(0, 10);
@@ -119,47 +117,6 @@ function QuestionIdentityTags({
   );
 }
 
-function StatsPanel({
-  stats,
-}: {
-  stats: {
-    targetTotal: number;
-    actualTotal: number;
-    targetFirstCount: number;
-    actualFirstCount: number;
-    targetNormalCount: number;
-    actualNormalCount: number;
-  };
-}) {
-  const totalReady = stats.actualTotal === stats.targetTotal;
-  const firstReady = stats.actualFirstCount === stats.targetFirstCount;
-  const normalReady = stats.actualNormalCount === stats.targetNormalCount;
-
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <div className="rounded-2xl bg-white/70 p-4 dark:bg-slate-950/30">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Total</div>
-        <div className={`mt-2 text-2xl font-semibold ${totalReady ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}`}>
-          {`${stats.actualTotal} / ${stats.targetTotal}`}
-        </div>
-      </div>
-      <div className="rounded-2xl bg-white/70 p-4 dark:bg-slate-950/30">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">First question</div>
-        <div className={`mt-2 text-2xl font-semibold ${firstReady ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}`}>
-          {`${stats.actualFirstCount} / ${stats.targetFirstCount}`}
-        </div>
-      </div>
-      <div className="rounded-2xl bg-white/70 p-4 dark:bg-slate-950/30">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Normal questions</div>
-        <div className={`mt-2 text-2xl font-semibold ${normalReady ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}`}>
-          {`${stats.actualNormalCount} / ${stats.targetNormalCount}`}
-        </div>
-      </div>
-      <div className="hidden rounded-2xl bg-transparent p-4 sm:block" aria-hidden="true" />
-    </div>
-  );
-}
-
 function AnalysisPanel({
   analysis,
   loading,
@@ -208,11 +165,18 @@ function AnalysisPanel({
 
   return (
     <div className="space-y-4">
-      <div className="text-center">
-        <div className="text-sm font-semibold text-slate-900 dark:text-white">Analysis</div>
-        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="text-xs text-slate-500 dark:text-slate-400">
           Generated coverage and remaining capacity
         </div>
+        <GradientButton
+          onClick={() => undefined}
+          title="Refresh"
+          align="center"
+          variant="subtle"
+          className="sm:w-auto"
+          icon=<RefreshCcwIcon className="h-4 w-4"/>
+        />
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         {metrics.map((metric) => (
@@ -368,7 +332,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   const [previewIndex, setPreviewIndex] = useState(0);
   const [savedIndex, setSavedIndex] = useState(0);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [activeTopPanel, setActiveTopPanel] = useState<TopPanelKey>('status');
+  const [activeTopPanel, setActiveTopPanel] = useState<TopPanelKey>('details');
   const [replaceConfirmOpen, setReplaceConfirmOpen] = useState(false);
   const [guidanceDismissed, setGuidanceDismissed] = useState(false);
   const [planActionsOpen, setPlanActionsOpen] = useState(false);
@@ -475,7 +439,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
     setPreviewState({ data: selectedPlannedDay?.preview ?? null, loading: false, error: null });
     setPreviewIndex(0);
     setSavedIndex(0);
-    setActiveTopPanel('status');
+    setActiveTopPanel('details');
     setReplaceConfirmOpen(false);
     setGuidanceDismissed(false);
     if (selectedHasSavedSet) {
@@ -644,15 +608,6 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
     [generatedDateSet, plannedDays]
   );
 
-  const activeStats = previewState.data?.stats ?? detailState.data?.stats ?? null;
-  const displayStats = activeStats ?? {
-    targetTotal: DEFAULT_TARGET_TOTAL,
-    actualTotal: 0,
-    targetFirstCount: 1,
-    actualFirstCount: 0,
-    targetNormalCount: DEFAULT_TARGET_TOTAL - 1,
-    actualNormalCount: 0,
-  };
   const activeMessages = previewState.data?.messages ?? [];
   const previewItems = previewState.data?.items ?? [];
   const hasPreviewNavigation = previewItems.length > 1;
@@ -680,7 +635,6 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
             'border-red-200 bg-red-50 text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200',
         };
   const panelItems = [
-    { key: 'status' as const, label: 'Status', mobileIcon: <BadgeInfoIcon className="h-4 w-4" /> },
     { key: 'details' as const, label: 'Details', mobileIcon: <ListTodoIcon className="h-4 w-4" /> },
     { key: 'stats' as const, label: 'Analysis', mobileIcon: <ChartColumnStackedIcon className="h-4 w-4" /> },
     { key: 'info' as const, label: 'Info', mobileIcon: <InfoIcon className="h-4 w-4" /> },
@@ -770,7 +724,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
               setRangeSelection(createEmptyRange());
               setSelectedDate(nextPlannedDays[0].showDate);
               setPreviewState({ data: nextPlannedDays[0].preview, loading: false, error: null });
-              setActiveTopPanel('status');
+              setActiveTopPanel('details');
             }}
           />
         </div>
@@ -778,12 +732,6 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
         <div className="min-w-0 overflow-hidden rounded-3xl border border-black/10 p-4 dark:border-white/10 sm:p-5 xl:self-stretch">
           <div className="flex min-w-0 flex-col gap-4 xl:h-full">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">{selectedDate}</div>
-                <div className={cn('rounded-full border px-3 py-1 text-xs font-semibold', selectedStatusBadge.className)}>
-                  {selectedStatusBadge.label}
-                </div>
-              </div>
               <XToggleButton
                 ariaLabel="Top panel toggle"
                 value={activeTopPanel}
@@ -791,23 +739,30 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                 options={panelItems.map((item) => ({
                   value: item.key,
                   label: item.label,
-                  mobileIcon: item.mobileIcon,
                 }))}
                 size="compact"
-                className="max-w-full border-black/10 dark:border-white/10"
-                minItemWidthClassName="min-w-9 sm:min-w-[88px]"
-                maxItemWidthClassName="max-w-9 sm:max-w-[160px]"
-                itemPaddingClassName="px-2 py-2 sm:px-4"
+                className="mx-auto max-w-full border-black/10 dark:border-white/10"
+                minItemWidthClassName="min-w-[88px]"
+                maxItemWidthClassName="max-w-[160px]"
+                itemPaddingClassName="px-4 py-2"
                 itemTextClassName="text-sm"
                 inactiveItemClassName="text-gray-800 hover:text-gray-900 dark:text-gray-200 dark:hover:text-gray-100"
               />
             </div>
 
-            <div className="min-w-0 overflow-hidden rounded-2xl border border-black/10 p-3 dark:border-white/10 sm:p-4">
-              {activeTopPanel === 'status' ? (
-                <div className="space-y-4">
+            <div className={cn(
+              'min-w-0 overflow-hidden p-3 sm:p-4',
+              activeTopPanel === 'info' ? '' : 'rounded-2xl border border-black/10 dark:border-white/10'
+            )}>
+              {activeTopPanel === 'details' ? (
+                <div className="space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="text-sm font-semibold text-slate-900 dark:text-white">Current status</div>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white">{selectedDate}</div>
+                      <div className={cn('rounded-full border px-3 py-1 text-xs font-semibold', selectedStatusBadge.className)}>
+                        {selectedStatusBadge.label}
+                      </div>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {previewState.data ? (
                         <>
@@ -824,6 +779,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                               title="Save set"
                               loadingText="Saving..."
                               align="center"
+                              variant="subtle"
                               icon=<BookCheckIcon/>
                               className="sm:w-auto"
                               disabled={saving}
@@ -844,27 +800,15 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                       ) : (
                         <GradientButton
                           onClick={() => void handlePreview()}
-                          title="Generate preview"
+                          title="Generate"
                           loadingText="Loading..."
                           align="center"
+                          variant="subtle"
                           icon=<CircleStopIcon/>
                           className="sm:w-auto"
                           disabled={previewState.loading || detailState.loading}
                         />
                       )}
-                    </div>
-                  </div>
-
-                  <StatsPanel stats={displayStats} />
-                </div>
-              ) : null}
-
-              {activeTopPanel === 'details' ? (
-                <div className="space-y-3">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900 dark:text-white">Supporting details</div>
-                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      Categories and IDs for this set
                     </div>
                   </div>
                   {(previewItems.length > 0 || savedItems.length > 0) ? (

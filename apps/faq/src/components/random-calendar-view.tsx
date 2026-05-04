@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, CoinsIcon, DatabaseZapIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, CoinsIcon, CrossIcon, DatabaseZapIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import { cn } from '@windrun-huaiin/lib/utils';
 
 export type RandomCalendarRange = {
@@ -81,12 +81,17 @@ function getRangeLabel(range: RandomCalendarRange): string {
   return `${range.startDate} ~ ${range.endDate}`;
 }
 
-function getMonthTitle(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
+function getMonthParts(date: Date): { year: string; month: string } {
+  return {
+    year: date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      timeZone: 'UTC',
+    }),
+    month: date.toLocaleDateString('en-US', {
+      month: 'long',
+      timeZone: 'UTC',
+    }),
+  };
 }
 
 function buildMonthDays(currentMonth: Date): Date[] {
@@ -164,44 +169,88 @@ export const RandomCalendarView = memo(function RandomCalendarView({
   onActionOpen,
   hasPlannedDays = false,
 }: RandomCalendarViewProps) {
-  const [calendarMonth, setCalendarMonth] = useState(() => parseDateString(`${selectedDate.slice(0, 7)}-01`));
+  const selectedMonthBase = useMemo(() => parseDateString(`${selectedDate.slice(0, 7)}-01`), [selectedDate]);
+  const [monthOffset, setMonthOffset] = useState(0);
+  const calendarMonth = useMemo(() => new Date(Date.UTC(
+    selectedMonthBase.getUTCFullYear(),
+    selectedMonthBase.getUTCMonth() + monthOffset,
+    1
+  )), [monthOffset, selectedMonthBase]);
+  const monthTitle = useMemo(() => getMonthParts(calendarMonth), [calendarMonth]);
   const monthDays = useMemo(() => buildMonthDays(calendarMonth), [calendarMonth]);
+  const today = useMemo(() => getTodayString(), []);
+
+  const handlePreviousYear = useCallback(() => {
+    setMonthOffset((current) => current - 12);
+  }, []);
   const handlePreviousMonth = useCallback(() => {
-    setCalendarMonth(
-      new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() - 1, 1))
-    );
-  }, [calendarMonth]);
+    setMonthOffset((current) => current - 1);
+  }, []);
+  const handleSelectToday = useCallback(() => {
+    onSelectedDateChange(today);
+    setMonthOffset(0);
+  }, [onSelectedDateChange, today]);
   const handleNextMonth = useCallback(() => {
-    setCalendarMonth(
-      new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() + 1, 1))
-    );
-  }, [calendarMonth]);
+    setMonthOffset((current) => current + 1);
+  }, []);
+  const handleNextYear = useCallback(() => {
+    setMonthOffset((current) => current + 12);
+  }, []);
   const handleDayPress = useCallback((nextDate: string, year: number, month: number) => {
     onSelectedDateChange(nextDate);
-    setCalendarMonth(new Date(Date.UTC(year, month, 1)));
-  }, [onSelectedDateChange]);
+    const targetMonth = new Date(Date.UTC(year, month, 1));
+    const nextOffset =
+      (targetMonth.getUTCFullYear() - selectedMonthBase.getUTCFullYear()) * 12
+      + (targetMonth.getUTCMonth() - selectedMonthBase.getUTCMonth());
+    setMonthOffset(nextOffset);
+  }, [onSelectedDateChange, selectedMonthBase]);
 
   return (
     <div className="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden rounded-3xl border border-black/10 p-3 dark:border-white/10 sm:p-4 xl:self-stretch">
       <div className="flex h-full flex-col space-y-4">
         <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={handlePreviousMonth}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
-            aria-label="Previous month"
-            title="Previous month"
-          >
+          <div className="flex shrink-0 items-center">
+            <button
+              type="button"
+              onClick={handlePreviousYear}
+              className="inline-flex h-9 w-8 items-center justify-center rounded-l-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5 sm:w-9"
+              aria-label="Previous year"
+              title="Previous year"
+            >
+              <ChevronLeftIcon className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handlePreviousMonth}
+              className="-ml-px inline-flex h-9 w-8 items-center justify-center border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5 sm:w-9"
+              aria-label="Previous month"
+              title="Previous month"
+            >
             <ChevronLeftIcon className="h-4 w-4" />
-          </button>
-          <div className="min-w-0 text-center">
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">{getMonthTitle(calendarMonth)}</div>
+            </button>
+            <button
+              type="button"
+              onClick={handleSelectToday}
+              className="-ml-px inline-flex h-9 w-8 items-center justify-center rounded-r-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5 sm:w-9"
+              aria-label="Select today"
+              title="Select today"
+            >
+              <CrossIcon className="h-4 w-4" />
+            </button>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="min-w-0 flex-1 px-2 text-center">
+            <div className="text-[11px] font-semibold leading-none text-slate-500 dark:text-slate-400 sm:text-xs">
+              {monthTitle.year}
+            </div>
+            <div className="mt-1 truncate text-sm font-semibold leading-none text-slate-900 dark:text-white">
+              {monthTitle.month}
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center">
             <button
               type="button"
               onClick={onActionOpen}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+              className="inline-flex h-9 w-8 items-center justify-center rounded-l-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5 sm:w-9"
               aria-label={hasPlannedDays ? 'Open planned actions' : 'Select date range'}
               title={hasPlannedDays ? 'Open planned actions' : 'Select date range'}
             >
@@ -210,9 +259,18 @@ export const RandomCalendarView = memo(function RandomCalendarView({
             <button
               type="button"
               onClick={handleNextMonth}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+              className="-ml-px inline-flex h-9 w-8 items-center justify-center border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5 sm:w-9"
               aria-label="Next month"
               title="Next month"
+            >
+              <ChevronRightIcon className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleNextYear}
+              className="-ml-px inline-flex h-9 w-8 items-center justify-center rounded-r-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5 sm:w-9"
+              aria-label="Next year"
+              title="Next year"
             >
               <ChevronRightIcon className="h-4 w-4" />
             </button>
