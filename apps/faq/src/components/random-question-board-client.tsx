@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BadgeInfoIcon,
   BookCheckIcon,
@@ -401,21 +401,21 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   const selectedPlannedDay = plannedDayMap.get(selectedDate) ?? null;
   const guidanceResetKey = previewState.data?.messages.join('|') ?? '';
 
-  function openRangeDialog() {
+  const openRangeDialog = useCallback(() => {
     setRangeSelection({ startDate: selectedDate, endDate: selectedDate });
     setPlannedDays([]);
     setPreviewState({ data: null, loading: false, error: null });
     setRangeDialogOpen(true);
-  }
+  }, [selectedDate]);
 
-  function openCalendarAction() {
+  const openCalendarAction = useCallback(() => {
     if (plannedDays.length > 0) {
       setPlanActionsOpen(true);
       return;
     }
 
     openRangeDialog();
-  }
+  }, [openRangeDialog, plannedDays.length]);
 
   async function loadAnalysis() {
     setAnalysisState((current) => ({ ...current, loading: true, error: null }));

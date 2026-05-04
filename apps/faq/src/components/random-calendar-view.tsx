@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, CoinsIcon, DatabaseZapIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import { cn } from '@windrun-huaiin/lib/utils';
 
@@ -157,7 +157,7 @@ function formatMonthShort(value: string): string {
   });
 }
 
-export function RandomCalendarView({
+export const RandomCalendarView = memo(function RandomCalendarView({
   selectedDate,
   dayStates,
   onSelectedDateChange,
@@ -166,6 +166,20 @@ export function RandomCalendarView({
 }: RandomCalendarViewProps) {
   const [calendarMonth, setCalendarMonth] = useState(() => parseDateString(`${selectedDate.slice(0, 7)}-01`));
   const monthDays = useMemo(() => buildMonthDays(calendarMonth), [calendarMonth]);
+  const handlePreviousMonth = useCallback(() => {
+    setCalendarMonth(
+      new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() - 1, 1))
+    );
+  }, [calendarMonth]);
+  const handleNextMonth = useCallback(() => {
+    setCalendarMonth(
+      new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() + 1, 1))
+    );
+  }, [calendarMonth]);
+  const handleDayPress = useCallback((nextDate: string, year: number, month: number) => {
+    onSelectedDateChange(nextDate);
+    setCalendarMonth(new Date(Date.UTC(year, month, 1)));
+  }, [onSelectedDateChange]);
 
   return (
     <div className="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden rounded-3xl border border-black/10 p-3 dark:border-white/10 sm:p-4 xl:self-stretch">
@@ -173,11 +187,7 @@ export function RandomCalendarView({
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
-            onClick={() =>
-              setCalendarMonth(
-                new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() - 1, 1))
-              )
-            }
+            onClick={handlePreviousMonth}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
             aria-label="Previous month"
             title="Previous month"
@@ -199,11 +209,7 @@ export function RandomCalendarView({
             </button>
             <button
               type="button"
-              onClick={() =>
-                setCalendarMonth(
-                  new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() + 1, 1))
-                )
-              }
+              onClick={handleNextMonth}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
               aria-label="Next month"
               title="Next month"
@@ -233,10 +239,9 @@ export function RandomCalendarView({
                 currentMonth={day.getUTCMonth() === calendarMonth.getUTCMonth()}
                 selected={date === selectedDate}
                 dayState={dayStates.get(date)}
-                onPress={(nextDate) => {
-                  onSelectedDateChange(nextDate);
-                  setCalendarMonth(new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), 1)));
-                }}
+                onPress={handleDayPress}
+                year={day.getUTCFullYear()}
+                month={day.getUTCMonth()}
               />
             );
           })}
@@ -244,7 +249,7 @@ export function RandomCalendarView({
       </div>
     </div>
   );
-}
+});
 
 export function RandomDateRangeDialog({
   open,
@@ -720,20 +725,24 @@ export function RandomDateRangeDialog({
   );
 }
 
-function CalendarDayButton({
+const CalendarDayButton = memo(function CalendarDayButton({
   date,
   label,
   currentMonth,
   selected,
   dayState,
   onPress,
+  year,
+  month,
 }: {
   date: string;
   label: string;
   currentMonth: boolean;
   selected: boolean;
   dayState?: RandomCalendarDayState;
-  onPress: (date: string) => void;
+  onPress: (date: string, year: number, month: number) => void;
+  year: number;
+  month: number;
 }) {
   const isSaved = dayState?.state === 'saved';
   const isPlanned = dayState?.state === 'planned';
@@ -741,7 +750,7 @@ function CalendarDayButton({
   return (
     <button
       type="button"
-      onClick={() => onPress(date)}
+      onClick={() => onPress(date, year, month)}
       className={cn(
         'relative flex h-11 select-none items-center justify-center rounded-2xl border text-sm transition',
         selected
@@ -770,4 +779,4 @@ function CalendarDayButton({
       ) : null}
     </button>
   );
-}
+});
