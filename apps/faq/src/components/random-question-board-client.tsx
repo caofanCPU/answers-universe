@@ -1,7 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookCheckIcon, ChevronLeftIcon, ChevronRightIcon, CircleStopIcon, CopyIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
+import {
+  BadgeInfoIcon,
+  BookCheckIcon,
+  ChartColumnStackedIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CircleStopIcon,
+  CopyIcon,
+  InfoIcon,
+  ListTodoIcon,
+  XIcon,
+} from '@windrun-huaiin/base-ui/icons';
 import { cn } from '@windrun-huaiin/lib/utils';
 import { GradientButton, XButton, XToggleButton } from '@windrun-huaiin/third-ui/main/buttons';
 import { buildReadonlyAnswerOptions } from './question-answer-options';
@@ -585,17 +596,17 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
             'border-red-200 bg-red-50 text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200',
         };
   const panelItems = [
-    { key: 'status' as const, label: 'Status' },
-    { key: 'details' as const, label: 'Details' },
-    { key: 'stats' as const, label: 'Analysis' },
-    { key: 'info' as const, label: 'Info' },
+    { key: 'status' as const, label: 'Status', mobileIcon: <BadgeInfoIcon className="h-4 w-4" /> },
+    { key: 'details' as const, label: 'Details', mobileIcon: <ListTodoIcon className="h-4 w-4" /> },
+    { key: 'stats' as const, label: 'Analysis', mobileIcon: <ChartColumnStackedIcon className="h-4 w-4" /> },
+    { key: 'info' as const, label: 'Info', mobileIcon: <InfoIcon className="h-4 w-4" /> },
   ];
 
   return (
-    <div className="min-h-[calc(100vh-18rem)] space-y-6">
-      <div className="grid gap-6 xl:items-stretch xl:grid-cols-[24rem_minmax(0,1fr)]">
-        <div className="rounded-3xl border border-black/10 p-4 dark:border-white/10 xl:self-stretch">
-          <div className="flex flex-col">
+    <div className="min-h-[calc(100vh-18rem)] min-w-0 space-y-6">
+      <div className="grid min-w-0 gap-6 xl:items-stretch xl:grid-cols-[24rem_minmax(0,1fr)]">
+        <div className="min-w-0 overflow-hidden rounded-3xl border border-black/10 p-4 dark:border-white/10 xl:self-stretch">
+          <div className="flex min-w-0 flex-col">
             <div className="flex items-center justify-between gap-3">
               <button
                 type="button"
@@ -674,8 +685,8 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
           </div>
         </div>
 
-        <div className="rounded-3xl border border-black/10 p-5 dark:border-white/10 xl:self-stretch">
-          <div className="flex flex-col gap-4 xl:h-full">
+        <div className="min-w-0 overflow-hidden rounded-3xl border border-black/10 p-4 dark:border-white/10 sm:p-5 xl:self-stretch">
+          <div className="flex min-w-0 flex-col gap-4 xl:h-full">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
                 <div className="text-sm font-semibold text-slate-900 dark:text-white">{selectedDate}</div>
@@ -690,17 +701,19 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                 options={panelItems.map((item) => ({
                   value: item.key,
                   label: item.label,
+                  mobileIcon: item.mobileIcon,
                 }))}
                 size="compact"
                 className="max-w-full border-black/10 dark:border-white/10"
-                minItemWidthClassName="min-w-[64px] sm:min-w-[88px]"
-                itemPaddingClassName="px-4 py-2"
+                minItemWidthClassName="min-w-9 sm:min-w-[88px]"
+                maxItemWidthClassName="max-w-9 sm:max-w-[160px]"
+                itemPaddingClassName="px-2 py-2 sm:px-4"
                 itemTextClassName="text-sm"
                 inactiveItemClassName="text-gray-800 hover:text-gray-900 dark:text-gray-200 dark:hover:text-gray-100"
               />
             </div>
 
-            <div className="min-h-[22rem] flex-1 rounded-2xl border border-black/10 p-4 dark:border-white/10">
+            <div className="min-h-88 min-w-0 flex-1 overflow-hidden rounded-2xl border border-black/10 p-3 dark:border-white/10 sm:p-4">
               {activeTopPanel === 'status' ? (
                 <div className="space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -952,7 +965,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
             </div>
           </div>
         ) : (
-          <div className="flex min-h-[28rem] items-center justify-center rounded-3xl border border-dashed border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
+          <div className="flex min-h-112 items-center justify-center rounded-3xl border border-dashed border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
             {detailState.loading ? 'Loading...' : 'No questions to display for this date yet.'}
           </div>
         )}
