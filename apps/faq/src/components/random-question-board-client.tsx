@@ -1175,7 +1175,8 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
       <ConfirmDialog
         open={planActionsOpen}
         onOpenChange={setPlanActionsOpen}
-        type="normal"
+        type="danger"
+        emphasis="cancel"
         title={`${plannedDays.length} planned day${plannedDays.length === 1 ? '' : 's'}`}
         description={
           plannedDataOutdated

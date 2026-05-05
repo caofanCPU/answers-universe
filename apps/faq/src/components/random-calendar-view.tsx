@@ -1,9 +1,8 @@
 'use client';
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, CoinsIcon, DatabaseZapIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
+import { CalendarClockIcon, CalendarDaysIcon, CalendarHeartIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import { cn } from '@windrun-huaiin/lib/utils';
-import { ChevronsLeftIcon, ChevronsRightIcon, LocateIcon } from '@/lib/site-config';
 
 export type RandomCalendarRange = {
   startDate: string | null;
@@ -248,7 +247,7 @@ export const RandomCalendarView = memo(function RandomCalendarView({
               aria-label="Select today"
               title="Select today"
             >
-              <LocateIcon className="h-4 w-4" />
+              <CalendarHeartIcon className="h-4 w-4" />
             </button>
           </div>
           <div className="min-w-0 flex-1 px-2 text-center">
@@ -267,7 +266,7 @@ export const RandomCalendarView = memo(function RandomCalendarView({
               aria-label={hasPlannedDays ? 'Open planned actions' : 'Select date range'}
               title={hasPlannedDays ? 'Open planned actions' : 'Select date range'}
             >
-              {hasPlannedDays ? <CoinsIcon className="h-4 w-4" /> : <DatabaseZapIcon className="h-4 w-4" />}
+              {hasPlannedDays ? <CalendarClockIcon className="h-4 w-4" /> : <CalendarDaysIcon className="h-4 w-4" />}
             </button>
             <button
               type="button"
@@ -716,7 +715,7 @@ export function RandomDateRangeDialog({
                 <span className="relative block select-none text-center">
                   {monthLabels[0] ?? formatMonthShort(trackBounds.startDate ?? baseReferenceDate)}
                   <span className="pointer-events-none absolute left-1/2 top-7 h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-slate-400 dark:bg-slate-500" />
-                  <span className="pointer-events-none absolute left-1/2 top-[1.95rem] h-[2.25rem] w-0.5 -translate-x-1/2 bg-slate-400 dark:bg-slate-500" />
+                  <span className="pointer-events-none absolute left-1/2 top-[1.95rem] h-9 w-0.5 -translate-x-1/2 bg-slate-400 dark:bg-slate-500" />
                 </span>
                 <div className="flex min-w-0 items-center justify-center gap-1">
                   {([
@@ -738,7 +737,7 @@ export function RandomDateRangeDialog({
                 <span className="relative block select-none text-center">
                   {monthLabels[1] ?? formatMonthShort(trackBounds.endDate ?? baseReferenceDate)}
                   <span className="pointer-events-none absolute right-1/2 top-7 h-2.5 w-2.5 translate-x-1/2 rounded-full bg-slate-400 dark:bg-slate-500" />
-                  <span className="pointer-events-none absolute right-1/2 top-[1.95rem] h-[2.25rem] w-0.5 translate-x-1/2 bg-slate-400 dark:bg-slate-500" />
+                  <span className="pointer-events-none absolute right-1/2 top-[1.95rem] h-9 w-0.5 translate-x-1/2 bg-slate-400 dark:bg-slate-500" />
                 </span>
               </div>
 
