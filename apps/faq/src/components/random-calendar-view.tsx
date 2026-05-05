@@ -34,7 +34,10 @@ type RandomDateRangeDialogProps = {
 type QuickRangeDays = 7 | 10 | 15 | 30;
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DEFAULT_RANGE_DAYS = 2;
+const MAX_RANGE_DAYS = 30;
 const TRACK_MIN_DAYS = 45;
+const TRACK_PADDING_DAYS = 20;
 
 function parseDateString(value: string): Date {
   return new Date(`${value}T00:00:00.000Z`);
@@ -108,9 +111,16 @@ function buildMonthDays(currentMonth: Date): Date[] {
   )));
 }
 
-function buildTrackRange(referenceDate: string, minDays = TRACK_MIN_DAYS): RandomCalendarRange {
-  const startDate = addDays(referenceDate, -Math.floor(minDays / 3));
-  const endDate = addDays(startDate, minDays - 1);
+function clampWindowDays(days: number): number {
+  return Math.max(1, Math.min(MAX_RANGE_DAYS, Math.floor(days)));
+}
+
+function buildTrackRange(referenceDate: string, windowDays = DEFAULT_RANGE_DAYS): RandomCalendarRange {
+  const resolvedWindowDays = clampWindowDays(windowDays);
+  const resolvedTotalDays = Math.max(TRACK_MIN_DAYS, resolvedWindowDays + TRACK_PADDING_DAYS);
+  const daysBefore = Math.floor((resolvedTotalDays - resolvedWindowDays) / 3);
+  const startDate = addDays(referenceDate, -daysBefore);
+  const endDate = addDays(startDate, resolvedTotalDays - 1);
   return { startDate, endDate };
 }
 
@@ -331,8 +341,8 @@ export function RandomDateRangeDialog({
 }: RandomDateRangeDialogProps) {
   const [draftRange, setDraftRange] = useState<RandomCalendarRange>(value);
   const [referenceDate, setReferenceDate] = useState(anchorDate);
-  const [trackBounds, setTrackBounds] = useState<RandomCalendarRange>(() => buildTrackRange(anchorDate || getTodayString()));
-  const [windowDays, setWindowDays] = useState<number>(1);
+  const [trackBounds, setTrackBounds] = useState<RandomCalendarRange>(() => buildTrackRange(anchorDate || getTodayString(), DEFAULT_RANGE_DAYS));
+  const [windowDays, setWindowDays] = useState<number>(DEFAULT_RANGE_DAYS);
   const dragStartRangeRef = useRef<RandomCalendarRange | null>(null);
   const dragModeRef = useRef<'start' | 'end' | 'window' | null>(null);
   const pointerIdRef = useRef<number | null>(null);
@@ -359,6 +369,7 @@ export function RandomDateRangeDialog({
   const isSingleDay = (draftRange.startDate ?? null) === (draftRange.endDate ?? null);
   const startHandlePercent = isSingleDay ? Math.max(leftPercent - 0.8, 0) : leftPercent;
   const endHandlePercent = isSingleDay ? Math.min(rightPercent + 0.8, 100) : rightPercent;
+  const trackTickCount = Math.max(getDaysBetween(trackBounds.startDate ?? baseReferenceDate, trackBounds.endDate ?? baseReferenceDate) + 1, 2);
   const monthLabels = useMemo(() => {
     const values = [trackBounds.startDate, trackBounds.endDate]
       .filter((item): item is string => Boolean(item))
@@ -369,11 +380,14 @@ export function RandomDateRangeDialog({
 
   useEffect(() => {
     if (open && !previousOpenRef.current) {
-      const nextRange = { startDate: baseReferenceDate, endDate: baseReferenceDate };
+      const nextRange = {
+        startDate: baseReferenceDate,
+        endDate: addDays(baseReferenceDate, DEFAULT_RANGE_DAYS - 1),
+      };
       setDraftRange(nextRange);
       setReferenceDate(baseReferenceDate);
-      setTrackBounds(buildTrackRange(baseReferenceDate));
-      setWindowDays(1);
+      setTrackBounds(buildTrackRange(baseReferenceDate, DEFAULT_RANGE_DAYS));
+      setWindowDays(DEFAULT_RANGE_DAYS);
       dragStartRangeRef.current = null;
       dragModeRef.current = null;
       pointerIdRef.current = null;
@@ -383,15 +397,16 @@ export function RandomDateRangeDialog({
   }, [baseReferenceDate, open]);
 
   function updateRangeByReference(nextReferenceDate: string, nextWindowDays: number, options?: { preserveTrack?: boolean }) {
+    const clampedWindowDays = clampWindowDays(nextWindowDays);
     const nextRange = {
       startDate: nextReferenceDate,
-      endDate: addDays(nextReferenceDate, Math.max(nextWindowDays - 1, 0)),
+      endDate: addDays(nextReferenceDate, Math.max(clampedWindowDays - 1, 0)),
     };
     setReferenceDate(nextReferenceDate);
-    setWindowDays(nextWindowDays);
+    setWindowDays(clampedWindowDays);
     setDraftRange(nextRange);
     if (!options?.preserveTrack) {
-      setTrackBounds(buildTrackRange(nextReferenceDate, Math.max(TRACK_MIN_DAYS, nextWindowDays + 20)));
+      setTrackBounds(buildTrackRange(nextReferenceDate, clampedWindowDays));
     }
   }
 
@@ -447,7 +462,7 @@ export function RandomDateRangeDialog({
     const rect = trackRef.current.getBoundingClientRect();
     const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     const nextReferenceDate = getDateByRatio(trackBounds, ratio);
-    updateRangeByReference(nextReferenceDate, 1, { preserveTrack: true });
+    updateRangeByReference(nextReferenceDate, DEFAULT_RANGE_DAYS, { preserveTrack: true });
   }
 
   function applyQuickRange(dayCount: QuickRangeDays) {
@@ -503,12 +518,16 @@ export function RandomDateRangeDialog({
     }
 
     if (dragModeRef.current === 'start') {
-      const nextStart = compareDateStrings(pointerDate, currentRange.endDate) > 0 ? currentRange.endDate : pointerDate;
+      const earliestStart = addDays(currentRange.endDate, -(MAX_RANGE_DAYS - 1));
+      const boundedPointerDate = compareDateStrings(pointerDate, earliestStart) < 0 ? earliestStart : pointerDate;
+      const nextStart = compareDateStrings(boundedPointerDate, currentRange.endDate) > 0 ? currentRange.endDate : boundedPointerDate;
       return { startDate: nextStart, endDate: currentRange.endDate };
     }
 
     if (dragModeRef.current === 'end') {
-      const nextEnd = compareDateStrings(pointerDate, currentRange.startDate) < 0 ? currentRange.startDate : pointerDate;
+      const latestEnd = addDays(currentRange.startDate, MAX_RANGE_DAYS - 1);
+      const boundedPointerDate = compareDateStrings(pointerDate, latestEnd) > 0 ? latestEnd : pointerDate;
+      const nextEnd = compareDateStrings(boundedPointerDate, currentRange.startDate) < 0 ? currentRange.startDate : boundedPointerDate;
       return { startDate: currentRange.startDate, endDate: nextEnd };
     }
 
@@ -660,10 +679,13 @@ export function RandomDateRangeDialog({
                 <button
                   type="button"
                   onClick={() => {
-                    const nextRange = { startDate: baseReferenceDate, endDate: baseReferenceDate };
+                    const nextRange = {
+                      startDate: baseReferenceDate,
+                      endDate: addDays(baseReferenceDate, DEFAULT_RANGE_DAYS - 1),
+                    };
                     setReferenceDate(baseReferenceDate);
-                    setTrackBounds(buildTrackRange(baseReferenceDate));
-                    setWindowDays(1);
+                    setTrackBounds(buildTrackRange(baseReferenceDate, DEFAULT_RANGE_DAYS));
+                    setWindowDays(DEFAULT_RANGE_DAYS);
                     setDraftRange(nextRange);
                     onClear?.(nextRange);
                   }}
@@ -676,11 +698,18 @@ export function RandomDateRangeDialog({
                   onClick={() => {
                     const nextRange = {
                       startDate: getMonthStart(referenceDate),
-                      endDate: getMonthEnd(referenceDate),
+                      endDate: addDays(getMonthStart(referenceDate), MAX_RANGE_DAYS - 1),
                     };
-                    setDraftRange(nextRange);
-                    setWindowDays(getInclusiveDayCount(nextRange));
-                    setTrackBounds(buildTrackRange(referenceDate));
+                    const clampedEndDate = compareDateStrings(nextRange.endDate, getMonthEnd(referenceDate)) > 0
+                      ? getMonthEnd(referenceDate)
+                      : nextRange.endDate;
+                    const normalizedRange = {
+                      startDate: nextRange.startDate,
+                      endDate: clampedEndDate,
+                    };
+                    setDraftRange(normalizedRange);
+                    setWindowDays(getInclusiveDayCount(normalizedRange));
+                    setTrackBounds(buildTrackRange(normalizedRange.startDate, getInclusiveDayCount(normalizedRange)));
                   }}
                   className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15 sm:text-sm"
                 >
@@ -753,15 +782,33 @@ export function RandomDateRangeDialog({
                   className="absolute inset-x-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-slate-400/30 dark:bg-slate-500/25"
                 >
                 <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-0 top-1/2 grid h-8 -translate-y-1/2 items-center"
+                  style={{ gridTemplateColumns: `repeat(${trackTickCount}, minmax(0, 1fr))` }}
+                >
+                  {Array.from({ length: trackTickCount }, (_, index) => {
+                    return (
+                      <span key={index} className="flex justify-center">
+                        <span
+                          className={cn(
+                            'rounded-full bg-slate-400/55 dark:bg-slate-500/55',
+                            'h-3 w-px'
+                          )}
+                        />
+                      </span>
+                    );
+                  })}
+                </div>
+                <div
                   ref={selectionRef}
-                  className="absolute top-1/2 h-4 touch-none -translate-y-1/2 rounded-md border border-sky-500 bg-white dark:border-sky-300 dark:bg-slate-950"
+                  className="absolute top-1/2 z-10 h-4 touch-none -translate-y-1/2 overflow-visible rounded-md border border-sky-500 bg-white dark:border-sky-300 dark:bg-slate-950"
                   style={{ left: `${leftPercent}%`, width: `${widthPercent}%` }}
                   onPointerDown={(event) => {
                     event.stopPropagation();
                     beginDrag('window', event.pointerId, event.clientX);
                   }}
                 >
-                  <div ref={selectionDaysRef} className="pointer-events-none absolute inset-0 flex select-none items-center justify-center text-xs font-semibold text-sky-700 dark:text-sky-100">
+                  <div ref={selectionDaysRef} className="pointer-events-none absolute inset-0 z-30 flex select-none items-center justify-center text-xs font-semibold text-sky-700 dark:text-sky-100">
                     {`${getInclusiveDayCount(draftRange)}D`}
                   </div>
                 </div>
@@ -769,7 +816,7 @@ export function RandomDateRangeDialog({
                 <button
                   ref={startHandleRef}
                   type="button"
-                  className="absolute top-1/2 h-6 w-6 touch-none -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-500 bg-white shadow-sm dark:border-sky-300 dark:bg-slate-950"
+                  className="absolute top-1/2 z-20 h-6 w-6 touch-none -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-500 bg-white shadow-sm dark:border-sky-300 dark:bg-slate-950"
                   style={{ left: `${startHandlePercent}%` }}
                   onPointerDown={(event) => {
                     event.stopPropagation();
@@ -780,7 +827,7 @@ export function RandomDateRangeDialog({
                 <button
                   ref={endHandleRef}
                   type="button"
-                  className="absolute top-1/2 h-6 w-6 touch-none -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-500 bg-white shadow-sm dark:border-sky-300 dark:bg-slate-950"
+                  className="absolute top-1/2 z-20 h-6 w-6 touch-none -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-500 bg-white shadow-sm dark:border-sky-300 dark:bg-slate-950"
                   style={{ left: `${endHandlePercent}%` }}
                   onPointerDown={(event) => {
                     event.stopPropagation();
