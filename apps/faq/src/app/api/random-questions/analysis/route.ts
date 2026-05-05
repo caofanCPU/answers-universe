@@ -10,7 +10,8 @@ export async function GET(req: NextRequest) {
     const authUtils = new ApiAuthUtils(req);
     await authUtils.requireAuth();
 
-    const result = await getRandomQuestionAnalysis();
+    const forceRefresh = req.nextUrl.searchParams.get('refresh') === 'true';
+    const result = await getRandomQuestionAnalysis({ forceRefresh });
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof Error && (error.message === AUTH_ERRORS.unauthorized || error.message === AUTH_ERRORS.userNotFound)) {

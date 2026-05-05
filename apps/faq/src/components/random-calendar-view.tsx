@@ -1,8 +1,9 @@
 'use client';
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, CoinsIcon, CrossIcon, DatabaseZapIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, CoinsIcon, DatabaseZapIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import { cn } from '@windrun-huaiin/lib/utils';
+import { ChevronsLeftIcon, ChevronsRightIcon, LocateIcon } from '@/lib/site-config';
 
 export type RandomCalendarRange = {
   startDate: string | null;
@@ -162,6 +163,30 @@ function formatMonthShort(value: string): string {
   });
 }
 
+function addMonthsClamped(value: string, months: number): string {
+  const source = parseDateString(value);
+  const sourceYear = source.getUTCFullYear();
+  const sourceMonth = source.getUTCMonth();
+  const sourceDay = source.getUTCDate();
+  const targetMonthIndex = sourceMonth + months;
+  const targetYear = sourceYear + Math.floor(targetMonthIndex / 12);
+  const normalizedMonth = ((targetMonthIndex % 12) + 12) % 12;
+  const targetMonthLastDay = new Date(Date.UTC(targetYear, normalizedMonth + 1, 0)).getUTCDate();
+  const targetDay = Math.min(sourceDay, targetMonthLastDay);
+
+  return formatDateString(new Date(Date.UTC(targetYear, normalizedMonth, targetDay)));
+}
+
+function getMonthStart(value: string): string {
+  const date = parseDateString(value);
+  return formatDateString(new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)));
+}
+
+function getMonthEnd(value: string): string {
+  const date = parseDateString(value);
+  return formatDateString(new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)));
+}
+
 export const RandomCalendarView = memo(function RandomCalendarView({
   selectedDate,
   dayStates,
@@ -169,41 +194,29 @@ export const RandomCalendarView = memo(function RandomCalendarView({
   onActionOpen,
   hasPlannedDays = false,
 }: RandomCalendarViewProps) {
-  const selectedMonthBase = useMemo(() => parseDateString(`${selectedDate.slice(0, 7)}-01`), [selectedDate]);
-  const [monthOffset, setMonthOffset] = useState(0);
-  const calendarMonth = useMemo(() => new Date(Date.UTC(
-    selectedMonthBase.getUTCFullYear(),
-    selectedMonthBase.getUTCMonth() + monthOffset,
-    1
-  )), [monthOffset, selectedMonthBase]);
+  const calendarMonth = useMemo(() => parseDateString(`${selectedDate.slice(0, 7)}-01`), [selectedDate]);
   const monthTitle = useMemo(() => getMonthParts(calendarMonth), [calendarMonth]);
   const monthDays = useMemo(() => buildMonthDays(calendarMonth), [calendarMonth]);
   const today = useMemo(() => getTodayString(), []);
 
   const handlePreviousYear = useCallback(() => {
-    setMonthOffset((current) => current - 12);
-  }, []);
+    onSelectedDateChange(addMonthsClamped(selectedDate, -12));
+  }, [onSelectedDateChange, selectedDate]);
   const handlePreviousMonth = useCallback(() => {
-    setMonthOffset((current) => current - 1);
-  }, []);
+    onSelectedDateChange(addMonthsClamped(selectedDate, -1));
+  }, [onSelectedDateChange, selectedDate]);
   const handleSelectToday = useCallback(() => {
     onSelectedDateChange(today);
-    setMonthOffset(0);
   }, [onSelectedDateChange, today]);
   const handleNextMonth = useCallback(() => {
-    setMonthOffset((current) => current + 1);
-  }, []);
+    onSelectedDateChange(addMonthsClamped(selectedDate, 1));
+  }, [onSelectedDateChange, selectedDate]);
   const handleNextYear = useCallback(() => {
-    setMonthOffset((current) => current + 12);
-  }, []);
-  const handleDayPress = useCallback((nextDate: string, year: number, month: number) => {
+    onSelectedDateChange(addMonthsClamped(selectedDate, 12));
+  }, [onSelectedDateChange, selectedDate]);
+  const handleDayPress = useCallback((nextDate: string) => {
     onSelectedDateChange(nextDate);
-    const targetMonth = new Date(Date.UTC(year, month, 1));
-    const nextOffset =
-      (targetMonth.getUTCFullYear() - selectedMonthBase.getUTCFullYear()) * 12
-      + (targetMonth.getUTCMonth() - selectedMonthBase.getUTCMonth());
-    setMonthOffset(nextOffset);
-  }, [onSelectedDateChange, selectedMonthBase]);
+  }, [onSelectedDateChange]);
 
   return (
     <div className="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden rounded-3xl border border-black/10 p-3 dark:border-white/10 sm:p-4 xl:self-stretch">
@@ -217,7 +230,7 @@ export const RandomCalendarView = memo(function RandomCalendarView({
               aria-label="Previous year"
               title="Previous year"
             >
-              <ChevronLeftIcon className="h-4 w-4" />
+              <ChevronsLeftIcon className="h-4 w-4" />
             </button>
             <button
               type="button"
@@ -235,7 +248,7 @@ export const RandomCalendarView = memo(function RandomCalendarView({
               aria-label="Select today"
               title="Select today"
             >
-              <CrossIcon className="h-4 w-4" />
+              <LocateIcon className="h-4 w-4" />
             </button>
           </div>
           <div className="min-w-0 flex-1 px-2 text-center">
@@ -272,7 +285,7 @@ export const RandomCalendarView = memo(function RandomCalendarView({
               aria-label="Next year"
               title="Next year"
             >
-              <ChevronRightIcon className="h-4 w-4" />
+              <ChevronsRightIcon className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -330,6 +343,7 @@ export function RandomDateRangeDialog({
   const startHandleRef = useRef<HTMLButtonElement | null>(null);
   const endHandleRef = useRef<HTMLButtonElement | null>(null);
   const resultLabelRef = useRef<HTMLDivElement | null>(null);
+  const selectionDaysRef = useRef<HTMLDivElement | null>(null);
   const dragPreviewRef = useRef<RandomCalendarRange | null>(null);
   const frameRef = useRef<number | null>(null);
   const pendingClientXRef = useRef<number | null>(null);
@@ -416,6 +430,9 @@ export function RandomDateRangeDialog({
     if (resultLabelRef.current) {
       resultLabelRef.current.textContent = getRangeLabel(range);
     }
+    if (selectionDaysRef.current) {
+      selectionDaysRef.current.textContent = `${getInclusiveDayCount(range)}D`;
+    }
   }, [getPreviewPercents]);
 
   useEffect(() => {
@@ -438,8 +455,12 @@ export function RandomDateRangeDialog({
     updateRangeByReference(referenceDate, dayCount);
   }
 
-  function shiftReferenceDate(daysOffset: number) {
-    updateRangeByReference(addDays(referenceDate, daysOffset), windowDays);
+  function shiftReferenceDateByMonths(monthOffset: number) {
+    updateRangeByReference(addMonthsClamped(referenceDate, monthOffset), windowDays);
+  }
+
+  function shiftReferenceDateByYears(yearOffset: number) {
+    updateRangeByReference(addMonthsClamped(referenceDate, yearOffset * 12), windowDays);
   }
 
   function beginDrag(mode: 'start' | 'end' | 'window', pointerId: number, clientX?: number) {
@@ -618,16 +639,16 @@ export function RandomDateRangeDialog({
               <div className="flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={() => shiftReferenceDate(-365)}
+                  onClick={() => shiftReferenceDateByYears(-1)}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-slate-500 shadow-sm transition hover:bg-white hover:text-slate-900 dark:border-white/10 dark:bg-slate-950 dark:text-slate-400 dark:hover:text-white"
                   aria-label="Previous year"
                   title="Previous year"
                 >
-                  <ChevronLeftIcon className="h-4 w-4" />
+                  <ChevronsLeftIcon className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
-                  onClick={() => shiftReferenceDate(-30)}
+                  onClick={() => shiftReferenceDateByMonths(-1)}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-slate-500 shadow-sm transition hover:bg-white hover:text-slate-900 dark:border-white/10 dark:bg-slate-950 dark:text-slate-400 dark:hover:text-white"
                   aria-label="Previous month"
                   title="Previous month"
@@ -655,12 +676,8 @@ export function RandomDateRangeDialog({
                   type="button"
                   onClick={() => {
                     const nextRange = {
-                      startDate: referenceDate,
-                      endDate: new Date(Date.UTC(
-                        parseDateString(referenceDate).getUTCFullYear(),
-                        parseDateString(referenceDate).getUTCMonth() + 1,
-                        0
-                      )).toISOString().slice(0, 10),
+                      startDate: getMonthStart(referenceDate),
+                      endDate: getMonthEnd(referenceDate),
                     };
                     setDraftRange(nextRange);
                     setWindowDays(getInclusiveDayCount(nextRange));
@@ -675,7 +692,7 @@ export function RandomDateRangeDialog({
               <div className="flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={() => shiftReferenceDate(30)}
+                  onClick={() => shiftReferenceDateByMonths(1)}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-slate-500 shadow-sm transition hover:bg-white hover:text-slate-900 dark:border-white/10 dark:bg-slate-950 dark:text-slate-400 dark:hover:text-white"
                   aria-label="Next month"
                   title="Next month"
@@ -684,22 +701,22 @@ export function RandomDateRangeDialog({
                 </button>
                 <button
                   type="button"
-                  onClick={() => shiftReferenceDate(365)}
+                  onClick={() => shiftReferenceDateByYears(1)}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-slate-500 shadow-sm transition hover:bg-white hover:text-slate-900 dark:border-white/10 dark:bg-slate-950 dark:text-slate-400 dark:hover:text-white"
                   aria-label="Next year"
                   title="Next year"
                 >
-                  <ChevronRightIcon className="h-4 w-4" />
+                  <ChevronsRightIcon className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
             <div className="relative h-24">
-              <div className="absolute inset-x-0 top-0 grid grid-cols-[auto_1fr_auto] items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400">
-                <span className="relative select-none">
+              <div className="absolute inset-x-0 top-0 grid grid-cols-[3.5rem_minmax(0,1fr)_3.5rem] items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400">
+                <span className="relative block select-none text-center">
                   {monthLabels[0] ?? formatMonthShort(trackBounds.startDate ?? baseReferenceDate)}
                   <span className="pointer-events-none absolute left-1/2 top-7 h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-slate-400 dark:bg-slate-500" />
-                  <span className="pointer-events-none absolute left-1/2 top-[1.95rem] h-[1.9rem] w-0.5 -translate-x-1/2 bg-slate-400 dark:bg-slate-500" />
+                  <span className="pointer-events-none absolute left-1/2 top-[1.95rem] h-[2.25rem] w-0.5 -translate-x-1/2 bg-slate-400 dark:bg-slate-500" />
                 </span>
                 <div className="flex min-w-0 items-center justify-center gap-1">
                   {([
@@ -718,10 +735,10 @@ export function RandomDateRangeDialog({
                     </button>
                   ))}
                 </div>
-                <span className="relative select-none text-right">
+                <span className="relative block select-none text-center">
                   {monthLabels[1] ?? formatMonthShort(trackBounds.endDate ?? baseReferenceDate)}
                   <span className="pointer-events-none absolute right-1/2 top-7 h-2.5 w-2.5 translate-x-1/2 rounded-full bg-slate-400 dark:bg-slate-500" />
-                  <span className="pointer-events-none absolute right-1/2 top-[1.95rem] h-[1.9rem] w-0.5 translate-x-1/2 bg-slate-400 dark:bg-slate-500" />
+                  <span className="pointer-events-none absolute right-1/2 top-[1.95rem] h-[2.25rem] w-0.5 translate-x-1/2 bg-slate-400 dark:bg-slate-500" />
                 </span>
               </div>
 
@@ -745,7 +762,7 @@ export function RandomDateRangeDialog({
                     beginDrag('window', event.pointerId, event.clientX);
                   }}
                 >
-                  <div className="pointer-events-none absolute inset-0 flex select-none items-center justify-center text-xs font-semibold text-sky-700 dark:text-sky-100">
+                  <div ref={selectionDaysRef} className="pointer-events-none absolute inset-0 flex select-none items-center justify-center text-xs font-semibold text-sky-700 dark:text-sky-100">
                     {`${getInclusiveDayCount(draftRange)}D`}
                   </div>
                 </div>

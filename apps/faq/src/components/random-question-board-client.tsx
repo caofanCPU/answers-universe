@@ -14,7 +14,7 @@ import {
   XIcon,
 } from '@windrun-huaiin/base-ui/icons';
 import { cn } from '@windrun-huaiin/lib/utils';
-import { ConfirmDialog } from '@windrun-huaiin/third-ui/main/alert-dialog';
+import { ConfirmDialog, InfoDialog } from '@windrun-huaiin/third-ui/main/alert-dialog';
 import { GradientButton, XButton, XToggleButton } from '@windrun-huaiin/third-ui/main/buttons';
 import { RandomCalendarView, RandomDateRangeDialog, type RandomCalendarDayState, type RandomCalendarRange } from './random-calendar-view';
 import { buildReadonlyAnswerOptions } from './question-answer-options';
@@ -42,7 +42,7 @@ type TopPanelKey = 'details' | 'stats' | 'info';
 
 type PlannedDay = {
   showDate: string;
-  planId: string;
+  groupId: string;
   preview: RandomQuestionPreviewResult;
 };
 
@@ -62,6 +62,14 @@ function toDraftItems(items: RandomQuestionPreviewResult['items']): RandomQuesti
     category: item.category,
     sortOrder: item.sortOrder,
   }));
+}
+
+function isSnapshotVersionMismatchResponse(body: unknown): boolean {
+  if (!body || typeof body !== 'object') {
+    return false;
+  }
+
+  return 'error' in body && body.error === 'SNAPSHOT_VERSION_MISMATCH';
 }
 
 function QuestionIdentityTags({
@@ -120,9 +128,11 @@ function QuestionIdentityTags({
 function AnalysisPanel({
   analysis,
   loading,
+  onRefresh,
 }: {
   analysis: RandomQuestionAnalysisResult | null;
   loading: boolean;
+  onRefresh: () => void;
 }) {
   const metrics = [
     {
@@ -170,11 +180,13 @@ function AnalysisPanel({
           Generated coverage and remaining capacity
         </div>
         <GradientButton
-          onClick={() => undefined}
+          onClick={onRefresh}
           title="Refresh"
+          loadingText="Refreshing..."
           align="center"
           variant="subtle"
           className="sm:w-auto"
+          disabled={loading}
           icon=<RefreshCcwIcon className="h-4 w-4"/>
         />
       </div>
@@ -334,8 +346,11 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [activeTopPanel, setActiveTopPanel] = useState<TopPanelKey>('details');
   const [replaceConfirmOpen, setReplaceConfirmOpen] = useState(false);
+  const [generateConfirmOpen, setGenerateConfirmOpen] = useState(false);
   const [guidanceDismissed, setGuidanceDismissed] = useState(false);
   const [planActionsOpen, setPlanActionsOpen] = useState(false);
+  const [activeSnapshotVersion, setActiveSnapshotVersion] = useState<string | null>(null);
+  const [plannedDataOutdated, setPlannedDataOutdated] = useState(false);
   const copyResetTimerRef = useRef<number | null>(null);
   const generatedDateSet = useMemo(
     () => new Set(analysisState.data?.dates.map((item) => item.showDate) ?? []),
@@ -381,11 +396,12 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
     openRangeDialog();
   }, [openRangeDialog, plannedDays.length]);
 
-  async function loadAnalysis() {
+  async function loadAnalysis(options?: { forceRefresh?: boolean }) {
     setAnalysisState((current) => ({ ...current, loading: true, error: null }));
 
     try {
-      const response = await fetch('/api/random-questions/analysis', {
+      const query = options?.forceRefresh ? '?refresh=true' : '';
+      const response = await fetch(`/api/random-questions/analysis${query}`, {
         method: 'GET',
         credentials: 'include',
         cache: 'no-store',
@@ -397,6 +413,13 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
 
       const data = (await response.json()) as RandomQuestionAnalysisResult;
       setAnalysisState({ data, loading: false, error: null });
+      setActiveSnapshotVersion(data.snapshotVersion);
+      setPlannedDataOutdated(false);
+
+      if (options?.forceRefresh) {
+        setPlannedDays([]);
+        setPreviewState({ data: null, loading: false, error: null });
+      }
     } catch (error) {
       setAnalysisState({
         data: null,
@@ -448,7 +471,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
     }
 
     setDetailState({ data: null, loading: false, error: null });
-  }, [selectedDate, selectedHasSavedSet, selectedPlannedDay?.planId, selectedPlannedDay?.preview]);
+  }, [selectedDate, selectedHasSavedSet, selectedPlannedDay?.groupId, selectedPlannedDay?.preview]);
 
   useEffect(() => {
     setPreviewIndex(0);
@@ -471,20 +494,32 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        snapshotVersion: activeSnapshotVersion,
         showDate: selectedDate,
       }),
     });
 
-    if (!response.ok) {
-      setPreviewState({
-        data: null,
-        loading: false,
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        if (response.status === 409 && isSnapshotVersionMismatchResponse(errorBody)) {
+          setPlannedDataOutdated(true);
+          setPreviewState((current) => ({
+            ...current,
+            loading: false,
+            error: 'Planned data is outdated. Refresh required.',
+          }));
+          return;
+        }
+        setPreviewState({
+          data: null,
+          loading: false,
         error: `Request failed with status ${response.status}`,
       });
       return;
     }
 
     const preview = (await response.json()) as RandomQuestionPreviewResult;
+    setActiveSnapshotVersion(preview.snapshotVersion ?? null);
     setPreviewState({
       data: preview,
       loading: false,
@@ -494,10 +529,19 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
       ...current.filter((item) => item.showDate !== selectedDate),
       {
         showDate: selectedDate,
-        planId: `preview-${selectedDate}`,
+        groupId: preview.groupId ?? toDraftItems(preview.items).map((item) => item.questionId).sort((a, b) => Number(a) - Number(b)).join(','),
         preview,
       },
     ]);
+  }
+
+  async function handleGenerateRequest() {
+    if (plannedDays.length > 0 && !selectedPlannedDay) {
+      setGenerateConfirmOpen(true);
+      return;
+    }
+
+    await handlePreview();
   }
 
   async function handleSavePreview(replaceExisting: boolean) {
@@ -516,6 +560,8 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          snapshotVersion: activeSnapshotVersion,
+          groupId: previewState.data.groupId,
           showDate: selectedDate,
           replaceExisting,
           items: toDraftItems(previewState.data.items),
@@ -523,11 +569,17 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
       });
 
       if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        if (response.status === 409 && isSnapshotVersionMismatchResponse(errorBody)) {
+          setPlannedDataOutdated(true);
+          throw new Error('Planned data is outdated. Refresh required.');
+        }
         throw new Error(`Request failed with status ${response.status}`);
       }
 
       await loadAnalysis();
       await loadDetail(selectedDate);
+      setPlanActionsOpen(false);
       setPreviewState({ data: null, loading: false, error: null });
       setPlannedDays((current) => current.filter((item) => item.showDate !== selectedDate));
     } catch (error) {
@@ -559,6 +611,8 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
         },
         body: JSON.stringify({
           plans: commitReadyPlans.map((item) => ({
+            snapshotVersion: activeSnapshotVersion,
+            groupId: item.groupId,
             showDate: item.showDate,
             items: toDraftItems(item.preview.items),
           })),
@@ -566,6 +620,11 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
       });
 
       if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        if (response.status === 409 && isSnapshotVersionMismatchResponse(errorBody)) {
+          setPlannedDataOutdated(true);
+          throw new Error('Planned data is outdated. Refresh required.');
+        }
         throw new Error(`Request failed with status ${response.status}`);
       }
 
@@ -685,22 +744,33 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
+                  snapshotVersion: activeSnapshotVersion,
                   startDate: nextRange.startDate,
                   endDate: nextRange.endDate,
                 }),
               });
 
               if (!response.ok) {
+                const errorBody = await response.json().catch(() => null);
+                if (response.status === 409 && isSnapshotVersionMismatchResponse(errorBody)) {
+                  setPlannedDataOutdated(true);
+                  setPlannedDays([]);
+                  setPreviewState({ data: null, loading: false, error: 'Planned data is outdated. Refresh required.' });
+                  return;
+                }
                 setPlannedDays([]);
                 setPreviewState({ data: null, loading: false, error: `Request failed with status ${response.status}` });
                 return;
               }
 
               const result = (await response.json()) as RandomQuestionPlanRangeResult;
+              setActiveSnapshotVersion(result.snapshotVersion);
               const nextPlannedDays = result.plannedDates.map((item) => ({
                 showDate: item.showDate,
-                planId: item.planId,
+                groupId: item.groupId,
                 preview: {
+                  snapshotVersion: result.snapshotVersion,
+                  groupId: item.groupId,
                   showDate: item.showDate,
                   targetCount: item.targetCount,
                   canCommit: item.canCommit,
@@ -780,9 +850,9 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                               loadingText="Saving..."
                               align="center"
                               variant="subtle"
-                              icon=<BookCheckIcon/>
-                              className="sm:w-auto"
-                              disabled={saving}
+                          icon=<BookCheckIcon/>
+                          className="sm:w-auto"
+                              disabled={saving || plannedDataOutdated}
                             />
                           ) : null}
                           <XButton
@@ -799,14 +869,14 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                         </>
                       ) : (
                         <GradientButton
-                          onClick={() => void handlePreview()}
+                          onClick={() => void handleGenerateRequest()}
                           title="Generate"
                           loadingText="Loading..."
                           align="center"
                           variant="subtle"
                           icon=<CircleStopIcon/>
                           className="sm:w-auto"
-                          disabled={previewState.loading || detailState.loading}
+                          disabled={previewState.loading || detailState.loading || plannedDataOutdated}
                         />
                       )}
                     </div>
@@ -832,7 +902,13 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
               ) : null}
 
               {activeTopPanel === 'stats' ? (
-                <AnalysisPanel analysis={analysisState.data} loading={analysisState.loading} />
+                <AnalysisPanel
+                  analysis={analysisState.data}
+                  loading={analysisState.loading}
+                  onRefresh={() => {
+                    void loadAnalysis({ forceRefresh: true });
+                  }}
+                />
               ) : null}
 
               {activeTopPanel === 'info' ? (
@@ -853,9 +929,27 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                 {`Failed to load saved set: ${detailState.error}`}
               </div>
             ) : null}
-            {previewState.error ? (
-              <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
-                {`Request failed: ${previewState.error}`}
+            {plannedDataOutdated ? (
+              <div className="rounded-3xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span>Request failed: Planned data is outdated. Refresh required.</span>
+                  <GradientButton
+                    onClick={() => {
+                      void loadAnalysis({ forceRefresh: true });
+                    }}
+                    title="Refresh"
+                    align="center"
+                    variant="subtle"
+                    className="px-2.5 py-1 text-xs sm:w-auto"
+                    icon=<RefreshCcwIcon className="h-3.5 w-3.5"/>
+                  />
+                </div>
+              </div>
+            ) : previewState.error ? (
+              <div className="rounded-3xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span>{`Request failed: ${previewState.error}`}</span>
+                </div>
               </div>
             ) : null}
           </div>
@@ -1061,13 +1155,32 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
         </div>
       ) : null}
 
+      <InfoDialog
+        open={generateConfirmOpen}
+        onOpenChange={setGenerateConfirmOpen}
+        type="warn"
+        title="Plan data pending"
+        description="Temporary planned data already exists. Process the current planned days first before generating a new group."
+        confirmText="Go to plan"
+        onConfirm={() => {
+          const firstPlannedDate = plannedDays[0]?.showDate;
+          setGenerateConfirmOpen(false);
+          if (firstPlannedDate) {
+            setSelectedDate(firstPlannedDate);
+            setActiveTopPanel('details');
+          }
+        }}
+      />
+
       <ConfirmDialog
         open={planActionsOpen}
         onOpenChange={setPlanActionsOpen}
         type="normal"
         title={`${plannedDays.length} planned day${plannedDays.length === 1 ? '' : 's'}`}
         description={
-          commitReadyPlans.length > 0
+          plannedDataOutdated
+            ? 'Planned data is outdated. Refresh analysis before saving or clear the current temporary plans.'
+            : commitReadyPlans.length > 0
             ? `${commitReadyPlans.length} planned day${commitReadyPlans.length === 1 ? '' : 's'} can be saved now. Clear plans to drop all temporary plan data, or save all commit-ready plans together.`
             : 'No commit-ready planned days are available right now. You can still clear all temporary plan data.'
         }
@@ -1078,7 +1191,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
           setPreviewState({ data: null, loading: false, error: null });
         }}
         onConfirm={() => {
-          if (commitReadyPlans.length > 0) {
+          if (!plannedDataOutdated && commitReadyPlans.length > 0) {
             void handleSaveAllPlanned();
           }
         }}

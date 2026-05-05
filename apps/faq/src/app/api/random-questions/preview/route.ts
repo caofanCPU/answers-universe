@@ -13,7 +13,9 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const input = randomQuestionPreviewBodySchema.parse(body);
-    const result = await previewRandomQuestionSet(input.showDate);
+    const result = await previewRandomQuestionSet(input.showDate, {
+      snapshotVersion: input.snapshotVersion,
+    });
 
     return NextResponse.json(result);
   } catch (error) {
@@ -22,6 +24,9 @@ export async function POST(req: NextRequest) {
     }
     if (error instanceof ZodError) {
       return badRequest(error);
+    }
+    if (error instanceof Error && error.message === 'SNAPSHOT_VERSION_MISMATCH') {
+      return NextResponse.json({ error: error.message }, { status: 409 });
     }
     return internalServerError('Random question preview route error', error);
   }

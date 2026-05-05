@@ -24,6 +24,8 @@ export type RandomQuestionPreviewStats = {
 };
 
 export type RandomQuestionPreviewResult = {
+  snapshotVersion?: string;
+  groupId?: string;
   showDate: string;
   targetCount: number;
   canCommit: boolean;
@@ -34,11 +36,11 @@ export type RandomQuestionPreviewResult = {
 };
 
 export type RandomQuestionPlannedGroup = Omit<RandomQuestionPreviewResult, 'showDate'> & {
-  planId: string;
+  groupId: string;
 };
 
 export type RandomQuestionPlannedDateResult = RandomQuestionPreviewResult & {
-  planId: string;
+  groupId: string;
 };
 
 export type RandomQuestionStoredItem = {
@@ -69,6 +71,7 @@ export type RandomQuestionDateListResult = {
 };
 
 export type RandomQuestionAnalysisResult = RandomQuestionDateListResult & {
+  snapshotVersion: string;
   totalQuestions: number;
   usedQuestions: number;
   remainingQuestions: number;
@@ -78,6 +81,7 @@ export type RandomQuestionAnalysisResult = RandomQuestionDateListResult & {
 };
 
 export type RandomQuestionPlanRangeResult = {
+  snapshotVersion: string;
   startDate: string;
   endDate: string;
   requestedDays: number;

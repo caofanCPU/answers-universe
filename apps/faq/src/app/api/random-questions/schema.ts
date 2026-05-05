@@ -7,15 +7,19 @@ export const randomQuestionShowDateQuerySchema = z.object({
 });
 
 export const randomQuestionPreviewBodySchema = z.object({
+  snapshotVersion: z.string().trim().min(1).optional(),
   showDate: showDateSchema,
 });
 
 export const randomQuestionPlanRangeBodySchema = z.object({
+  snapshotVersion: z.string().trim().min(1).optional(),
   startDate: showDateSchema,
   endDate: showDateSchema,
 });
 
 export const randomQuestionCommitBodySchema = z.object({
+  snapshotVersion: z.string().trim().min(1).optional(),
+  groupId: z.string().trim().min(1).optional(),
   showDate: showDateSchema,
   replaceExisting: z.boolean().optional().default(false),
   items: z.array(
@@ -32,6 +36,8 @@ export const randomQuestionCommitBodySchema = z.object({
 export const randomQuestionBulkCommitBodySchema = z.object({
   plans: z.array(
     z.object({
+      snapshotVersion: z.string().trim().min(1).optional(),
+      groupId: z.string().trim().min(1).optional(),
       showDate: showDateSchema,
       items: randomQuestionCommitBodySchema.shape.items,
     })

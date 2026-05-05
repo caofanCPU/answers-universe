@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const input = randomQuestionCommitBodySchema.parse(body);
-    const result = await commitRandomQuestionSet(input.showDate, input.items, {
+    const result = await commitRandomQuestionSet(input.snapshotVersion, input.groupId, input.showDate, input.items, {
       replaceExisting: input.replaceExisting,
     });
 
@@ -27,6 +27,18 @@ export async function POST(req: NextRequest) {
     }
     if (error instanceof Error && error.message.includes('already exists')) {
       return conflict(error.message);
+    }
+    if (error instanceof Error && error.message.includes('planned group not found')) {
+      return conflict(error.message);
+    }
+    if (error instanceof Error && error.message === 'SNAPSHOT_VERSION_MISMATCH') {
+      return NextResponse.json({ error: 'SNAPSHOT_VERSION_MISMATCH' }, { status: 409 });
+    }
+    if (error instanceof Error && error.message.includes('group mismatch')) {
+      return badRequest(error);
+    }
+    if (error instanceof Error && error.message.includes('locked')) {
+      return NextResponse.json({ error: error.message }, { status: 423 });
     }
     if (error instanceof Error && error.message.includes('Invalid random question set')) {
       return badRequest(error);

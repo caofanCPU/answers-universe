@@ -23,6 +23,21 @@ export async function POST(req: NextRequest) {
     if (error instanceof ZodError) {
       return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
     }
+    if (error instanceof Error && error.message === 'SNAPSHOT_VERSION_MISMATCH') {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
+    if (error instanceof Error && error.message.includes('group mismatch')) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    if (error instanceof Error && error.message.includes('planned group not found')) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
+    if (error instanceof Error && error.message.includes('already exists')) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
+    if (error instanceof Error && error.message.includes('locked')) {
+      return NextResponse.json({ error: error.message }, { status: 423 });
+    }
     return internalServerError('Random question bulk commit route error', error);
   }
 }
