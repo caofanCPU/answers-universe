@@ -1,4 +1,4 @@
-export function QuestionListSkeleton({ label }: { label?: string }) {
+export function QuestionListSkeleton() {
   const cards = Array.from({ length: 8 }, (_, index) => index);
 
   return (
@@ -7,11 +7,6 @@ export function QuestionListSkeleton({ label }: { label?: string }) {
       aria-busy="true"
       aria-live="polite"
     >
-      {label ? (
-        <div className="rounded-3xl border border-black/10 px-6 py-4 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
-          {label}
-        </div>
-      ) : null}
       {cards.map((card) => (
         <div
           key={card}

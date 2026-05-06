@@ -446,7 +446,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
       </div>
 
       <div className="flex flex-1 flex-col gap-4">
-        {state.loading ? <QuestionListSkeleton label={copy.loading} /> : null}
+        {state.loading ? <QuestionListSkeleton /> : null}
 
         {state.error ? (
           <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-5 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
