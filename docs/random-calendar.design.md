@@ -375,13 +375,293 @@ random question 页面的核心目标，不是“选日期”，而是帮助用�
 
 ---
 
-## 8. Right-side panel design
+## 8. Frontend component structure
+
+当前前端实现把“日历视图能力”“滑动范围选择能力”“random question 业务编排”拆成三层。
+
+这个拆分的目标不是简单缩短页面文件，而是让两类通用能力可以被其他业务复用：
+
+- 单独使用滑动窗口日期组件
+- 单独使用带状态的日历视图组件
+- 在具体业务中组合两者，形成“范围准备数据 + 单日审查操作 + 批量处理”的完整流程
+
+## 8.1 CalendarStatusView
+
+`CalendarStatusView` 是通用的带状态日历视图组件。
+
+如果不叠加任何其他业务逻辑，单独使用它，本质上等价于：
+
+- 一个可切换选中日期的月历
+- 一个能显示日期状态的月历
+- 一个带单个主操作按钮的月历
+
+也就是说，它只是“日历视图本身”，不是完整业务面板。
+
+它沉淀的能力包括：
+
+1. 显示固定 42 格的月历视图
+2. 支持选中日期
+3. 支持日期迁移式导航
+4. 支持顶部六个按钮布局
+5. 支持单日点击后切换当前选中日期
+6. 支持每一天的数据状态展示
+7. 支持一个由使用方配置的主操作按钮
+
+它不包含 random question 业务逻辑。
+
+也就是说，它不应该知道：
+
+- 哪些日期是题组已保存
+- 哪些日期是题组已规划
+- 点击范围按钮后是否要请求 `/api/random-questions/plan-range`
+- 是否存在 `snapshotVersion`
+- 是否要批量保存
+
+这些都属于业务容器职责。
+
+`CalendarStatusView` 只接收已经整理好的日历输入：
+
+- `selectedDate`
+- `dayStates`
+- `action`
+- `onSelectedDateChange`
+
+其中，`action` 表示顶部中间的业务主入口。
+
+在 random question 页面中，这个入口会根据当前状态切换：
+
+- 没有规划数据时，显示滑动日期选择入口
+- 已有规划数据时，显示批量处理入口
+
+但这个切换本身不属于通用日历组件。
+
+## 8.2 Calendar day state
+
+日历中的日期状态通过 `dayStates` 传入。
+
+它的设计重点是：日历只负责表达状态，不负责解释业务。
+
+每个日期状态至少包含一个业务 key：
+
+```ts
+type CalendarDayState<TStateKey extends string = string> = {
+  key: TStateKey;
+  title?: string;
+  tone?: 'saved' | 'planned' | 'warning' | 'danger' | 'neutral';
+};
+```
+
+`key` 由业务方定义。
+
+例如 random question 页面中使用：
+
+- `saved`
+- `planned`
+
+其他业务可以使用：
+
+- `published`
+- `draft`
+- `scheduled`
+- `blocked`
+
+`tone` 只用于视觉表达。它不是业务枚举，也不应该反向驱动业务逻辑。
+
+单日点击时，通用日历组件只负责切换选中日期：
+
+```tsx
+<CalendarStatusView
+  selectedDate={selectedDate}
+  dayStates={dayStates}
+  onSelectedDateChange={setSelectedDate}
+  action={calendarAction}
+/>
+```
+
+这保证了一个核心交互原则：
+
+- 日历上的每一天都是可操作入口
+- 不同状态只影响视觉表达与页面后续展示数据
+- 范围选择或批量处理不会取代单日操作
+
+如果业务需要“点击某天后联动请求数据、切换详情区、打开特定弹窗、驱动批处理流程”，这些都不属于 `CalendarStatusView` 自身职责，而应由业务方在外层封装。
+
+## 8.3 RandomDateRangeDialog
+
+`RandomDateRangeDialog` 是独立的滑动窗口日期组件。
+
+如果不叠加任何其他业务逻辑，单独使用它，本质上等价于：
+
+- 一个日期范围选择弹窗
+- 一个输出 `startDate/endDate` 的滑动窗口选择器
+
+也就是说，它只是“范围输入器”，不是完整规划流程。
+
+它只负责范围选择交互，输出：
+
+- `startDate`
+- `endDate`
+
+它不关心：
+
+- 范围选择后请求哪个接口
+- 范围选择后生成什么数据
+- 是否要在日历上标记 planned
+- 是否允许批量操作
+
+因此它可以被筛选器、报表、导出、排期等业务单独使用。
+
+单独使用时，调用方只需要维护 open 状态和 range 状态：
+
+```tsx
+<RandomDateRangeDialog
+  open={rangeOpen}
+  value={range}
+  anchorDate={selectedDate}
+  defaultRangeDays={7}
+  onOpenChange={setRangeOpen}
+  onApply={(nextRange) => {
+    setRange(nextRange);
+    runQuery(nextRange);
+  }}
+/>
+```
+
+## 8.4 RandomQuestionCalendarPanel
+
+`RandomQuestionCalendarPanel` 是 random question 页面专用的业务容器。
+
+它组合：
+
+- `CalendarStatusView`
+- `RandomDateRangeDialog`
+
+并负责把 random question 的业务状态映射到通用日历组件。
+
+它承担的职责包括：
+
+1. 把已保存日期映射为 `saved` day state
+2. 把临时规划日期映射为 `planned` day state
+3. 根据是否存在 planned days 切换顶部主操作按钮
+4. 打开滑动日期范围弹窗
+5. 调用范围规划接口
+6. 把接口返回的 planned dates 映射为页面的 `PlannedDay`
+7. 在范围规划成功后切换到第一条规划日期
+8. 把 preview state、snapshot version、outdated state 回传给页面
+
+它仍然不负责右侧详情区域。
+
+右侧详情、保存、删除、批量确认、刷新分析等页面级行为仍由 `RandomQuestionBoardClient` 管理。
+
+这样可以保证：
+
+- 日历视图能力可以复用
+- 滑动日期范围能力可以复用
+- random question 的业务流程集中在一个专用容器里
+- 页面主体不需要直接处理范围弹窗内部状态
+
+这里的层级关系应明确理解为：
+
+1. `CalendarStatusView` 是基础日历组件
+2. `RandomDateRangeDialog` 是基础范围输入组件
+3. 如果业务只需要“看日历”或“选范围”，可以单独使用这两个基础组件
+4. 如果业务需要“带状态数据的日历视图 + 范围选择 + 请求接口 + 结果回填 + 页面联动”，就应该由业务方自己再封装一个 panel/container
+
+换句话说：
+
+- 通用层只沉淀“日历怎么显示”“范围怎么选”
+- 业务层自己封装“状态怎么映射”“按钮点了做什么”“范围 apply 后怎么请求和回填”
+
+## 8.5 RandomQuestionBoardClient usage
+
+`RandomQuestionBoardClient` 使用日历区域时，只组合专用业务容器：
+
+```tsx
+<RandomQuestionCalendarPanel
+  selectedDate={selectedDate}
+  savedDates={generatedDateSet}
+  plannedDays={plannedDays}
+  activeSnapshotVersion={activeSnapshotVersion}
+  onSelectedDateChange={setSelectedDate}
+  onPlannedDaysChange={setPlannedDays}
+  onPreviewStateChange={setPreviewState}
+  onSnapshotVersionChange={setActiveSnapshotVersion}
+  onPlannedDataOutdatedChange={setPlannedDataOutdated}
+  onOpenPlanActions={() => setPlanActionsOpen(true)}
+  onShowDetailsPanel={() => setActiveTopPanel('details')}
+/>
+```
+
+页面主体保留的职责是：
+
+- 当前选中日期
+- 当前 planned days
+- 当前 preview/detail/analysis state
+- 保存、删除、替换、批量保存
+- 刷新分析
+- 右侧详情和信息面板
+- 各类确认弹窗
+
+页面主体不再直接关心：
+
+- range dialog 是否打开
+- range draft value 是什么
+- range apply 后如何请求 plan-range
+- 日历状态 Map 如何从 saved/planned 数据生成
+
+## 8.6 Usage patterns for other business areas
+
+其他业务使用时应按需求选择组合方式。
+
+### Only use the range dialog
+
+适用于筛选、报表、导出等场景。
+
+业务方只接收一个日期范围，然后触发查询或导出。
+
+这时它等价于一个“日期范围输入器”。
+
+### Only use the calendar view
+
+适用于发布日历、排期日历、任务日历等场景。
+
+业务方提供：
+
+- 当前选中日期
+- 日期状态 Map
+- 顶部主操作按钮
+
+这时它等价于一个“带状态标记的月历视图”。
+
+### Use both together
+
+适用于“范围准备数据 + 日历逐日处理 + 批量处理”的场景。
+
+这种模式下：
+
+1. 日历仍然是主交互面板
+2. 点击单个日期始终可以触发该日期的业务操作
+3. 顶部主操作按钮用于打开范围选择或批处理
+4. 范围选择只是准备一批日期相关业务数据
+5. 范围 apply 后，业务方把结果映射回 `dayStates`
+6. 用户继续通过日历逐日审查或操作
+7. 批量操作是附加能力，不替代单日操作
+
+这个模型是当前 random question 页面采用的模式。
+
+但需要注意，这种模式本身不是基础组件直接提供的能力，而是业务方额外封装出来的能力。
+
+也就是说，当你需要这样的完整流程时，应该自己再包一层类似 `RandomQuestionCalendarPanel` 的业务容器，而不是把这些逻辑继续塞回 `CalendarStatusView` 或 `RandomDateRangeDialog`。
+
+---
+
+## 9. Right-side panel design
 
 右侧区域负责“当前选中日期”的具体信息和操作。
 
 它不是全局配置区，而是一个跟随当前日期焦点变化的内容区。
 
-## 8.1 Details
+## 9.1 Details
 
 Details 面板负责当前日期的实际处理。
 
@@ -400,7 +680,7 @@ Details 面板负责当前日期的实际处理。
 
 如果当前日期对应的是临时规划数据，用户可以直接在这里完成审查与保存。
 
-## 8.2 Analysis
+## 9.2 Analysis
 
 Analysis 面板负责展示全局分析结果。
 
@@ -415,7 +695,7 @@ Analysis 面板负责展示全局分析结果。
 
 刷新不是装饰性按钮，而是系统重新接受“最新全局结果”的明确入口。
 
-## 8.3 Info
+## 9.3 Info
 
 Info 面板负责承载补充性的资源信息，例如类别分布等。
 
@@ -423,7 +703,7 @@ Info 面板负责承载补充性的资源信息，例如类别分布等。
 
 ---
 
-## 9. Backend product semantics
+## 10. Backend product semantics
 
 虽然本文档不讨论代码实现，但 random question 页面有一个非常关键的产品前提：
 
@@ -433,7 +713,7 @@ Info 面板负责承载补充性的资源信息，例如类别分布等。
 
 这也是后端设计和前端体验必须绑定的核心原因。
 
-## 9.1 Analysis as the base snapshot
+## 10.1 Analysis as the base snapshot
 
 当前系统把分析结果视为一份“当前可规划能力快照”。
 
@@ -463,7 +743,7 @@ Info 面板负责承载补充性的资源信息，例如类别分布等。
 - 在不重算全库的前提下
 - 还可以继续拿出多少组完整题组
 
-## 9.2 Stable planning pool
+## 10.2 Stable planning pool
 
 一旦分析结果已经生成，后续的范围规划和单日预览都应从这份稳定结果中取数据。
 
@@ -475,7 +755,7 @@ Info 面板负责承载补充性的资源信息，例如类别分布等。
 
 产品上，这能保证用户看到的规划结果在一段操作周期内可预测、可审查。
 
-## 9.3 Save consumes availability
+## 10.3 Save consumes availability
 
 当用户保存一条或多条规划结果时，系统对待它的方式不是“重新生成一套全新世界”。
 
@@ -505,7 +785,7 @@ Info 面板负责承载补充性的资源信息，例如类别分布等。
 
 如果保存一天就重建整份快照，那么用户手上正在审查的其他临时规划可能会全部变化，违反“规划期间保持稳定”的原则。
 
-## 9.4 Refresh means accepting a new world state
+## 10.4 Refresh means accepting a new world state
 
 只有在刷新发生时，系统才重新构建全局分析结果。
 
@@ -526,7 +806,7 @@ Info 面板负责承载补充性的资源信息，例如类别分布等。
 - 旧的统计摘要不再继续沿用
 - 前端持有的临时规划如果来自旧快照，应被清空或视为过期
 
-## 9.5 Clear means deleting saved reality
+## 10.5 Clear means deleting saved reality
 
 Clear 的语义与普通取消预览不同。
 
@@ -551,7 +831,7 @@ Clear 的语义与普通取消预览不同。
 
 这条规则保证 Clear 后页面不会继续展示已经删除的日期，也不会继续沿用错误的剩余题量和预计可生成天数。
 
-## 9.6 Pending plan guard before destructive changes
+## 10.6 Pending plan guard before destructive changes
 
 当页面存在尚未处理的临时规划数据时，用户不能直接执行会重建快照的破坏性操作。
 
@@ -576,7 +856,7 @@ Clear 的语义与普通取消预览不同。
 
 ---
 
-## 10. Date assignment rule for range planning
+## 11. Date assignment rule for range planning
 
 范围规划的结果并不是简单把候选题组机械填进用户选中的每一天。
 
@@ -596,9 +876,9 @@ Clear 的语义与普通取消预览不同。
 
 ---
 
-## 11. Version consistency and stale-state handling
+## 12. Version consistency and stale-state handling
 
-## 11.1 Why version consistency matters
+## 12.1 Why version consistency matters
 
 由于分析结果本身是一份稳定快照，所以页面必须知道：
 
@@ -606,7 +886,7 @@ Clear 的语义与普通取消预览不同。
 
 如果不是同一份，就不能继续假设这批计划安全可用。
 
-## 11.2 User-facing rule
+## 12.2 User-facing rule
 
 当系统发现当前页面持有的规划数据已经落后于最新分析结果时：
 
@@ -620,7 +900,7 @@ Clear 的语义与普通取消预览不同。
 - 系统也不让用户在过期结果上继续保存
 - 而是明确提示：请刷新，再继续操作
 
-## 11.3 Error presentation principle
+## 12.3 Error presentation principle
 
 版本不一致属于“需要用户处理的状态”，不是一次性的瞬时报错。
 
@@ -637,7 +917,7 @@ Clear 的语义与普通取消预览不同。
 
 ---
 
-## 12. Concurrency and safety
+## 13. Concurrency and safety
 
 保存行为需要在并发情况下仍然可控。
 
@@ -667,7 +947,7 @@ Clear 的语义与普通取消预览不同。
 
 ---
 
-## 13. Mobile design requirement
+## 14. Mobile design requirement
 
 本页所有关键交互都必须移动端可用，尤其包括：
 
@@ -689,7 +969,7 @@ Clear 的语义与普通取消预览不同。
 
 ---
 
-## 14. Final design conclusion
+## 15. Final design conclusion
 
 当前 random question 页面的设计已经形成以下稳定结论：
 

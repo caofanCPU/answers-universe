@@ -17,16 +17,19 @@ import {
 import { cn, getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import { ConfirmDialog, InfoDialog } from '@windrun-huaiin/third-ui/main/alert-dialog';
 import { GradientButton, XButton, XToggleButton } from '@windrun-huaiin/third-ui/main/buttons';
-import { RandomCalendarView, type RandomCalendarDayState } from './random-calendar-view';
-import { RandomDateRangeDialog, type RandomCalendarRange } from './random-date-range-dialog';
 import { buildReadonlyAnswerOptions } from './question-answer-options';
 import { QuestionDetail } from './question-detail';
+import { RandomQuestionCalendarPanel } from './random-question-calendar-panel';
+import {
+  isSnapshotVersionMismatchResponse,
+  toRandomQuestionDraftItems,
+  type PlannedDay,
+  type RequestState,
+} from './random-question-board-types';
 import type {
   RandomQuestionAnalysisResult,
   RandomQuestionCategoryInventory,
   RandomQuestionDetailResult,
-  RandomQuestionDraftItem,
-  RandomQuestionPlanRangeResult,
   RandomQuestionPreviewResult,
 } from '@/server/random-questions/types';
 
@@ -34,44 +37,10 @@ type RandomQuestionBoardClientProps = {
   locale: string;
 };
 
-type RequestState<T> = {
-  data: T | null;
-  loading: boolean;
-  error: string | null;
-};
-
 type TopPanelKey = 'details' | 'stats' | 'info';
-
-type PlannedDay = {
-  showDate: string;
-  groupId: string;
-  preview: RandomQuestionPreviewResult;
-};
 
 function getTodayString(): string {
   return new Date().toISOString().slice(0, 10);
-}
-
-function createEmptyRange(): RandomCalendarRange {
-  return { startDate: null, endDate: null };
-}
-
-function toDraftItems(items: RandomQuestionPreviewResult['items']): RandomQuestionDraftItem[] {
-  return items.map((item) => ({
-    questionId: item.questionId,
-    questionUuid: item.questionUuid,
-    asFirst: item.asFirst,
-    category: item.category,
-    sortOrder: item.sortOrder,
-  }));
-}
-
-function isSnapshotVersionMismatchResponse(body: unknown): boolean {
-  if (!body || typeof body !== 'object') {
-    return false;
-  }
-
-  return 'error' in body && body.error === 'SNAPSHOT_VERSION_MISMATCH';
 }
 
 function QuestionIdentityTags({
@@ -337,8 +306,6 @@ function InventoryTableSkeleton({ rows, className }: { rows: number; className?:
 export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientProps) {
   const today = useMemo(() => getTodayString(), []);
   const [selectedDate, setSelectedDate] = useState(today);
-  const [rangeSelection, setRangeSelection] = useState<RandomCalendarRange>(createEmptyRange);
-  const [rangeDialogOpen, setRangeDialogOpen] = useState(false);
   const [plannedDays, setPlannedDays] = useState<PlannedDay[]>([]);
   const [analysisState, setAnalysisState] = useState<RequestState<RandomQuestionAnalysisResult>>({
     data: null,
@@ -374,44 +341,9 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
     [analysisState.data]
   );
   const plannedDayMap = useMemo(() => new Map(plannedDays.map((item) => [item.showDate, item])), [plannedDays]);
-  const dayStates = useMemo(() => {
-    const states = new Map<string, RandomCalendarDayState>();
-
-    for (const date of generatedDateSet) {
-      states.set(date, {
-        state: 'saved',
-        title: `${date} has a saved set`,
-      });
-    }
-
-    for (const plannedDay of plannedDays) {
-      states.set(plannedDay.showDate, {
-        state: 'planned',
-        title: `${plannedDay.showDate} has a planned set`,
-      });
-    }
-
-    return states;
-  }, [generatedDateSet, plannedDays]);
   const selectedHasSavedSet = generatedDateSet.has(selectedDate);
   const selectedPlannedDay = plannedDayMap.get(selectedDate) ?? null;
   const guidanceResetKey = previewState.data?.messages.join('|') ?? '';
-
-  const openRangeDialog = useCallback(() => {
-    setRangeSelection({ startDate: selectedDate, endDate: selectedDate });
-    setPlannedDays([]);
-    setPreviewState({ data: null, loading: false, error: null });
-    setRangeDialogOpen(true);
-  }, [selectedDate]);
-
-  const openCalendarAction = useCallback(() => {
-    if (plannedDays.length > 0) {
-      setPlanActionsOpen(true);
-      return;
-    }
-
-    openRangeDialog();
-  }, [openRangeDialog, plannedDays.length]);
 
   async function loadAnalysis(options?: { forceRefresh?: boolean }) {
     setAnalysisState((current) => ({ ...current, loading: true, error: null }));
@@ -547,7 +479,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
       ...current.filter((item) => item.showDate !== selectedDate),
       {
         showDate: selectedDate,
-        groupId: preview.groupId ?? toDraftItems(preview.items).map((item) => item.questionId).sort((a, b) => Number(a) - Number(b)).join(','),
+        groupId: preview.groupId ?? toRandomQuestionDraftItems(preview.items).map((item) => item.questionId).sort((a, b) => Number(a) - Number(b)).join(','),
         preview,
       },
     ]);
@@ -591,7 +523,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
           groupId: previewState.data.groupId,
           showDate: selectedDate,
           replaceExisting,
-          items: toDraftItems(previewState.data.items),
+          items: toRandomQuestionDraftItems(previewState.data.items),
         }),
       });
 
@@ -632,7 +564,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
         snapshotVersion,
         groupId: item.groupId,
         showDate: item.showDate,
-        items: toDraftItems(item.preview.items),
+        items: toRandomQuestionDraftItems(item.preview.items),
       };
     });
 
@@ -780,100 +712,18 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
     <div className="min-h-[calc(100vh-18rem)] min-w-0 space-y-6">
       <div className="grid min-w-0 gap-6 xl:items-stretch xl:grid-cols-[24rem_minmax(0,1fr)]">
         <div className="flex min-w-0 max-w-full flex-col space-y-3 overflow-hidden xl:h-full">
-          <RandomCalendarView
+          <RandomQuestionCalendarPanel
             selectedDate={selectedDate}
-            dayStates={dayStates}
+            savedDates={generatedDateSet}
+            plannedDays={plannedDays}
+            activeSnapshotVersion={activeSnapshotVersion}
             onSelectedDateChange={setSelectedDate}
-            onActionOpen={openCalendarAction}
-            hasPlannedDays={plannedDays.length > 0}
-          />
-          <RandomDateRangeDialog
-            open={rangeDialogOpen}
-            value={rangeSelection}
-            anchorDate={selectedDate}
-            defaultRangeDays={5}
-            onOpenChange={(open) => {
-              setRangeDialogOpen(open);
-              if (!open) {
-                setRangeSelection(createEmptyRange());
-              }
-            }}
-            onClear={(nextRange) => {
-              setRangeSelection(nextRange);
-              setPlannedDays([]);
-              setPreviewState({ data: null, loading: false, error: null });
-              if (nextRange.startDate) {
-                setSelectedDate(nextRange.startDate);
-              }
-            }}
-            onApply={async (nextRange) => {
-              setRangeSelection(nextRange);
-              if (!nextRange.startDate || !nextRange.endDate) {
-                setPlannedDays([]);
-                setPreviewState({ data: null, loading: false, error: null });
-                return;
-              }
-
-              const response = await fetch('/api/random-questions/plan-range', {
-                method: 'POST',
-                credentials: 'include',
-                cache: 'no-store',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  snapshotVersion: activeSnapshotVersion,
-                  startDate: nextRange.startDate,
-                  endDate: nextRange.endDate,
-                }),
-              });
-
-              if (!response.ok) {
-                const errorBody = await response.json().catch(() => null);
-                if (response.status === 409 && isSnapshotVersionMismatchResponse(errorBody)) {
-                  setPlannedDataOutdated(true);
-                  setPlannedDays([]);
-                  setPreviewState({ data: null, loading: false, error: 'Planned data is outdated. Refresh required.' });
-                  return;
-                }
-                setPlannedDays([]);
-                setPreviewState({ data: null, loading: false, error: `Request failed with status ${response.status}` });
-                return;
-              }
-
-              const result = (await response.json()) as RandomQuestionPlanRangeResult;
-              setActiveSnapshotVersion(result.snapshotVersion);
-              const nextPlannedDays = result.plannedDates.map((item) => ({
-                showDate: item.showDate,
-                groupId: item.groupId,
-                preview: {
-                  snapshotVersion: result.snapshotVersion,
-                  groupId: item.groupId,
-                  showDate: item.showDate,
-                  targetCount: item.targetCount,
-                  canCommit: item.canCommit,
-                  reasons: item.reasons,
-                  messages: item.messages,
-                  stats: item.stats,
-                  items: item.items,
-                },
-              }));
-
-              if (nextPlannedDays.length === 0) {
-                setPlannedDays([]);
-                setPreviewState({ data: null, loading: false, error: 'No planned groups available for this range.' });
-                return;
-              }
-
-              setPlannedDays((current) => [
-                ...current.filter((item) => !nextPlannedDays.some((nextItem) => nextItem.showDate === item.showDate)),
-                ...nextPlannedDays,
-              ]);
-              setRangeSelection(createEmptyRange());
-              setSelectedDate(nextPlannedDays[0].showDate);
-              setPreviewState({ data: nextPlannedDays[0].preview, loading: false, error: null });
-              setActiveTopPanel('details');
-            }}
+            onPlannedDaysChange={setPlannedDays}
+            onPreviewStateChange={setPreviewState}
+            onSnapshotVersionChange={setActiveSnapshotVersion}
+            onPlannedDataOutdatedChange={setPlannedDataOutdated}
+            onOpenPlanActions={() => setPlanActionsOpen(true)}
+            onShowDetailsPanel={() => setActiveTopPanel('details')}
           />
         </div>
 

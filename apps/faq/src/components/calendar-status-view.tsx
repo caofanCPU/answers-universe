@@ -1,21 +1,38 @@
 'use client';
 
-import { memo, useCallback, useMemo } from 'react';
-import { CalendarClockIcon, CalendarDaysIcon, CalendarHeartIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon } from '@windrun-huaiin/base-ui/icons';
+import { memo, useCallback, useMemo, type ReactNode } from 'react';
+import {
+  CalendarHeartIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronsLeftIcon,
+  ChevronsRightIcon,
+} from '@windrun-huaiin/base-ui/icons';
 import { cn } from '@windrun-huaiin/lib/utils';
 import { usePressFeedback } from './use-press-feedback';
 
-export type RandomCalendarDayState = {
-  state?: 'saved' | 'planned';
+export type CalendarDayTone = 'saved' | 'planned' | 'warning' | 'danger' | 'neutral';
+
+export type CalendarDayState<TStateKey extends string = string> = {
+  key: TStateKey;
   title?: string;
+  tone?: CalendarDayTone;
 };
 
-type RandomCalendarViewProps = {
+export type CalendarToolbarAction = {
+  icon: ReactNode;
+  label: string;
+  title?: string;
+  disabled?: boolean;
+  onPress: () => void;
+};
+
+type CalendarStatusViewProps<TStateKey extends string = string> = {
   selectedDate: string;
-  dayStates: Map<string, RandomCalendarDayState>;
+  dayStates?: Map<string, CalendarDayState<TStateKey>>;
+  action: CalendarToolbarAction;
+  className?: string;
   onSelectedDateChange: (date: string) => void;
-  onActionOpen: () => void;
-  hasPlannedDays?: boolean;
 };
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -60,11 +77,11 @@ function buildMonthDays(currentMonth: Date): Date[] {
   const startWeekday = firstDay.getUTCDay();
   const gridStart = new Date(Date.UTC(year, month, 1 - startWeekday));
 
-  return Array.from({ length: 42 }, (_, index) => new Date(Date.UTC(
-    gridStart.getUTCFullYear(),
-    gridStart.getUTCMonth(),
-    gridStart.getUTCDate() + index
-  )));
+  return Array.from(
+    { length: 42 },
+    (_, index) =>
+      new Date(Date.UTC(gridStart.getUTCFullYear(), gridStart.getUTCMonth(), gridStart.getUTCDate() + index))
+  );
 }
 
 function addMonthsClamped(value: string, months: number): string {
@@ -81,13 +98,51 @@ function addMonthsClamped(value: string, months: number): string {
   return formatDateString(new Date(Date.UTC(targetYear, normalizedMonth, targetDay)));
 }
 
-export const RandomCalendarView = memo(function RandomCalendarView({
+function getToneClassName(tone: CalendarDayTone | undefined, selected: boolean): string {
+  if (selected) {
+    return 'border-black/20 dark:border-white/20';
+  }
+
+  switch (tone) {
+    case 'saved':
+      return 'border-emerald-300 dark:border-emerald-400';
+    case 'planned':
+      return 'border-amber-300 dark:border-amber-400';
+    case 'warning':
+      return 'border-orange-300 dark:border-orange-400';
+    case 'danger':
+      return 'border-red-300 dark:border-red-400';
+    case 'neutral':
+      return 'border-slate-300 dark:border-slate-500';
+    default:
+      return 'border-black/10 dark:border-white/10';
+  }
+}
+
+function getToneDotClassName(tone: CalendarDayTone | undefined): string {
+  switch (tone) {
+    case 'saved':
+      return 'bg-emerald-500 dark:bg-emerald-300';
+    case 'planned':
+      return 'bg-amber-500 dark:bg-amber-300';
+    case 'warning':
+      return 'bg-orange-500 dark:bg-orange-300';
+    case 'danger':
+      return 'bg-red-500 dark:bg-red-300';
+    case 'neutral':
+      return 'bg-slate-400 dark:bg-slate-300';
+    default:
+      return '';
+  }
+}
+
+export const CalendarStatusView = memo(function CalendarStatusView<TStateKey extends string = string>({
   selectedDate,
   dayStates,
+  action,
+  className,
   onSelectedDateChange,
-  onActionOpen,
-  hasPlannedDays = false,
-}: RandomCalendarViewProps) {
+}: CalendarStatusViewProps<TStateKey>) {
   const calendarMonth = useMemo(() => parseDateString(`${selectedDate.slice(0, 7)}-01`), [selectedDate]);
   const monthTitle = useMemo(() => getMonthParts(calendarMonth), [calendarMonth]);
   const monthDays = useMemo(() => buildMonthDays(calendarMonth), [calendarMonth]);
@@ -104,7 +159,8 @@ export const RandomCalendarView = memo(function RandomCalendarView({
       shapeClassName,
       pressedToolbarButton === button
         ? CALENDAR_TOOLBAR_BUTTON_PRESSED_CLASS_NAME
-        : CALENDAR_TOOLBAR_BUTTON_REST_CLASS_NAME
+        : CALENDAR_TOOLBAR_BUTTON_REST_CLASS_NAME,
+      button === 'action' && action.disabled ? 'pointer-events-none opacity-45' : ''
     );
   }
 
@@ -123,12 +179,20 @@ export const RandomCalendarView = memo(function RandomCalendarView({
   const handleNextYear = useCallback(() => {
     onSelectedDateChange(addMonthsClamped(selectedDate, 12));
   }, [onSelectedDateChange, selectedDate]);
-  const handleDayPress = useCallback((nextDate: string) => {
-    onSelectedDateChange(nextDate);
-  }, [onSelectedDateChange]);
+  const handleDayPress = useCallback(
+    (nextDate: string) => {
+      onSelectedDateChange(nextDate);
+    },
+    [onSelectedDateChange]
+  );
 
   return (
-    <div className="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden rounded-3xl border border-black/10 p-3 dark:border-white/10 sm:p-4 xl:self-stretch">
+    <div
+      className={cn(
+        'flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden rounded-3xl border border-black/10 p-3 dark:border-white/10 sm:p-4 xl:self-stretch',
+        className
+      )}
+    >
       <div className="flex h-full flex-col space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex shrink-0 items-center">
@@ -156,7 +220,7 @@ export const RandomCalendarView = memo(function RandomCalendarView({
               aria-label="Previous month"
               title="Previous month"
             >
-            <ChevronLeftIcon className="h-4 w-4" />
+              <ChevronLeftIcon className="h-4 w-4" />
             </button>
             <button
               type="button"
@@ -184,15 +248,20 @@ export const RandomCalendarView = memo(function RandomCalendarView({
             <button
               type="button"
               onClick={() => {
+                if (action.disabled) {
+                  return;
+                }
+
                 flashToolbarButtonPress('action');
-                onActionOpen();
+                action.onPress();
               }}
               className={getToolbarButtonClassName('action', 'rounded-l-full')}
               {...getToolbarButtonPressProps('action')}
-              aria-label={hasPlannedDays ? 'Open planned actions' : 'Select date range'}
-              title={hasPlannedDays ? 'Open planned actions' : 'Select date range'}
+              aria-label={action.label}
+              title={action.title ?? action.label}
+              disabled={action.disabled}
             >
-              {hasPlannedDays ? <CalendarClockIcon className="h-4 w-4" /> : <CalendarDaysIcon className="h-4 w-4" />}
+              {action.icon}
             </button>
             <button
               type="button"
@@ -234,6 +303,7 @@ export const RandomCalendarView = memo(function RandomCalendarView({
         <div className="grid grid-cols-7 gap-1">
           {monthDays.map((day) => {
             const date = formatDateString(day);
+            const state = dayStates?.get(date);
 
             return (
               <CalendarDayButton
@@ -242,10 +312,8 @@ export const RandomCalendarView = memo(function RandomCalendarView({
                 label={String(day.getUTCDate())}
                 currentMonth={day.getUTCMonth() === calendarMonth.getUTCMonth()}
                 selected={date === selectedDate}
-                dayState={dayStates.get(date)}
+                dayState={state}
                 onPress={handleDayPress}
-                year={day.getUTCFullYear()}
-                month={day.getUTCMonth()}
               />
             );
           })}
@@ -262,50 +330,33 @@ const CalendarDayButton = memo(function CalendarDayButton({
   selected,
   dayState,
   onPress,
-  year,
-  month,
 }: {
   date: string;
   label: string;
   currentMonth: boolean;
   selected: boolean;
-  dayState?: RandomCalendarDayState;
-  onPress: (date: string, year: number, month: number) => void;
-  year: number;
-  month: number;
+  dayState?: CalendarDayState;
+  onPress: (date: string) => void;
 }) {
-  const isSaved = dayState?.state === 'saved';
-  const isPlanned = dayState?.state === 'planned';
+  const tone = dayState?.tone;
 
   return (
     <button
       type="button"
-      onClick={() => onPress(date, year, month)}
+      onClick={() => onPress(date)}
       className={cn(
         'relative flex h-11 select-none items-center justify-center rounded-2xl border text-sm transition',
         selected
           ? 'bg-black text-white dark:bg-white dark:text-slate-950'
           : 'text-slate-700 hover:bg-black/5 dark:text-slate-200 dark:hover:bg-white/5',
-        isSaved
-          ? 'border-emerald-300 dark:border-emerald-400'
-          : isPlanned
-            ? 'border-amber-300 dark:border-amber-400'
-            : selected
-              ? 'border-black/20 dark:border-white/20'
-              : 'border-black/10 dark:border-white/10',
+        getToneClassName(tone, selected),
         currentMonth ? '' : 'opacity-45'
       )}
       title={dayState?.title ?? `Open ${date}`}
     >
       <span>{label}</span>
-      {isSaved || isPlanned ? (
-        <span
-          className={cn(
-            'absolute bottom-1 h-1.5 w-1.5 rounded-full',
-            isSaved && 'bg-emerald-500 dark:bg-emerald-300',
-            isPlanned && 'bg-amber-500 dark:bg-amber-300'
-          )}
-        />
+      {tone ? (
+        <span className={cn('absolute bottom-1 h-1.5 w-1.5 rounded-full', getToneDotClassName(tone))} />
       ) : null}
     </button>
   );
