@@ -36,10 +36,8 @@ export type QuestionEditorCopy = {
   form: QuestionFormCopy;
   detail: QuestionPreviewCopy;
   preview: {
-    toggleAriaLabel: string;
     edit: string;
     preview: string;
-    draftHint: string;
     reviewButton: string;
     previous: string;
     next: string;
@@ -175,7 +173,6 @@ export type QuestionEditorPageCopy = {
     primary: string;
     secondary?: string;
   };
-  backLabel: string;
   editor: QuestionEditorCopy;
 };
 
@@ -335,7 +332,6 @@ export async function getQuestionCreatePageCopy(locale: string): Promise<Questio
     actions: {
       primary: importT('title'),
     },
-    backLabel: createT('actions.backToList'),
     editor: {
       noticeCreate: createT('notice'),
       noticeEdit: createT('notice'),
@@ -348,10 +344,8 @@ export async function getQuestionCreatePageCopy(locale: string): Promise<Questio
       form: formCopy,
       detail: previewCopy,
       preview: {
-        toggleAriaLabel: createT('preview.toggleAriaLabel'),
         edit: createT('preview.edit'),
         preview: createT('preview.preview'),
-        draftHint: createT('preview.draftHint'),
         reviewButton: createT('preview.reviewButton'),
         previous: createT('preview.previous'),
         next: createT('preview.next'),
@@ -380,7 +374,6 @@ export async function getQuestionDetailPageCopy(locale: string, id: string): Pro
       primary: importT('title'),
       secondary: createT('title'),
     },
-    backLabel: detailT('actions.backToList'),
     editor: {
       noticeCreate: editT('notice'),
       noticeEdit: editT('notice'),
@@ -393,10 +386,8 @@ export async function getQuestionDetailPageCopy(locale: string, id: string): Pro
       form: formCopy,
       detail: previewCopy,
       preview: {
-        toggleAriaLabel: editT('preview.toggleAriaLabel'),
         edit: editT('preview.edit'),
         preview: editT('preview.preview'),
-        draftHint: editT('preview.draftHint'),
         reviewButton: editT('preview.reviewButton'),
         previous: editT('preview.previous'),
         next: editT('preview.next'),
@@ -424,7 +415,6 @@ export async function getQuestionEditPageCopy(locale: string, id: string): Promi
       primary: importT('title'),
       secondary: createT('title'),
     },
-    backLabel: createT('actions.backToList'),
     editor: {
       noticeCreate: editT('notice'),
       noticeEdit: editT('notice'),
@@ -437,10 +427,8 @@ export async function getQuestionEditPageCopy(locale: string, id: string): Promi
       form: formCopy,
       detail: previewCopy,
       preview: {
-        toggleAriaLabel: editT('preview.toggleAriaLabel'),
         edit: editT('preview.edit'),
         preview: editT('preview.preview'),
-        draftHint: editT('preview.draftHint'),
         reviewButton: editT('preview.reviewButton'),
         previous: editT('preview.previous'),
         next: editT('preview.next'),

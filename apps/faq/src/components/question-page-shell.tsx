@@ -22,7 +22,7 @@ export function QuestionPageShell({
   actions = [],
 }: QuestionPageShellProps) {
   return (
-    <section className="mx-auto mt-12 flex w-full max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 md:px-8 lg:px-10">
+    <section className="mx-auto mt-12 flex min-h-[calc(100vh-16rem)] w-full max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 md:px-8 lg:px-10">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="space-y-2">
           <div className="flex min-w-0 items-center gap-2">

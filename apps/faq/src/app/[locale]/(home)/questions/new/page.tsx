@@ -27,8 +27,6 @@ export default async function NewQuestionPage({
       <QuestionEditorClient
         locale={locale}
         mode="create"
-        backHref={getAsNeededLocalizedUrl(locale, '/questions')}
-        backLabel={copy.backLabel}
         usb={copy.editor}
       />
     </QuestionPageShell>

@@ -13,7 +13,7 @@ import {
   RefreshCcwIcon,
   XIcon,
 } from '@windrun-huaiin/base-ui/icons';
-import { cn } from '@windrun-huaiin/lib/utils';
+import { cn, getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import { ConfirmDialog, InfoDialog } from '@windrun-huaiin/third-ui/main/alert-dialog';
 import { GradientButton, XButton, XToggleButton } from '@windrun-huaiin/third-ui/main/buttons';
 import { RandomCalendarView, RandomDateRangeDialog, type RandomCalendarDayState, type RandomCalendarRange } from './random-calendar-view';
@@ -672,10 +672,16 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   const hasPreviewNavigation = previewItems.length > 1;
   const safePreviewIndex = previewItems.length > 0 ? Math.min(previewIndex, previewItems.length - 1) : 0;
   const activePreviewItem = previewItems[safePreviewIndex] ?? null;
+  const activePreviewEditHref = activePreviewItem
+    ? getAsNeededLocalizedUrl(locale, `/questions/${activePreviewItem.questionId}/edit`)
+    : null;
   const savedItems = detailState.data?.items ?? [];
   const hasSavedNavigation = savedItems.length > 1;
   const safeSavedIndex = savedItems.length > 0 ? Math.min(savedIndex, savedItems.length - 1) : 0;
   const activeSavedItem = savedItems[safeSavedIndex] ?? null;
+  const activeSavedEditHref = activeSavedItem
+    ? getAsNeededLocalizedUrl(locale, `/questions/${activeSavedItem.questionId}/edit`)
+    : null;
   const selectedStatusBadge = previewState.data
     ? {
         label: selectedPlannedDay ? 'Planned' : 'Preview',
@@ -993,16 +999,24 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                 activePreviewItem.question.correctAnswerIndex,
                 activePreviewItem.question.id
               )}
+              editAction={{
+                enabled: Boolean(activePreviewEditHref),
+                onClick: () => {
+                  if (activePreviewEditHref) {
+                    window.location.href = activePreviewEditHref;
+                  }
+                },
+                label: 'Edit',
+              }}
             />
-            <div className="rounded-[1.75rem] border border-black/10 bg-neutral-100 p-3 dark:border-white/10 dark:bg-neutral-900">
-              <div className="flex min-w-0 items-center justify-center">
-                <div className="flex min-w-0 items-center gap-2">
+            <div className="rounded-[1.75rem] bg-neutral-100 p-3 dark:bg-neutral-900">
+              <div className="flex min-w-0 items-center justify-center gap-2">
                   {hasPreviewNavigation ? (
                     <button
                       type="button"
                       onClick={() => setPreviewIndex((current) => Math.max(0, current - 1))}
                       disabled={safePreviewIndex <= 0}
-                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-700 transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-200 dark:hover:bg-white/5"
                       aria-label="Previous"
                       title="Previous"
                     >
@@ -1010,11 +1024,11 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                     </button>
                   ) : null}
                   <div
-                    className="inline-flex min-w-0 items-center rounded-full border border-black/10 bg-slate-50/90 p-1 dark:border-white/10 dark:bg-white/5"
+                    className="inline-flex min-w-0 items-center rounded-full border border-black/10 bg-slate-50/90 px-2 py-1.5 dark:border-white/10 dark:bg-white/5"
                     aria-label={hasPreviewNavigation ? `Progress ${safePreviewIndex + 1}/${previewItems.length}` : 'Preview'}
                     title={hasPreviewNavigation ? `Progress ${safePreviewIndex + 1}/${previewItems.length}` : 'Preview'}
                   >
-                    <div className="min-w-0 px-3 text-center text-xs font-medium text-slate-600 dark:text-slate-300">
+                    <div className="min-w-0 px-4 text-center text-sm font-medium text-slate-600 dark:text-slate-300">
                       <span className="truncate">
                         {hasPreviewNavigation ? `${safePreviewIndex + 1}/${previewItems.length}` : 'Preview'}
                       </span>
@@ -1025,14 +1039,13 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                       type="button"
                       onClick={() => setPreviewIndex((current) => Math.min(previewItems.length - 1, current + 1))}
                       disabled={safePreviewIndex >= previewItems.length - 1}
-                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-700 transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-200 dark:hover:bg-white/5"
                       aria-label="Next"
                       title="Next"
                     >
                       <ChevronRightIcon className="h-4 w-4" />
                     </button>
                   ) : null}
-                </div>
               </div>
             </div>
           </div>
@@ -1048,16 +1061,24 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                 activeSavedItem.question.correctAnswerIndex,
                 activeSavedItem.question.id
               )}
+              editAction={{
+                enabled: Boolean(activeSavedEditHref),
+                onClick: () => {
+                  if (activeSavedEditHref) {
+                    window.location.href = activeSavedEditHref;
+                  }
+                },
+                label: 'Edit',
+              }}
             />
-            <div className="rounded-[1.75rem] border border-black/10 bg-neutral-100 p-3 dark:border-white/10 dark:bg-neutral-900">
-              <div className="flex min-w-0 items-center justify-center">
-                <div className="flex min-w-0 items-center gap-2">
+            <div className="rounded-[1.75rem] bg-neutral-100 p-3 dark:bg-neutral-900">
+              <div className="flex min-w-0 items-center justify-center gap-2">
                   {hasSavedNavigation ? (
                     <button
                       type="button"
                       onClick={() => setSavedIndex((current) => Math.max(0, current - 1))}
                       disabled={safeSavedIndex <= 0}
-                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-700 transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-200 dark:hover:bg-white/5"
                       aria-label="Previous"
                       title="Previous"
                     >
@@ -1065,11 +1086,11 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                     </button>
                   ) : null}
                   <div
-                    className="inline-flex min-w-0 items-center rounded-full border border-black/10 bg-slate-50/90 p-1 dark:border-white/10 dark:bg-white/5"
+                    className="inline-flex min-w-0 items-center rounded-full border border-black/10 bg-slate-50/90 px-2 py-1.5 dark:border-white/10 dark:bg-white/5"
                     aria-label={hasSavedNavigation ? `Progress ${safeSavedIndex + 1}/${savedItems.length}` : 'Saved set'}
                     title={hasSavedNavigation ? `Progress ${safeSavedIndex + 1}/${savedItems.length}` : 'Saved set'}
                   >
-                    <div className="min-w-0 px-3 text-center text-xs font-medium text-slate-600 dark:text-slate-300">
+                    <div className="min-w-0 px-4 text-center text-sm font-medium text-slate-600 dark:text-slate-300">
                       <span className="truncate">
                         {hasSavedNavigation ? `${safeSavedIndex + 1}/${savedItems.length}` : 'Saved set'}
                       </span>
@@ -1080,14 +1101,13 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                       type="button"
                       onClick={() => setSavedIndex((current) => Math.min(savedItems.length - 1, current + 1))}
                       disabled={safeSavedIndex >= savedItems.length - 1}
-                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-700 transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-200 dark:hover:bg-white/5"
                       aria-label="Next"
                       title="Next"
                     >
                       <ChevronRightIcon className="h-4 w-4" />
                     </button>
                   ) : null}
-                </div>
               </div>
             </div>
           </div>

@@ -174,3 +174,12 @@ CREATE TABLE IF NOT EXISTS faq.apilog (
     created_at    TIMESTAMPTZ  DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 重建表后必须重新执行一次显式授权。
+-- 原因：
+-- 1. DROP / CREATE 后，新表是全新的数据库对象，不会继承旧表上的 GRANT。
+-- 2. 运维可能使用不同高权限账号执行建表，无法依赖某个固定 owner 的 default privileges。
+-- 因此这里统一在建表 SQL 末尾补一遍授权，保证应用账号始终可访问最新对象。
+GRANT USAGE ON SCHEMA faq TO faq_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA faq TO faq_app;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA faq TO faq_app;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA faq TO faq_app;

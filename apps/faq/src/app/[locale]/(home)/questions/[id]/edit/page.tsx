@@ -33,8 +33,6 @@ export default async function EditQuestionPage({
         locale={locale}
         mode="edit"
         id={id}
-        backHref={getAsNeededLocalizedUrl(locale, '/questions')}
-        backLabel={copy.backLabel}
         usb={copy.editor}
       />
     </QuestionPageShell>

@@ -1,7 +1,8 @@
 import Image from 'next/image';
-import { CheckIcon } from '@windrun-huaiin/base-ui/icons';
+import { CheckIcon, EyeClosedIcon, EyeIcon, PencilIcon } from '@windrun-huaiin/base-ui/icons';
 import { themeBgColor, themeIconColor } from '@windrun-huaiin/base-ui/lib';
 import { cn } from '@windrun-huaiin/lib/utils';
+import { GradientButton } from '@windrun-huaiin/third-ui/main/buttons';
 import type { QuestionAnswerOptionDraft } from './question-answer-options';
 import type { QuestionPreviewCopy } from './question-copy';
 import type { QuestionViewModel } from './question-ui-types';
@@ -12,6 +13,19 @@ type QuestionDetailProps = {
   answerOptions: QuestionAnswerOptionDraft[];
   copy?: QuestionPreviewCopy;
   previewAsPlayer?: boolean;
+  previewToggle?: {
+    enabled: boolean;
+    onToggle: () => void;
+    showFullPreviewLabel: string;
+    switchToPlayerViewLabel: string;
+    showText: string;
+    hideText: string;
+  };
+  editAction?: {
+    enabled: boolean;
+    onClick: () => void;
+    label: string;
+  };
 };
 
 const DEFAULT_PREVIEW_COPY: QuestionPreviewCopy = {
@@ -28,6 +42,8 @@ export function QuestionDetail({
   answerOptions,
   copy = DEFAULT_PREVIEW_COPY,
   previewAsPlayer = false,
+  previewToggle,
+  editAction,
 }: QuestionDetailProps) {
   const options = answerOptions.filter((option) => option.text.trim());
   const metaPillClassName =
@@ -40,15 +56,65 @@ export function QuestionDetail({
   return (
     <div className="w-full min-w-0 space-y-5 rounded-3xl border border-black/10 p-6 dark:border-white/10">
       <div className="min-w-0 space-y-3">
-        <div className="flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-          {question.category ? <span className={metaPillClassName}>{question.category}</span> : null}
-          {question.subCategory ? <span className={metaPillClassName}>{question.subCategory}</span> : null}
-          {question.difficulty ? <span className={metaPillClassName}>{question.difficulty}</span> : null}
-          {question.asFirst ? (
-            <span className="inline-flex max-w-full items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 transition dark:bg-amber-500/10 dark:text-amber-300">
-              {copy.firstBadge}
-            </span>
-          ) : null}
+        <div className="min-w-0">
+          <div className="flex items-start justify-end gap-1 md:hidden">
+            {previewToggle?.enabled ? (
+              <GradientButton
+                onClick={previewToggle.onToggle}
+                title={previewAsPlayer ? previewToggle.showText : previewToggle.hideText}
+                align="center"
+                variant="soft"
+                className="h-8 px-3 text-xs"
+                icon={previewAsPlayer ? <EyeClosedIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+              />
+            ) : null}
+            {editAction?.enabled ? (
+              <GradientButton
+                onClick={editAction.onClick}
+                title={editAction.label}
+                align="center"
+                variant="soft"
+                className="h-8 px-3 text-xs"
+                icon={<PencilIcon className="h-4 w-4" />}
+              />
+            ) : null}
+          </div>
+          <div className="mt-3 flex min-w-0 flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400 md:mt-0 md:flex-nowrap md:items-start md:justify-between md:gap-3">
+            <div className="flex min-w-0 flex-wrap gap-2">
+              {question.category ? <span className={metaPillClassName}>{question.category}</span> : null}
+              {question.subCategory ? <span className={metaPillClassName}>{question.subCategory}</span> : null}
+              {question.difficulty ? <span className={metaPillClassName}>{question.difficulty}</span> : null}
+              {question.asFirst ? (
+                <span className="inline-flex max-w-full items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 transition dark:bg-amber-500/10 dark:text-amber-300">
+                  {copy.firstBadge}
+                </span>
+              ) : null}
+            </div>
+            {(previewToggle?.enabled || editAction?.enabled) ? (
+              <div className="hidden shrink-0 items-center gap-1 md:flex">
+                {previewToggle?.enabled ? (
+                  <GradientButton
+                    onClick={previewToggle.onToggle}
+                    title={previewAsPlayer ? previewToggle.showText : previewToggle.hideText}
+                    align="center"
+                    variant="soft"
+                    className="h-8 px-3 text-xs"
+                    icon={previewAsPlayer ? <EyeClosedIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                  />
+                ) : null}
+                {editAction?.enabled ? (
+                  <GradientButton
+                    onClick={editAction.onClick}
+                    title={editAction.label}
+                    align="center"
+                    variant="soft"
+                    className="h-8 px-3 text-xs"
+                    icon={<PencilIcon className="h-4 w-4" />}
+                  />
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </div>
         <h2 className="min-w-0 wrap-break-word text-2xl font-semibold text-slate-900 dark:text-white">{question.question}</h2>
       </div>
@@ -117,18 +183,6 @@ export function QuestionDetail({
             )}
             sizes={previewAsPlayer ? '(max-width: 768px) 240px, 240px' : '(max-width: 1024px) 70vw, 420px'}
           />
-        </div>
-      ) : null}
-
-      {!previewAsPlayer && question.tags.length > 0 ? (
-        <div>
-          <div className="flex flex-wrap gap-2">
-            {question.tags.map((tag) => (
-              <span key={tag} className={metaPillClassName}>
-                {tag}
-              </span>
-            ))}
-          </div>
         </div>
       ) : null}
     </div>

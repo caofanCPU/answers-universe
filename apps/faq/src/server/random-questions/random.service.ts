@@ -1,6 +1,7 @@
 import { prisma } from '@/server/prisma';
 import type { Prisma, Usb } from '@app-prisma';
 import { buildQuestionDetailDto } from '@/server/questions/service';
+import { QUESTION_CATEGORIES } from '@/server/questions/constants';
 import {
   getRandomQuestionAnalysisSnapshot,
   isRandomQuestionCacheEnabled,
@@ -31,6 +32,7 @@ import type {
 import { selectBestRandomQuestionSet } from '@/lib/random-question-planner';
 
 const DEFAULT_RANDOM_QUESTION_COUNT = 5;
+const RANDOM_CALENDAR_INFO_CATEGORIES = QUESTION_CATEGORIES.slice(0, 12);
 
 function getRandomQuestionTargetCount(): number {
   const rawValue = process.env.RANDOM_USB_DAILY_COUNT?.trim();
@@ -300,12 +302,14 @@ function buildCategoryInventory(records: RandomQuestionSelectionRecord[]): Rando
     inventoryByCategory.set(record.category, existing);
   }
 
-  return [...inventoryByCategory.values()].sort((left, right) => {
-    if (left.totalCount !== right.totalCount) {
-      return right.totalCount - left.totalCount;
-    }
-
-    return left.category.localeCompare(right.category);
+  return RANDOM_CALENDAR_INFO_CATEGORIES.map((category) => {
+    const existing = inventoryByCategory.get(category);
+    return existing ?? {
+      category,
+      firstCount: 0,
+      normalCount: 0,
+      totalCount: 0,
+    };
   });
 }
 
@@ -391,15 +395,15 @@ function consumeSnapshotGroups(params: {
     }
   }
 
-  const nextCategoryInventory = [...nextInventoryMap.values()]
-    .filter((item) => item.totalCount > 0)
-    .sort((left, right) => {
-      if (left.totalCount !== right.totalCount) {
-        return right.totalCount - left.totalCount;
-      }
-
-      return left.category.localeCompare(right.category);
-    });
+  const nextCategoryInventory = RANDOM_CALENDAR_INFO_CATEGORIES.map((category) => {
+    const existing = nextInventoryMap.get(category);
+    return existing ?? {
+      category,
+      firstCount: 0,
+      normalCount: 0,
+      totalCount: 0,
+    };
+  });
 
   return {
     ...params.snapshot,

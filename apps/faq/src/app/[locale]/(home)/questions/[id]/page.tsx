@@ -34,8 +34,6 @@ export default async function QuestionDetailPage({
         mode="edit"
         id={id}
         initialPreviewOpen
-        backHref={getAsNeededLocalizedUrl(locale, '/questions')}
-        backLabel={copy.backLabel}
         usb={copy.editor}
       />
     </QuestionPageShell>

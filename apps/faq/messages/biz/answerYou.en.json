@@ -132,10 +132,7 @@
     },
     "questionDetail": {
       "title": "Question Detail #{id}",
-      "description": "",
-      "actions": {
-        "backToList": "Library"
-      }
+      "description": ""
     },
     "questionPreview": {
       "firstBadge": "First",
@@ -148,7 +145,6 @@
       "title": "Create",
       "description": "",
       "actions": {
-        "backToList": "Back to Library",
         "submit": "Create"
       },
       "notice": "Create mode is wired to the create API. Successful save will redirect to the detail page.",
@@ -159,11 +155,9 @@
         "saved": "Saved"
       },
       "preview": {
-        "toggleAriaLabel": "Edit and preview toggle",
         "edit": "Edit",
         "preview": "Preview",
-        "draftHint": "Draft state. Review in preview before submit.",
-        "reviewButton": "Review in Preview",
+        "reviewButton": "Preview",
         "previous": "Previous",
         "next": "Next",
         "progress": "Progress",
@@ -185,16 +179,14 @@
         "saved": "Saved"
       },
       "preview": {
-        "toggleAriaLabel": "Edit and preview toggle",
         "edit": "Edit",
         "preview": "Preview",
-        "draftHint": "Draft state. Review in preview before submit.",
-        "reviewButton": "Review in Preview",
+        "reviewButton": "Preview",
         "previous": "Previous",
         "next": "Next",
         "progress": "Progress",
-        "showFullPreview": "Show full preview",
-        "switchToPlayerView": "Switch to player view"
+        "showFullPreview": "Show",
+        "switchToPlayerView": "Hide"
       }
     },
     "questionForm": {

@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { BadgeAlertIcon, BookCheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon, EyeClosedIcon, PencilIcon } from '@windrun-huaiin/base-ui/icons';
-import { GradientButton, XButton, XToggleButton } from '@windrun-huaiin/third-ui/main/buttons';
+import { BookCheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon } from '@windrun-huaiin/base-ui/icons';
+import { GradientButton, XButton } from '@windrun-huaiin/third-ui/main/buttons';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import { QUESTION_DEFAULT_DIFFICULTY } from '@/server/questions/constants';
-import { loadQuestionGroupContext } from './question-group-context';
+import { QUESTION_GROUP_STORAGE_KEY } from './question-group-context';
 import {
   buildAnswerOptionDrafts,
   splitAnswerOptionDrafts,
@@ -28,8 +27,6 @@ type QuestionEditorClientProps = {
   mode: 'create' | 'edit';
   id?: string;
   initialPreviewOpen?: boolean;
-  backHref: string;
-  backLabel: string;
   usb: QuestionEditorCopy;
 };
 
@@ -160,8 +157,6 @@ export function QuestionEditorClient({
   mode,
   id,
   initialPreviewOpen = false,
-  backHref,
-  backLabel,
   usb,
 }: QuestionEditorClientProps) {
   const router = useRouter();
@@ -174,16 +169,35 @@ export function QuestionEditorClient({
   const [saving, setSaving] = useState(false);
   const [submitSucceeded, setSubmitSucceeded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const groupIds = useMemo(() => {
-    if (!id) {
+    if (!id || !isClient) {
       return [];
     }
 
-    const context = loadQuestionGroupContext();
-    const nextGroupIds = context?.groupIds ?? [];
+    try {
+      const raw = window.sessionStorage.getItem(QUESTION_GROUP_STORAGE_KEY);
+      if (!raw) {
+        return [];
+      }
 
-    return nextGroupIds.includes(id) ? nextGroupIds : [];
-  }, [id]);
+      const parsed = JSON.parse(raw) as { groupIds?: unknown };
+      if (!Array.isArray(parsed.groupIds)) {
+        return [];
+      }
+
+      const nextGroupIds = parsed.groupIds.filter(
+        (item): item is string => typeof item === 'string' && item.trim().length > 0
+      );
+      return nextGroupIds.includes(id) ? nextGroupIds : [];
+    } catch {
+      return [];
+    }
+  }, [id, isClient]);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -242,6 +256,11 @@ export function QuestionEditorClient({
 
   function openPreview() {
     setActiveView('preview');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function openEdit() {
+    setActiveView('edit');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -321,48 +340,6 @@ export function QuestionEditorClient({
 
   return (
     <div className="mx-auto flex min-h-[calc(100vh-18rem)] w-full max-w-6xl min-w-0 flex-col gap-4 pb-32">
-      <div className="sticky top-4 z-20 w-full">
-        <div className="rounded-[1.75rem] border border-black/10 p-3 dark:border-white/10">
-          <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 lg:grid-cols-[12rem_minmax(0,1fr)_12rem]">
-            <div className="flex min-w-0 items-center">
-              <Link
-                href={backHref}
-                className="inline-flex items-center gap-2 rounded-full border border-black/10 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-black/20 hover:bg-black/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5 sm:px-4"
-                aria-label={backLabel}
-                title={backLabel}
-              >
-                <ChevronLeftIcon className="h-4 w-4" />
-                <span className="hidden lg:inline">{backLabel}</span>
-              </Link>
-            </div>
-
-            <div className="flex min-w-0 justify-center">
-              <XToggleButton
-                ariaLabel={usb.preview.toggleAriaLabel}
-                value={activeView}
-                onChange={(value) => {
-                  if (value === 'preview') {
-                    openPreview();
-                    return;
-                  }
-
-                  setActiveView('edit');
-                }}
-                options={[
-                  { value: 'edit', label: usb.preview.edit },
-                  { value: 'preview', label: usb.preview.preview },
-                ]}
-                size="compact"
-                className="max-w-full border-black/10 dark:border-white/10"
-                minItemWidthClassName="min-w-[72px] sm:min-w-[88px]"
-                itemPaddingClassName="px-5 py-2"
-                itemTextClassName="text-sm"
-                inactiveItemClassName="text-gray-800 hover:text-gray-900 dark:text-gray-200 dark:hover:text-gray-100"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
       {loading ? (
         <div className="min-h-[560px]" aria-busy="true" aria-live="polite" aria-label={usb.loading}>
           {activeView === 'preview' ? <QuestionDetailSkeleton /> : <QuestionEditorSkeleton mode={mode} />}
@@ -390,25 +367,32 @@ export function QuestionEditorClient({
           answerOptions={answerOptions}
           copy={usb.detail}
           previewAsPlayer={previewAsPlayer}
+          previewToggle={{
+            enabled: true,
+            onToggle: () => setPreviewAsPlayer((value) => !value),
+            showFullPreviewLabel: usb.preview.showFullPreview,
+            switchToPlayerViewLabel: usb.preview.switchToPlayerView,
+            showText: 'Show',
+            hideText: 'Hide',
+          }}
+          editAction={{
+            enabled: true,
+            onClick: openEdit,
+            label: usb.preview.edit,
+          }}
         />
       )}
       <div className="sticky bottom-4 z-20 w-full">
-        <div className="rounded-[1.75rem] border border-black/10 bg-neutral-100 p-3 dark:border-white/10 dark:bg-neutral-900">
+        <div
+          className={
+            activeView === 'edit'
+              ? 'rounded-[1.75rem] border border-black/10 bg-neutral-100 p-3 dark:border-white/10 dark:bg-neutral-900'
+              : 'rounded-[1.75rem] bg-neutral-100 p-3 dark:bg-neutral-900'
+          }
+        >
           {activeView === 'edit' ? (
-            <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div className="flex min-w-0 items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                <BadgeAlertIcon className="h-4 w-4 shrink-0" />
-                <span className="min-w-0 wrap-break-word">{usb.preview.draftHint}</span>
-              </div>
+            <div className="flex min-w-0 justify-end">
               <div className="flex min-w-0 items-center justify-end gap-2">
-                <div
-                  className="inline-flex min-w-0 items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-medium text-slate-600 dark:bg-white/5 dark:text-slate-300"
-                  aria-label={activeStatusText}
-                  title={activeStatusText}
-                >
-                  <PencilIcon className="h-4 w-4" />
-                  <span className="truncate">{activeStatusText}</span>
-                </div>
                 <XButton
                   type="single"
                   variant="subtle"
@@ -420,64 +404,56 @@ export function QuestionEditorClient({
                     onClick: openPreview,
                   }}
                 />
+                <GradientButton
+                  variant="soft"
+                  onClick={() => void onSubmit()}
+                  disabled={saving || loading}
+                  title={submitLabel}
+                  align="center"
+                  icon={<BookCheckIcon />}
+                  className="min-w-0 sm:w-auto"
+                />
               </div>
             </div>
           ) : (
-            <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex min-w-0 items-center gap-2">
-                {hasGroupNavigation ? (
+            <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center">
+              <div aria-hidden="true" className="hidden min-w-0 lg:block" />
+              {hasGroupNavigation ? (
+                <div className="flex min-w-0 items-center justify-center gap-2">
                   <button
                     type="button"
                     onClick={() => handleQuestionNavigation(previousQuestionId)}
                     disabled={!previousQuestionId}
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-700 transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-200 dark:hover:bg-white/5"
                     aria-label={usb.preview.previous}
                     title={usb.preview.previous}
                   >
                     <ChevronLeftIcon className="h-4 w-4" />
                   </button>
-                ) : null}
-                <div
-                  className="inline-flex min-w-0 items-center rounded-full border border-black/10 bg-slate-50/90 p-1 dark:border-white/10 dark:bg-white/5"
-                  aria-label={hasGroupNavigation ? `${usb.preview.progress} ${activeStatusText}` : activeStatusText}
-                  title={hasGroupNavigation ? `${usb.preview.progress} ${activeStatusText}` : activeStatusText}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setPreviewAsPlayer((value) => !value)}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-black/5 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
-                    aria-pressed={previewAsPlayer}
-                    aria-label={previewAsPlayer ? usb.preview.showFullPreview : usb.preview.switchToPlayerView}
-                    title={previewAsPlayer ? usb.preview.showFullPreview : usb.preview.switchToPlayerView}
+                  <div
+                    className="inline-flex min-w-0 items-center rounded-full border border-black/10 bg-slate-50/90 px-2 py-1.5 dark:border-white/10 dark:bg-white/5"
+                    aria-label={`${usb.preview.progress} ${activeStatusText}`}
+                    title={`${usb.preview.progress} ${activeStatusText}`}
                   >
-                    {previewAsPlayer ? <EyeClosedIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                  </button>
-                  <div className="min-w-0 px-2 text-center text-xs font-medium text-slate-600 dark:text-slate-300 sm:px-3">
-                    <span className="truncate">{activeStatusText}</span>
+                    <div className="min-w-0 px-4 text-center text-sm font-medium text-slate-600 dark:text-slate-300">
+                      <span className="truncate">{activeStatusText}</span>
+                    </div>
                   </div>
-                </div>
-                {hasGroupNavigation ? (
                   <button
                     type="button"
                     onClick={() => handleQuestionNavigation(nextQuestionId)}
                     disabled={!nextQuestionId}
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-700 transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-200 dark:hover:bg-white/5"
                     aria-label={usb.preview.next}
                     title={usb.preview.next}
                   >
                     <ChevronRightIcon className="h-4 w-4" />
                   </button>
-                ) : null}
-              </div>
-              <div className="flex min-w-0 items-center justify-end">
-                <GradientButton
-                  onClick={() => void onSubmit()}
-                  disabled={saving || loading}
-                  title={submitLabel}
-                  align="center"
-                  icon=<BookCheckIcon/>
-                  className="min-w-0 sm:w-auto"
-                />
+                </div>
+              ) : (
+                <div aria-hidden="true" className="hidden min-w-0 lg:block" />
+              )}
+              <div className="flex min-w-0 items-center justify-end gap-2">
               </div>
             </div>
           )}
