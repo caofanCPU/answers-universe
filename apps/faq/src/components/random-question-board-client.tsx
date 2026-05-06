@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BookCheckIcon,
   ChartColumnStackedIcon,
@@ -1089,8 +1089,9 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
         }
         cancelText="Cancel"
         confirmText="Replace and save"
-        onConfirm={() => {
-          void handleSavePreview(true);
+        loadingActions={['confirm']}
+        onConfirm={async () => {
+          await handleSavePreview(true);
         }}
       />
 
@@ -1102,8 +1103,9 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
         description={`This will permanently delete the saved random question set for ${selectedDate}.`}
         cancelText="Cancel"
         confirmText="Delete"
-        onConfirm={() => {
-          void handleClearSavedSet();
+        loadingActions={['confirm']}
+        onConfirm={async () => {
+          await handleClearSavedSet();
         }}
       />
 
@@ -1156,13 +1158,14 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
         }
         cancelText="Clear plans"
         confirmText="Save all"
+        loadingActions={['confirm']}
         onCancel={() => {
           setPlannedDays([]);
           setPreviewState({ data: null, loading: false, error: null });
         }}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (!plannedDataOutdated && commitReadyPlans.length > 0) {
-            void handleSaveAllPlanned();
+            await handleSaveAllPlanned();
           }
         }}
       />

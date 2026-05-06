@@ -22,7 +22,7 @@ catalog:
   "@windrun-huaiin/base-ui": 29.0.2
   "@windrun-huaiin/lib": 29.0.0
   "@windrun-huaiin/fumadocs-local-md": 29.0.0
-  "@windrun-huaiin/third-ui": 29.1.0
+  "@windrun-huaiin/third-ui": 29.2.1
   "@windrun-huaiin/dev-scripts": 29.0.0
   baseline-browser-mapping: ^2.10.0
   clsx: ^2.1.1

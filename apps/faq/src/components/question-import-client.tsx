@@ -44,7 +44,7 @@ function renderCountBadge(count: number, tone: 'neutral' | 'success' | 'danger')
         ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300'
         : 'bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-slate-300';
 
-  return <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${toneClassName}`}>{count}</span>;
+  return <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none md:px-2 md:text-[11px] ${toneClassName}`}>{count}</span>;
 }
 export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -321,12 +321,12 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
         <div className="space-y-3 border-b border-black/10 pb-4 dark:border-white/10">
           <div className="-mx-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex min-w-max items-center justify-center gap-1.5">
-              <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[84px] md:gap-2 md:px-3 md:py-1.5">
-                <ChartColumnStackedIcon className="h-3.5 w-3.5 shrink-0 text-slate-600 dark:text-slate-300 md:h-4 md:w-4" aria-hidden="true" />
+              <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[90px] md:gap-2 md:px-3 md:py-1.5">
+                <ChartColumnStackedIcon className="h-3.5 w-3.5 shrink-0 text-slate-600 dark:text-slate-300 md:h-[18px] md:w-[18px]" aria-hidden="true" />
                 {renderCountBadge(totalCount, 'neutral')}
               </div>
-              <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[84px] md:gap-2 md:px-3 md:py-1.5">
-                <BookmarkCheckIcon className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300 md:h-4 md:w-4" aria-hidden="true" />
+              <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[90px] md:gap-2 md:px-3 md:py-1.5">
+                <BookmarkCheckIcon className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300 md:h-[18px] md:w-[18px]" aria-hidden="true" />
                 {renderCountBadge(validCount, 'success')}
               </div>
               <button
@@ -336,13 +336,13 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
                     scrollToToFix();
                   }
                 }}
-                className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[84px] md:gap-2 md:px-3 md:py-1.5"
+                className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[90px] md:gap-2 md:px-3 md:py-1.5"
               >
-                <BookmarkXIcon className="h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-300 md:h-4 md:w-4" aria-hidden="true" />
+                <BookmarkXIcon className="h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-300 md:h-[18px] md:w-[18px]" aria-hidden="true" />
                 {renderCountBadge(invalidCount, 'danger')}
               </button>
-              <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[84px] md:gap-2 md:px-3 md:py-1.5">
-                <DatabaseZapIcon className="h-3.5 w-3.5 shrink-0 text-cyan-600 dark:text-cyan-300 md:h-4 md:w-4" aria-hidden="true" />
+              <div className="inline-flex min-w-[68px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-2 py-1 dark:border-white/10 dark:bg-white/5 md:min-w-[90px] md:gap-2 md:px-3 md:py-1.5">
+                <DatabaseZapIcon className="h-3.5 w-3.5 shrink-0 text-cyan-600 dark:text-cyan-300 md:h-[18px] md:w-[18px]" aria-hidden="true" />
                 {renderCountBadge(importedCount, importedCount > 0 ? 'success' : 'neutral')}
               </div>
             </div>
@@ -354,7 +354,7 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
                 title={copy.toolbar.uploadJson}
                 align="center"
                 variant="subtle"
-                className="w-full md:min-w-[120px] md:w-auto"
+                className="h-9 min-h-0 w-full px-4 py-0 text-sm md:min-w-[120px] md:w-auto"
                 icon={<JsonIcon className="h-4 w-4"/>}
               />
               <GradientButton
@@ -365,12 +365,12 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
                 title={copy.toolbar.loadSample}
                 align="center"
                 variant="subtle"
-                className="w-full md:min-w-[120px] md:w-auto"
+                className="h-9 min-h-0 w-full px-4 py-0 text-sm md:min-w-[120px] md:w-auto"
                 icon={<RotateCcwIcon className="h-4 w-4"/>}
               />
             </div>
 
-            <div className="hidden h-9 w-px shrink-0 bg-black/10 dark:bg-white/10 md:block" />
+            <div className="hidden h-8 w-px shrink-0 bg-black/10 dark:bg-white/10 md:block" />
 
             <div className="grid w-full grid-cols-2 gap-2 md:w-auto md:flex md:flex-wrap md:items-center md:justify-center">
               <div className="flex w-full md:w-auto">
@@ -381,7 +381,7 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
                   loadingText={copy.toolbar.validating}
                   align="center"
                   variant="soft"
-                  className="w-full md:min-w-[120px] md:w-auto"
+                  className="h-9 min-h-0 w-full px-4 py-0 text-sm md:min-w-[120px] md:w-auto"
                   icon={<ScanSearchIcon className="h-4 w-4"/>}
                 />
               </div>
@@ -392,7 +392,7 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
                   title={copy.toolbar.import}
                   loadingText={copy.toolbar.importing}
                   align="center"
-                  className="w-full md:min-w-[120px] md:w-auto"
+                  className="h-9 min-h-0 w-full px-4 py-0 text-sm md:min-w-[120px] md:w-auto"
                   icon={<CheckCheckIcon className="h-4 w-4"/>}
                 />
               </div>

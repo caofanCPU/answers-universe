@@ -1,8 +1,8 @@
 'use client';
 
 import type { InputHTMLAttributes } from 'react';
-import { useMemo, useState } from 'react';
-import { BrushCleaningIcon, CalendarDaysIcon, ChevronDownIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
+import { useState } from 'react';
+import { BrushCleaningIcon, ChevronDownIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import {
   QUESTION_CATEGORIES,
   QUESTION_DIFFICULTIES,
@@ -10,8 +10,8 @@ import {
 } from '@/server/questions/constants';
 import { cn } from '@windrun-huaiin/lib/utils';
 import { XFilterPills } from '@windrun-huaiin/third-ui/main/pill-select';
-import { RandomDateRangeDialog, type RandomCalendarRange } from './random-date-range-dialog';
-import { usePressFeedback } from './use-press-feedback';
+import { CalendarDateRangeInput } from '@windrun-huaiin/third-ui/main/calendar';
+import { usePressFeedback } from  '@windrun-huaiin/third-ui/main/buttons';
 
 type QuestionListFiltersProps = {
   question: string;
@@ -67,26 +67,6 @@ const CLEAR_FILTERS_BUTTON_PRESSED_CLASS_NAME =
   'translate-y-[2px] scale-[0.94] border-black/30 bg-black/10 text-slate-950 shadow-[inset_0_2px_4px_rgba(15,23,42,0.18)] dark:border-white/25 dark:bg-white/20 dark:text-white dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.14)]';
 
 type PressedFilterButton = 'clearFilters';
-
-function getTodayString(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function getDateRangeSummary(startDate: string, endDate: string, placeholder: string): string {
-  if (startDate && endDate) {
-    return `${startDate} ~ ${endDate}`;
-  }
-
-  if (startDate) {
-    return startDate;
-  }
-
-  if (endDate) {
-    return endDate;
-  }
-
-  return placeholder;
-}
 
 function FilterTextInput({
   label,
@@ -169,21 +149,11 @@ export function QuestionListFilters(props: QuestionListFiltersProps) {
   const subCategoryOptions = QUESTION_SUB_CATEGORIES.map((option) => ({ label: option, value: option }));
   const difficultyOptions = QUESTION_DIFFICULTIES.map((option) => ({ label: option, value: option }));
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [dateDialogOpen, setDateDialogOpen] = useState(false);
   const {
     pressedKey: pressedFilterButton,
     flash: flashFilterButtonPress,
     getPressProps: getFilterButtonPressProps,
   } = usePressFeedback<PressedFilterButton>();
-  const dateRangeValue = useMemo<RandomCalendarRange>(() => ({
-    startDate: createdAtFrom || null,
-    endDate: createdAtTo || null,
-  }), [createdAtFrom, createdAtTo]);
-  const dateAnchor = createdAtFrom || createdAtTo || getTodayString();
-  const dateRangeSummary = useMemo(
-    () => getDateRangeSummary(createdAtFrom, createdAtTo, copy.dateRangePlaceholder),
-    [copy.dateRangePlaceholder, createdAtFrom, createdAtTo]
-  );
   const hasDateRangeFilter = Boolean(createdAtFrom.trim() || createdAtTo.trim());
   const activeAdvancedFilterCount = [
     correctAnswer.trim(),
@@ -298,32 +268,18 @@ export function QuestionListFilters(props: QuestionListFiltersProps) {
               <div className="grid gap-3 lg:grid-cols-3 lg:gap-4">
                 <label className="space-y-2">
                   <div className="text-xs font-medium text-slate-700 dark:text-slate-200">{copy.dateRangeLabel}</div>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setDateDialogOpen(true)}
-                      className="flex min-h-9 w-full items-center gap-3 rounded-full border border-black/10 bg-transparent px-3 py-1.5 pr-14 text-left text-xs text-slate-800 outline-none transition hover:border-black/20 focus:border-black/20 dark:border-white/10 dark:text-slate-100 dark:hover:border-white/20 dark:focus:border-white/20"
-                    >
-                      <CalendarDaysIcon className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
-                      <span className={`truncate ${createdAtFrom || createdAtTo ? '' : 'text-slate-500 dark:text-slate-400'}`}>
-                        {dateRangeSummary}
-                      </span>
-                    </button>
-                    {(createdAtFrom || createdAtTo) ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onCreatedAtFromChange('');
-                          onCreatedAtToChange('');
-                        }}
-                        className="absolute right-3 top-1/2 inline-flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition hover:bg-black/5 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/5 dark:hover:text-slate-200"
-                        aria-label="Clear date range"
-                        title="Clear date range"
-                      >
-                        <XIcon className="h-3.5 w-3.5" />
-                      </button>
-                    ) : null}
-                  </div>
+                  <CalendarDateRangeInput
+                    value={{
+                      startDate: createdAtFrom || null,
+                      endDate: createdAtTo || null,
+                    }}
+                    onChange={(range) => {
+                      onCreatedAtFromChange(range.startDate ?? '');
+                      onCreatedAtToChange(range.endDate ?? '');
+                    }}
+                    placeholder={copy.dateRangePlaceholder}
+                    defaultRangeDays={7}
+                  />
                 </label>
                 <FilterTextInput
                   label={copy.correctAnswerLabel}
@@ -345,22 +301,6 @@ export function QuestionListFilters(props: QuestionListFiltersProps) {
           ) : null}
         </div>
       </div>
-
-      <RandomDateRangeDialog
-        open={dateDialogOpen}
-        value={dateRangeValue}
-        anchorDate={dateAnchor}
-        defaultRangeDays={7}
-        onOpenChange={setDateDialogOpen}
-        onClear={() => {
-          onCreatedAtFromChange('');
-          onCreatedAtToChange('');
-        }}
-        onApply={(range) => {
-          onCreatedAtFromChange(range.startDate ?? '');
-          onCreatedAtToChange(range.endDate ?? '');
-        }}
-      />
     </>
   );
 }

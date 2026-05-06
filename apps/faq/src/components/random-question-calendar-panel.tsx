@@ -2,8 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { CalendarClockIcon, CalendarDaysIcon } from '@windrun-huaiin/base-ui/icons';
-import { CalendarStatusView, type CalendarDayState } from './calendar-status-view';
-import { RandomDateRangeDialog, type RandomCalendarRange } from './random-date-range-dialog';
+import { CalendarStatusView, RandomDateRangeDialog, type RandomCalendarRange, type CalendarDayState } from '@windrun-huaiin/third-ui/main/calendar';
 import {
   isSnapshotVersionMismatchResponse,
   type PlannedDay,
@@ -182,6 +181,8 @@ export function RandomQuestionCalendarPanel({
         value={rangeSelection}
         anchorDate={selectedDate}
         defaultRangeDays={5}
+        loadingFullPage={false}
+        loadingActions={['confirm']}
         onOpenChange={(open) => {
           setRangeDialogOpen(open);
           if (!open) {
@@ -196,8 +197,8 @@ export function RandomQuestionCalendarPanel({
             onSelectedDateChange(nextRange.startDate);
           }
         }}
-        onApply={(nextRange) => {
-          void handleRangeApply(nextRange);
+        onApply={async (nextRange) => {
+          await handleRangeApply(nextRange);
         }}
       />
     </>
