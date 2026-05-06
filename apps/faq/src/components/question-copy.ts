@@ -245,7 +245,7 @@ export async function getQuestionsListPageCopy(locale: string): Promise<Question
     actions: {
       create: listT('actions.create'),
       import: importT('title'),
-      randomSets: 'Random Sets',
+      randomSets: 'Random',
       clients: 'Clients',
     },
     client: {
@@ -490,7 +490,7 @@ export async function getRandomQuestionsPageCopy(locale: string): Promise<Random
   const importT = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
 
   return {
-    title: 'Random Question Sets',
+    title: 'Random Question',
     description: 'Generate daily random question sets, inspect saved dates, and regenerate a day when the pool changes.',
     actions: {
       backToList: 'Library',

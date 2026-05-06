@@ -33,7 +33,7 @@ export function QuestionPageShell({
           </div>
         </div>
         {actions.length > 0 ? (
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             {actions.map((action) => (
               <GradientButton
                 key={`${action.href}-${action.label}`}
@@ -42,7 +42,8 @@ export function QuestionPageShell({
                 icon={action.icon}
                 openInNewTab={false}
                 align="center"
-                className="w-full sm:w-[148px]"
+                variant="subtle"
+                className="h-10 text-sm px-3.5 sm:px-6"
               />
             ))}
           </div>

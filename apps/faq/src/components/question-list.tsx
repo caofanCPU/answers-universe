@@ -164,6 +164,7 @@ export function QuestionList({ locale, items, copy, onDeleted }: QuestionListPro
                   openInNewTab={false}
                   title={copy.edit}
                   align="center"
+                  variant="soft"
                   icon={false}
                   className="min-h-8 px-3 py-1.5 text-xs min-w-20"
                 />

@@ -355,7 +355,7 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
                 align="center"
                 variant="subtle"
                 className="w-full md:min-w-[120px] md:w-auto"
-                icon=<JsonIcon className="h-4 w-4"/>
+                icon={<JsonIcon className="h-4 w-4"/>}
               />
               <GradientButton
                 onClick={() => {
@@ -366,7 +366,7 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
                 align="center"
                 variant="subtle"
                 className="w-full md:min-w-[120px] md:w-auto"
-                icon=<RotateCcwIcon className="h-4 w-4"/>
+                icon={<RotateCcwIcon className="h-4 w-4"/>}
               />
             </div>
 
@@ -380,8 +380,9 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
                   title={copy.toolbar.validateAll}
                   loadingText={copy.toolbar.validating}
                   align="center"
+                  variant="soft"
                   className="w-full md:min-w-[120px] md:w-auto"
-                  icon=<ScanSearchIcon className="h-4 w-4"/>
+                  icon={<ScanSearchIcon className="h-4 w-4"/>}
                 />
               </div>
               <div className="flex w-full md:w-auto">
@@ -392,7 +393,7 @@ export function QuestionImportClient({ copy }: { copy: QuestionImportCopy }) {
                   loadingText={copy.toolbar.importing}
                   align="center"
                   className="w-full md:min-w-[120px] md:w-auto"
-                  icon=<CheckCheckIcon className="h-4 w-4"/>
+                  icon={<CheckCheckIcon className="h-4 w-4"/>}
                 />
               </div>
             </div>

@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { BookCheckIcon, ChevronLeftIcon, ChevronRightIcon, EyeIcon } from '@windrun-huaiin/base-ui/icons';
-import { GradientButton, XButton } from '@windrun-huaiin/third-ui/main/buttons';
+import { BookmarkCheckIcon, ChevronLeftIcon, ChevronRightIcon, CoffeeIcon } from '@windrun-huaiin/base-ui/icons';
+import { GradientButton } from '@windrun-huaiin/third-ui/main/buttons';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import { QUESTION_DEFAULT_DIFFICULTY } from '@/server/questions/constants';
 import { QUESTION_GROUP_STORAGE_KEY } from './question-group-context';
@@ -393,24 +393,20 @@ export function QuestionEditorClient({
           {activeView === 'edit' ? (
             <div className="flex min-w-0 justify-end">
               <div className="flex min-w-0 items-center justify-end gap-2">
-                <XButton
-                  type="single"
-                  variant="subtle"
-                  minWidth="min-w-0"
-                  className="self-end px-4 py-2.5 sm:px-5 sm:py-3"
-                  button={{
-                    icon: <EyeIcon className="h-4 w-4" />,
-                    text: usb.preview.reviewButton,
-                    onClick: openPreview,
-                  }}
+              <GradientButton
+                  onClick={openPreview}
+                  disabled={saving || loading}
+                  title={usb.preview.reviewButton}
+                  align="center"
+                  icon={<CoffeeIcon />}
+                  className="min-w-0 sm:w-auto"
                 />
                 <GradientButton
-                  variant="soft"
                   onClick={() => void onSubmit()}
                   disabled={saving || loading}
                   title={submitLabel}
                   align="center"
-                  icon={<BookCheckIcon />}
+                  icon={<BookmarkCheckIcon />}
                   className="min-w-0 sm:w-auto"
                 />
               </div>

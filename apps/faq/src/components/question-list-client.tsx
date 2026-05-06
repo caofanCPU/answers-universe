@@ -552,7 +552,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
                   title={copy.export.buttonLabel}
                   loadingText={copy.export.loadingLabel}
                   align="center"
-                  icon=<FileDownIcon/>
+                  icon={<FileDownIcon/>}
                   className="sm:w-auto"
                 />
               </div>

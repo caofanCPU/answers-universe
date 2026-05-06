@@ -258,8 +258,8 @@
     "titleR": "Creations",
     "description": "Swipe through the built-in UI language: gradient CTAs, pill billing toggles, credit buckets, and docs hero visuals.",
     "button": {
-      "title": "Preview the template",
-      "href": "https://newspaper-template.org/",
+      "title": "Take a Daily Trivia",
+      "href": "https://daily-trivia.org/",
       "align": "center"
     },
     "defaultImgUrl": "https://r2.d8ger.com/default.webp",

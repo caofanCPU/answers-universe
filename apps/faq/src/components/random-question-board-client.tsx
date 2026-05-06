@@ -187,7 +187,7 @@ function AnalysisPanel({
           variant="subtle"
           className="sm:w-auto"
           disabled={loading}
-          icon=<RefreshCcwIcon className="h-4 w-4"/>
+          icon={<RefreshCcwIcon className="h-3.5 w-3.5"/>}
         />
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
@@ -856,7 +856,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                               loadingText="Saving..."
                               align="center"
                               variant="subtle"
-                          icon=<BookCheckIcon/>
+                          icon={<BookCheckIcon/>}
                           className="sm:w-auto"
                               disabled={saving || plannedDataOutdated}
                             />
@@ -880,7 +880,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                           loadingText="Loading..."
                           align="center"
                           variant="subtle"
-                          icon=<CircleStopIcon/>
+                          icon={<CircleStopIcon/>}
                           className="sm:w-auto"
                           disabled={previewState.loading || detailState.loading || plannedDataOutdated}
                         />
@@ -947,7 +947,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                     align="center"
                     variant="subtle"
                     className="px-2.5 py-1 text-xs sm:w-auto"
-                    icon=<RefreshCcwIcon className="h-3.5 w-3.5"/>
+                    icon={<RefreshCcwIcon className="h-3.5 w-3.5"/>}
                   />
                 </div>
               </div>
