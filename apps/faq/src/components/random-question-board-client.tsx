@@ -11,6 +11,7 @@ import {
   InfoIcon,
   ListTodoIcon,
   RefreshCcwIcon,
+  Trash2Icon,
   XIcon,
 } from '@windrun-huaiin/base-ui/icons';
 import { cn, getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
@@ -948,7 +949,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                         <>
                           <GradientButton
                             onClick={() => void handleGenerateRequest()}
-                            title="Generate"
+                            title="Regenerate"
                             loadingText="Loading..."
                             align="center"
                             variant="soft"
@@ -961,10 +962,11 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                             variant="subtle"
                             minWidth="min-w-0"
                             className="h-9 min-h-0 px-4 py-0 text-sm text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50 dark:text-red-300 dark:border-red-400/20 dark:hover:bg-red-500/10"
-                            loadingText="Clearing..."
+                            loadingText="Deleting..."
+                            
                             button={{
-                              icon: false,
-                              text: 'Clear',
+                              icon: <Trash2Icon className="text-red-700"/>,
+                              text: 'Delete',
                               onClick: () => {
                                 if (plannedDays.length > 0) {
                                   setClearSavedPlanGuardOpen(true);
@@ -1246,10 +1248,10 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
         open={clearSavedConfirmOpen}
         onOpenChange={setClearSavedConfirmOpen}
         type="danger"
-        title="Clear saved set?"
+        title="Delete saved set?"
         description={`This will permanently delete the saved random question set for ${selectedDate}.`}
         cancelText="Cancel"
-        confirmText="Clear"
+        confirmText="Delete"
         onConfirm={() => {
           void handleClearSavedSet();
         }}

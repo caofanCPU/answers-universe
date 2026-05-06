@@ -894,7 +894,6 @@ export async function planRandomQuestionRangeWithSnapshot(
     if (!occupiedDateSet.has(cursor)) {
       const group = plannedGroups[groupIndex];
       plannedDates.push({
-        snapshotVersion: snapshot.version,
         showDate: cursor,
         groupId: group.groupId,
         targetCount: group.targetCount,

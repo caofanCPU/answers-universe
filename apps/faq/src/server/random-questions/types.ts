@@ -35,12 +35,18 @@ export type RandomQuestionPreviewResult = {
   items: RandomQuestionPreviewItem[];
 };
 
-export type RandomQuestionPlannedGroup = Omit<RandomQuestionPreviewResult, 'showDate'> & {
+export type RandomQuestionPlannedGroup = {
   groupId: string;
+  targetCount: number;
+  canCommit: boolean;
+  reasons: RandomQuestionReason[];
+  messages: string[];
+  stats: RandomQuestionPreviewStats;
+  items: RandomQuestionPreviewItem[];
 };
 
-export type RandomQuestionPlannedDateResult = RandomQuestionPreviewResult & {
-  groupId: string;
+export type RandomQuestionPlannedDateResult = RandomQuestionPlannedGroup & {
+  showDate: string;
 };
 
 export type RandomQuestionStoredItem = {

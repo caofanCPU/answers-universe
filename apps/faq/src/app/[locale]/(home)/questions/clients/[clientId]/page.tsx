@@ -23,7 +23,7 @@ export default async function OuterClientDetailPage({
         },
       ]}
     >
-      <OuterClientDetailClient locale={locale} clientId={clientId} copy={copy.client} />
+      <OuterClientDetailClient clientId={clientId} copy={copy.client} />
     </QuestionPageShell>
   );
 }
