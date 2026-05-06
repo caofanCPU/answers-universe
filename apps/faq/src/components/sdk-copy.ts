@@ -5,9 +5,6 @@ type ExpiryOptions = Record<'3_months' | '6_months' | '1_year' | 'never', string
 export type OuterClientsPageCopy = {
   title: string;
   description: string;
-  actions: {
-    backToQuestions: string;
-  };
   client: {
     loading: string;
     loadFailed: string;
@@ -113,9 +110,6 @@ export async function getOuterClientsPageCopy(locale: string): Promise<OuterClie
   return {
     title: t('title'),
     description: t('description'),
-    actions: {
-      backToQuestions: t('actions.backToQuestions'),
-    },
     client: {
       loading: t('client.loading'),
       loadFailed: t('client.loadFailed'),

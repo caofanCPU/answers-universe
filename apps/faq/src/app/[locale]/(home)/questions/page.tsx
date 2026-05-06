@@ -32,11 +32,6 @@ export default async function QuestionsPage({
           label: copy.actions.randomSets,
           icon: false
         },
-        {
-          href: getAsNeededLocalizedUrl(locale, '/questions/clients'),
-          label: copy.actions.clients,
-          icon: false
-        },
       ]}
     >
       <QuestionListClient locale={locale} copy={copy.client} />

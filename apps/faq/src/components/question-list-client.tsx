@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { FileDownIcon, SettingsIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
-import { GradientButton, XButton } from '@windrun-huaiin/third-ui/main/buttons';
+import { ChevronLeftIcon, ChevronRightIcon, FileDownIcon, SettingsIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
+import { GradientButton } from '@windrun-huaiin/third-ui/main/buttons';
 import type { QuestionListItemCopy } from './question-copy';
 import { QuestionList } from './question-list';
 import { QuestionListFilters } from './question-list-filters';
@@ -23,8 +23,8 @@ type QuestionListClientProps = {
       questionPlaceholder: string;
       correctAnswerLabel: string;
       correctAnswerPlaceholder: string;
-      createdAtFromLabel: string;
-      createdAtToLabel: string;
+      dateRangeLabel: string;
+      dateRangePlaceholder: string;
       advancedToggle: string;
       idLabel: string;
       idPlaceholder: string;
@@ -48,12 +48,10 @@ type QuestionListClientProps = {
       buttonLabel: string;
       loadingLabel: string;
       dialogTitle: string;
-      dialogDescription: string;
       settingsAriaLabel: string;
       closeAriaLabel: string;
       confirm: string;
       cancel: string;
-      requiredHint: string;
       failed: string;
       columns: {
         id: string;
@@ -462,6 +460,8 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
             locale={locale}
             items={state.items}
             copy={copy.item}
+            questionHighlight={question}
+            correctAnswerHighlight={correctAnswer}
             onDeleted={() => setReloadKey((current) => current + 1)}
           />
         ) : null}
@@ -477,18 +477,16 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
             <div className="grid gap-3 rounded-3xl border border-black/10 px-3 py-3 text-xs text-slate-600 dark:border-white/10 dark:text-slate-300 sm:px-4 sm:text-sm lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center">
               <div className="hidden lg:block" />
               <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-                <XButton
-                  type="single"
-                  variant="subtle"
-                  minWidth="min-w-0"
-                  className="px-3 py-1.5"
-                  button={{
-                    icon: false,
-                    text: copy.pagination.previous,
-                    onClick: () => changePage(page - 1),
-                    disabled: state.pagination.page <= 1,
-                  }}
-                />
+                <button
+                  type="button"
+                  onClick={() => changePage(page - 1)}
+                  disabled={state.pagination.page <= 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-black/10 text-slate-600 transition hover:border-black/20 hover:bg-black/5 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+                  aria-label={copy.pagination.previous}
+                  title={copy.pagination.previous}
+                >
+                  <ChevronLeftIcon className="h-4 w-4" />
+                </button>
                 <div className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-300">
                   <input
                     type="text"
@@ -522,25 +520,23 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
                     {copy.pagination.total.replace('{total}', String(state.pagination.total))}
                   </span>
                 </div>
-                <XButton
-                  type="single"
-                  variant="subtle"
-                  minWidth="min-w-0"
-                  className="px-3 py-1.5"
-                  button={{
-                    icon: false,
-                    text: copy.pagination.next,
-                    onClick: () => changePage(page + 1),
-                    disabled: state.pagination.totalPages <= 1 || state.pagination.page >= state.pagination.totalPages,
-                  }}
-                />
+                <button
+                  type="button"
+                  onClick={() => changePage(page + 1)}
+                  disabled={state.pagination.totalPages <= 1 || state.pagination.page >= state.pagination.totalPages}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-black/10 text-slate-600 transition hover:border-black/20 hover:bg-black/5 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+                  aria-label={copy.pagination.next}
+                  title={copy.pagination.next}
+                >
+                  <ChevronRightIcon className="h-4 w-4" />
+                </button>
               </div>
               <div className="flex items-center justify-center gap-2 lg:justify-end">
                 <button
                   type="button"
                   onClick={() => setDialogOpen(true)}
                   disabled={hasInvalidId || hasInvalidUuid}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-slate-700 transition hover:border-black/20 hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-200 dark:hover:bg-white/5"
                   aria-label={copy.export.settingsAriaLabel}
                   title={copy.export.settingsAriaLabel}
                 >
@@ -570,20 +566,18 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
             className="w-full max-w-md rounded-3xl border border-black/10 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-slate-950"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{copy.export.dialogTitle}</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300">{copy.export.dialogDescription}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{copy.export.requiredHint}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setDialogOpen(false)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-black/5 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-black/5 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                 aria-label={copy.export.closeAriaLabel}
                 title={copy.export.closeAriaLabel}
               >
-                <XIcon className="h-4 w-4" />
+                <XIcon className="h-5 w-5" />
               </button>
             </div>
             <div className="mt-4 space-y-2">

@@ -32,7 +32,6 @@ import type {
 import { selectBestRandomQuestionSet } from '@/lib/random-question-planner';
 
 const DEFAULT_RANDOM_QUESTION_COUNT = 5;
-const RANDOM_CALENDAR_INFO_CATEGORIES = QUESTION_CATEGORIES.slice(0, 12);
 
 function getRandomQuestionTargetCount(): number {
   const rawValue = process.env.RANDOM_USB_DAILY_COUNT?.trim();
@@ -302,7 +301,7 @@ function buildCategoryInventory(records: RandomQuestionSelectionRecord[]): Rando
     inventoryByCategory.set(record.category, existing);
   }
 
-  return RANDOM_CALENDAR_INFO_CATEGORIES.map((category) => {
+  return QUESTION_CATEGORIES.map((category) => {
     const existing = inventoryByCategory.get(category);
     return existing ?? {
       category,
@@ -395,7 +394,7 @@ function consumeSnapshotGroups(params: {
     }
   }
 
-  const nextCategoryInventory = RANDOM_CALENDAR_INFO_CATEGORIES.map((category) => {
+  const nextCategoryInventory = QUESTION_CATEGORIES.map((category) => {
     const existing = nextInventoryMap.get(category);
     return existing ?? {
       category,
@@ -518,18 +517,13 @@ export async function previewRandomQuestionSet(
     snapshotVersion?: string;
   }
 ): Promise<RandomQuestionPreviewResult> {
-  if (!options?.excludeShowDate) {
-    const snapshot = await getOrBuildRandomQuestionAnalysisSnapshot();
-    if (options?.snapshotVersion && snapshot.version !== options.snapshotVersion) {
-      throw new Error('SNAPSHOT_VERSION_MISMATCH');
-    }
-    const occupiedCount = await prisma.randomUsb.count({
-      where: {
-        showDate: parseShowDate(showDate),
-      },
-    });
+  const snapshot = await getOrBuildRandomQuestionAnalysisSnapshot();
+  if (options?.snapshotVersion && snapshot.version !== options.snapshotVersion) {
+    throw new Error('SNAPSHOT_VERSION_MISMATCH');
+  }
 
-    if (occupiedCount === 0 && snapshot.plannedGroups.length > 0) {
+  if (!options?.excludeShowDate) {
+    if (snapshot.plannedGroups.length > 0) {
       const plannedGroup = snapshot.plannedGroups[0];
       const previewItems = await attachQuestionDetails(plannedGroup.items);
 
@@ -555,7 +549,7 @@ export async function previewRandomQuestionSet(
   if (!candidateSet) {
     reasons.push('NO_FIRST_QUESTION_AVAILABLE');
     return {
-      snapshotVersion: undefined,
+      snapshotVersion: snapshot.version,
       groupId: undefined,
       showDate,
       targetCount,
@@ -580,7 +574,7 @@ export async function previewRandomQuestionSet(
   const previewItems = await attachQuestionDetails(items);
 
   return {
-    snapshotVersion: undefined,
+    snapshotVersion: snapshot.version,
     groupId: undefined,
     showDate,
     targetCount,
@@ -619,7 +613,7 @@ function buildRandomUsbCreateManyData(showDate: string, items: RandomQuestionDra
 }
 
 export async function commitRandomQuestionSet(
-  snapshotVersion: string | undefined,
+  snapshotVersion: string,
   groupId: string | undefined,
   showDate: string,
   items: RandomQuestionDraftItem[],
@@ -640,10 +634,10 @@ export async function commitRandomQuestionSet(
       console.info('[random-questions][commit] snapshot version check', {
         showDate,
         groupId,
-        requestSnapshotVersion: snapshotVersion ?? null,
+        requestSnapshotVersion: snapshotVersion,
         actualSnapshotVersion: snapshot.version,
       });
-      if (snapshotVersion && snapshot.version !== snapshotVersion) {
+      if (snapshot.version !== snapshotVersion) {
         throw new Error('SNAPSHOT_VERSION_MISMATCH');
       }
       const matchedGroup = snapshot.plannedGroups.find((group) => group.groupId === groupId);
@@ -703,7 +697,7 @@ export async function commitRandomQuestionSet(
 
 export async function commitRandomQuestionSets(
   plans: Array<{
-    snapshotVersion?: string;
+    snapshotVersion: string;
     groupId?: string;
     showDate: string;
     items: RandomQuestionDraftItem[];
@@ -741,7 +735,7 @@ export async function commitRandomQuestionSets(
         requestSnapshotVersion: expectedSnapshotVersion ?? null,
         actualSnapshotVersion: snapshot.version,
       });
-      if (expectedSnapshotVersion && snapshot.version !== expectedSnapshotVersion) {
+      if (snapshot.version !== expectedSnapshotVersion) {
         throw new Error('SNAPSHOT_VERSION_MISMATCH');
       }
       const availableGroupIds = new Set(snapshot.plannedGroups.map((group) => group.groupId));
@@ -900,6 +894,7 @@ export async function planRandomQuestionRangeWithSnapshot(
     if (!occupiedDateSet.has(cursor)) {
       const group = plannedGroups[groupIndex];
       plannedDates.push({
+        snapshotVersion: snapshot.version,
         showDate: cursor,
         groupId: group.groupId,
         targetCount: group.targetCount,
@@ -973,4 +968,30 @@ export async function getRandomQuestionSetByDate(showDate: string): Promise<Rand
     stats,
     items,
   };
+}
+
+export async function deleteRandomQuestionSetByDate(showDate: string): Promise<RandomQuestionCommitResult> {
+  const result = await withRandomQuestionCommitLock(async () => {
+    const deleted = await prisma.randomUsb.deleteMany({
+      where: {
+        showDate: parseShowDate(showDate),
+      },
+    });
+
+    if (isRandomQuestionCacheEnabled()) {
+      await rebuildRandomQuestionAnalysisSnapshot();
+    }
+
+    return {
+      saved: false,
+      showDate,
+      count: deleted.count,
+    };
+  });
+
+  if (!result) {
+    throw new Error('Random question delete is locked');
+  }
+
+  return result;
 }

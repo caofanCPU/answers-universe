@@ -1,13 +1,10 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowLeftIcon, BookmarkPlusIcon, CoinsIcon, CopyIcon, CopyCheckIcon, EyeIcon, EyeClosedIcon, Trash2Icon, XIcon } from '@windrun-huaiin/base-ui/icons';
+import { BookmarkPlusIcon, CoinsIcon, CopyIcon, CopyCheckIcon, EyeIcon, EyeClosedIcon, Trash2Icon } from '@windrun-huaiin/base-ui/icons';
 import { ConfirmDialog, UndoableConfirmDialog } from '@windrun-huaiin/third-ui/main/alert-dialog';
 import { XButton } from '@windrun-huaiin/third-ui/main/buttons';
 import { XFormPills } from '@windrun-huaiin/third-ui/main/pill-select';
-import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import type {
   OuterClientDetailDto,
   OuterClientExpiryOption,
@@ -18,13 +15,11 @@ import type { OuterClientDetailPageCopy } from './sdk-copy';
 import { OuterClientActionModal } from './sdk-action-modal';
 
 type OuterClientDetailClientProps = {
-  locale: string;
   clientId: string;
   copy: OuterClientDetailPageCopy['client'];
 };
 
 type SecretState = OuterClientKeyIssueResult | null;
-type PendingLeaveAction = { kind: 'navigate'; href: string } | null;
 type PendingDeleteKey = { keyVersion: string; status: string } | null;
 
 function getEnvVariableNames() {
@@ -58,8 +53,7 @@ function resolveFaqBaseUrl(): string {
   return 'http://localhost:3000';
 }
 
-export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientDetailClientProps) {
-  const router = useRouter();
+export function OuterClientDetailClient({ clientId, copy }: OuterClientDetailClientProps) {
   const [detail, setDetail] = useState<OuterClientDetailDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [issuing, setIssuing] = useState(false);
@@ -72,10 +66,7 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
   const [oneTimeSecret, setOneTimeSecret] = useState<SecretState>(null);
   const [showSecret, setShowSecret] = useState(false);
   const [copiedField, setCopiedField] = useState<'env' | null>(null);
-  const [pendingLeaveAction, setPendingLeaveAction] = useState<PendingLeaveAction>(null);
   const [pendingDeleteKey, setPendingDeleteKey] = useState<PendingDeleteKey>(null);
-
-  const backHref = getAsNeededLocalizedUrl(locale, '/questions/clients');
 
   const loadDetail = useCallback(async () => {
     setLoading(true);
@@ -292,17 +283,6 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
 
   const activeKey = detail?.keys.find((item) => item.status === 'active') ?? null;
   const otherKeys = detail?.keys.filter((item) => item.status !== 'active') ?? [];
-
-
-  function requestNavigate(href: string) {
-    if (!oneTimeSecret) {
-      router.push(href);
-      return;
-    }
-
-    setPendingLeaveAction({ kind: 'navigate', href });
-  }
-
   function closeIssuePanel() {
     setIssuingPanelOpen(false);
     setExpiresIn('1_year');
@@ -311,39 +291,8 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
     setOneTimeSecret(null);
   }
 
-  function confirmLeaveAction() {
-    if (!pendingLeaveAction) {
-      return;
-    }
-
-    const href = pendingLeaveAction.href;
-    setOneTimeSecret(null);
-    setShowSecret(false);
-    setCopiedField(null);
-    setPendingLeaveAction(null);
-    router.push(href);
-  }
-
   return (
     <div className="flex min-h-[80vh] flex-col gap-5 sm:gap-6">
-      <div className="flex justify-end">
-        <Link
-          href={backHref}
-          onClick={(event) => {
-            if (!oneTimeSecret) {
-              return;
-            }
-
-            event.preventDefault();
-            requestNavigate(backHref);
-          }}
-          className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-black/5 dark:border-white/10 dark:bg-neutral-950 dark:text-slate-200 dark:hover:bg-white/5"
-        >
-          <ArrowLeftIcon className="h-4 w-4" />
-          <span>{copy.backToClients}</span>
-        </Link>
-      </div>
-
       {loading ? (
         <div className="rounded-[1.75rem] border border-black/10 px-6 py-14 text-center text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
           {copy.loading}
@@ -594,53 +543,6 @@ export function OuterClientDetailClient({ locale, clientId, copy }: OuterClientD
         }}
       />
 
-      {pendingLeaveAction ? (
-        <div
-          className="fixed inset-0 z-50 mt-24 flex items-end justify-center bg-slate-950/45 px-4 pb-4 pt-10 backdrop-blur-sm sm:items-center sm:pb-0"
-          onClick={() => setPendingLeaveAction(null)}
-        >
-          <div
-            className="w-full max-w-lg rounded-4xl border border-black/10 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-neutral-950 sm:p-6"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-2">
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{copy.unsavedLeaveTitle}</h2>
-                <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{copy.unsavedLeaveDescription}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPendingLeaveAction(null)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-slate-600 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
-                aria-label={copy.closeDialog}
-                title={copy.closeDialog}
-              >
-                <XIcon className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <XButton
-                type="single"
-                variant="subtle"
-                button={{
-                  text: copy.cancel,
-                  icon: false,
-                  onClick: () => setPendingLeaveAction(null),
-                }}
-              />
-              <XButton
-                type="single"
-                variant="subtle"
-                button={{
-                  text: copy.confirm,
-                  icon: <Trash2Icon className="h-4 w-4" />,
-                  onClick: confirmLeaveAction,
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

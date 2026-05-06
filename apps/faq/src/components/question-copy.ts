@@ -108,7 +108,6 @@ export type QuestionsListPageCopy = {
     create: string;
     import: string;
     randomSets: string;
-    clients: string;
   };
   client: {
     filters: {
@@ -122,8 +121,8 @@ export type QuestionsListPageCopy = {
       questionPlaceholder: string;
       correctAnswerLabel: string;
       correctAnswerPlaceholder: string;
-      createdAtFromLabel: string;
-      createdAtToLabel: string;
+      dateRangeLabel: string;
+      dateRangePlaceholder: string;
       advancedToggle: string;
       idLabel: string;
       idPlaceholder: string;
@@ -147,12 +146,10 @@ export type QuestionsListPageCopy = {
       buttonLabel: string;
       loadingLabel: string;
       dialogTitle: string;
-      dialogDescription: string;
       settingsAriaLabel: string;
       closeAriaLabel: string;
       confirm: string;
       cancel: string;
-      requiredHint: string;
       failed: string;
       columns: {
         id: string;
@@ -190,7 +187,6 @@ export type RandomQuestionsPageCopy = {
   title: string;
   description: string;
   actions: {
-    backToList: string;
     create: string;
     import: string;
   };
@@ -245,8 +241,7 @@ export async function getQuestionsListPageCopy(locale: string): Promise<Question
     actions: {
       create: listT('actions.create'),
       import: importT('title'),
-      randomSets: 'Random',
-      clients: 'Clients',
+      randomSets: listT('actions.randomSets'),
     },
     client: {
       filters: {
@@ -260,8 +255,8 @@ export async function getQuestionsListPageCopy(locale: string): Promise<Question
         questionPlaceholder: listT('filters.question.placeholder'),
         correctAnswerLabel: listT('filters.correctAnswer.label'),
         correctAnswerPlaceholder: listT('filters.correctAnswer.placeholder'),
-        createdAtFromLabel: listT('filters.createdAt.fromLabel'),
-        createdAtToLabel: listT('filters.createdAt.toLabel'),
+        dateRangeLabel: listT('filters.dateRange.label'),
+        dateRangePlaceholder: listT('filters.dateRange.placeholder'),
         advancedToggle: listT('filters.advancedToggle'),
         idLabel: listT('filters.id.label'),
         idPlaceholder: listT('filters.id.placeholder'),
@@ -285,12 +280,10 @@ export async function getQuestionsListPageCopy(locale: string): Promise<Question
         buttonLabel: listT('export.button'),
         loadingLabel: listT('export.loading'),
         dialogTitle: listT('export.dialog.title'),
-        dialogDescription: listT('export.dialog.description'),
         settingsAriaLabel: listT('export.dialog.settingsAriaLabel'),
         closeAriaLabel: listT('export.dialog.closeAriaLabel'),
         confirm: listT('export.dialog.confirm'),
         cancel: listT('export.dialog.cancel'),
-        requiredHint: listT('export.dialog.requiredHint'),
         failed: listT('export.status.failed'),
         columns: {
           id: listT('export.columns.id'),
@@ -486,14 +479,14 @@ export async function getQuestionImportPageCopy(locale: string): Promise<Questio
 }
 
 export async function getRandomQuestionsPageCopy(locale: string): Promise<RandomQuestionsPageCopy> {
+  const randomT = await getTranslations({ locale, namespace: 'faqPage.randomQuestions' });
   const listT = await getTranslations({ locale, namespace: 'faqPage.questionsList' });
   const importT = await getTranslations({ locale, namespace: 'faqPage.questionsImport' });
 
   return {
-    title: 'Random Question',
-    description: 'Generate daily random question sets, inspect saved dates, and regenerate a day when the pool changes.',
+    title: randomT('title'),
+    description: randomT('description'),
     actions: {
-      backToList: 'Library',
       create: listT('actions.create'),
       import: importT('title'),
     },

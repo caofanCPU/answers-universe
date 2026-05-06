@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { Fragment, type ReactNode, useMemo, useRef, useState } from 'react';
 import { CheckLineIcon, CopyIcon, XIcon } from '@windrun-huaiin/base-ui/icons';
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import { GradientButton } from '@windrun-huaiin/third-ui/main/buttons';
@@ -13,15 +13,65 @@ type QuestionListProps = {
   locale: string;
   items: QuestionListItemDto[];
   copy: QuestionListItemCopy;
+  questionHighlight: string;
+  correctAnswerHighlight: string;
   onDeleted: () => void;
 };
 
-export function QuestionList({ locale, items, copy, onDeleted }: QuestionListProps) {
+function renderHighlightedText(text: string, keyword: string) {
+  const normalizedKeyword = keyword.trim();
+
+  if (!normalizedKeyword) {
+    return text;
+  }
+
+  const keywordLower = normalizedKeyword.toLowerCase();
+  const textLower = text.toLowerCase();
+  const parts: ReactNode[] = [];
+  let startIndex = 0;
+  let matchIndex = textLower.indexOf(keywordLower);
+
+  while (matchIndex !== -1) {
+    if (matchIndex > startIndex) {
+      parts.push(text.slice(startIndex, matchIndex));
+    }
+
+    const endIndex = matchIndex + normalizedKeyword.length;
+    parts.push(
+      <mark
+        key={`${matchIndex}-${endIndex}`}
+        className="rounded bg-amber-200/70 px-0.5 text-inherit dark:bg-amber-300/25"
+      >
+        {text.slice(matchIndex, endIndex)}
+      </mark>
+    );
+
+    startIndex = endIndex;
+    matchIndex = textLower.indexOf(keywordLower, startIndex);
+  }
+
+  if (startIndex < text.length) {
+    parts.push(text.slice(startIndex));
+  }
+
+  return parts.map((part, index) => <Fragment key={index}>{part}</Fragment>);
+}
+
+export function QuestionList({
+  locale,
+  items,
+  copy,
+  questionHighlight,
+  correctAnswerHighlight,
+  onDeleted,
+}: QuestionListProps) {
   const groupIds = items.map((item) => item.id);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const copyResetTimerRef = useRef<number | null>(null);
+  const normalizedQuestionHighlight = useMemo(() => questionHighlight.trim(), [questionHighlight]);
+  const normalizedCorrectAnswerHighlight = useMemo(() => correctAnswerHighlight.trim(), [correctAnswerHighlight]);
 
   async function copyText(key: string, value: string) {
     await navigator.clipboard.writeText(value);
@@ -116,11 +166,11 @@ export function QuestionList({ locale, items, copy, onDeleted }: QuestionListPro
               <h2
                 className="overflow-hidden text-base font-semibold leading-6 text-slate-900 [-webkit-box-orient:vertical] [-webkit-line-clamp:4] [display:-webkit-box] dark:text-white md:min-h-12 md:[-webkit-line-clamp:2]"
               >
-                {item.question}
+                {renderHighlightedText(item.question, normalizedQuestionHighlight)}
               </h2>
               <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
                 <CheckLineIcon className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
-                <span>{item.correctAnswer}</span>
+                <span>{renderHighlightedText(item.correctAnswer, normalizedCorrectAnswerHighlight)}</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {item.tags.map((tag) => (
@@ -137,8 +187,8 @@ export function QuestionList({ locale, items, copy, onDeleted }: QuestionListPro
               <XButton
                 type="single"
                 variant="subtle"
-                minWidth="min-w-20"
-                className="px-3 py-1.5 text-xs text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50 dark:text-red-300 dark:border-red-400/20 dark:hover:bg-red-500/10"
+                minWidth="w-20"
+                className="h-8 shrink-0 px-3 py-1 text-xs text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50 dark:text-red-300 dark:border-red-400/20 dark:hover:bg-red-500/10"
                 loadingText={copy.deleteLoading}
                 button={{
                   icon: false,
@@ -155,7 +205,7 @@ export function QuestionList({ locale, items, copy, onDeleted }: QuestionListPro
                   align="center"
                   variant="subtle"
                   icon={false}
-                  className="min-h-8 min-w-20 px-3 py-1.5 text-xs font-semibold shadow-none hover:shadow-none"
+                  className="h-8 w-20 min-w-0 shrink-0 px-3 py-1 text-xs font-semibold shadow-none hover:shadow-none"
                 />
               </span>
               <span onClickCapture={() => saveQuestionGroupContext({ groupIds })}>
@@ -166,7 +216,7 @@ export function QuestionList({ locale, items, copy, onDeleted }: QuestionListPro
                   align="center"
                   variant="soft"
                   icon={false}
-                  className="min-h-8 px-3 py-1.5 text-xs min-w-20"
+                  className="h-8 w-20 min-w-0 shrink-0 px-3 py-1 text-xs"
                 />
               </span>
             </div>

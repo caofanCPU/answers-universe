@@ -1,11 +1,8 @@
 {
   "clientPage": {
     "list": {
-      "title": "Outer Clients",
+      "title": "SDK Clients",
       "description": "Manage external application clients and prepare credentials for SDK access.",
-      "actions": {
-        "backToQuestions": "Client List"
-      },
       "client": {
         "loading": "Loading clients...",
         "loadFailed": "Failed to load clients: ",
@@ -52,7 +49,7 @@
       "title": "Client Detail",
       "description": "Generate or rotate keys, inspect active key versions, and reveal one-time private keys for copy only.",
       "actions": {
-        "backToClients": "Back To Clients"
+        "backToClients": "Client List"
       },
       "client": {
         "loading": "Loading client detail...",

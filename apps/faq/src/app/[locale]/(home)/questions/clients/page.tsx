@@ -1,4 +1,3 @@
-import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import { QuestionPageShell } from '@/components/question-page-shell';
 import { OuterClientsClient } from '@/components/sdk-list-client';
 import { getOuterClientsPageCopy } from '@/components/sdk-copy';
@@ -15,13 +14,6 @@ export default async function OuterClientsPage({
     <QuestionPageShell
       title={copy.title}
       description={copy.description}
-      actions={[
-        {
-          href: getAsNeededLocalizedUrl(locale, '/questions'),
-          label: copy.actions.backToQuestions,
-          icon: false,
-        },
-      ]}
     >
       <OuterClientsClient locale={locale} copy={copy.client} />
     </QuestionPageShell>

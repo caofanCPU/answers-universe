@@ -337,7 +337,7 @@ function buildQuestionWhereInput(params: QuestionListParams): Prisma.UsbWhereInp
   if (question) {
     andConditions.push({
       question: {
-        startsWith: question,
+        contains: question,
         mode: 'insensitive',
       },
     });
@@ -346,7 +346,7 @@ function buildQuestionWhereInput(params: QuestionListParams): Prisma.UsbWhereInp
   if (correctAnswer) {
     andConditions.push({
       correctAnswer: {
-        startsWith: correctAnswer,
+        contains: correctAnswer,
         mode: 'insensitive',
       },
     });

@@ -127,7 +127,7 @@ export function QuestionDetail({
               className={cn(
                 'flex h-full min-h-14 min-w-0 items-center gap-3 rounded-2xl border border-black/10 px-4 py-2 text-base leading-6 text-slate-700 dark:border-white/10 dark:text-slate-200',
                 !previewAsPlayer && option.isCorrect && [
-                  'border-emerald-300/80 bg-emerald-50/70 dark:border-emerald-400/50 dark:bg-emerald-500/10',
+                  'border-current',
                   themeIconColor,
                 ]
               )}

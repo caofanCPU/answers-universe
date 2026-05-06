@@ -18,7 +18,7 @@ export const randomQuestionPlanRangeBodySchema = z.object({
 });
 
 export const randomQuestionCommitBodySchema = z.object({
-  snapshotVersion: z.string().trim().min(1).optional(),
+  snapshotVersion: z.string().trim().min(1),
   groupId: z.string().trim().min(1).optional(),
   showDate: showDateSchema,
   replaceExisting: z.boolean().optional().default(false),
@@ -36,7 +36,7 @@ export const randomQuestionCommitBodySchema = z.object({
 export const randomQuestionBulkCommitBodySchema = z.object({
   plans: z.array(
     z.object({
-      snapshotVersion: z.string().trim().min(1).optional(),
+      snapshotVersion: z.string().trim().min(1),
       groupId: z.string().trim().min(1).optional(),
       showDate: showDateSchema,
       items: randomQuestionCommitBodySchema.shape.items,

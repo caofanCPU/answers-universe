@@ -1,7 +1,8 @@
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
-import { getQuestionImportPageCopy } from '@/components/question-copy';
+import { getQuestionImportPageCopy, getQuestionsListPageCopy } from '@/components/question-copy';
 import { QuestionImportClient } from '@/components/question-import-client';
 import { QuestionPageShell } from '@/components/question-page-shell';
+import { getRandomQuestionsPageCopy } from '@/components/question-copy';
 
 export default async function QuestionImportPage({
   params,
@@ -9,7 +10,11 @@ export default async function QuestionImportPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const copy = await getQuestionImportPageCopy(locale);
+  const [copy, listCopy, randomCopy] = await Promise.all([
+    getQuestionImportPageCopy(locale),
+    getQuestionsListPageCopy(locale),
+    getRandomQuestionsPageCopy(locale),
+  ]);
 
   return (
     <QuestionPageShell
@@ -18,13 +23,12 @@ export default async function QuestionImportPage({
       actions={[
         {
           href: getAsNeededLocalizedUrl(locale, '/questions'),
-          label: copy.actions.backToList,
+          label: listCopy.title,
           icon: false
         },
         {
-          href: getAsNeededLocalizedUrl(locale, '/questions/new'),
-          label: copy.actions.create,
-          primary: true,
+          href: getAsNeededLocalizedUrl(locale, '/questions/random'),
+          label: randomCopy.title,
           icon: false
         },
       ]}

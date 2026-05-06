@@ -24,7 +24,7 @@ export type RandomQuestionPreviewStats = {
 };
 
 export type RandomQuestionPreviewResult = {
-  snapshotVersion?: string;
+  snapshotVersion: string;
   groupId?: string;
   showDate: string;
   targetCount: number;

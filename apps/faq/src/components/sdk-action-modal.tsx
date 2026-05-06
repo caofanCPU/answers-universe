@@ -32,7 +32,7 @@ export function OuterClientActionModal({
 
   return (
     <div
-      className="fixed inset-0 z-[1000] flex items-start justify-center overflow-y-auto bg-slate-950/45 px-3 pb-4 pt-32 backdrop-blur-sm sm:px-4 sm:pb-6 sm:pt-36"
+      className="fixed inset-0 z-1000 flex items-start justify-center overflow-y-auto bg-slate-950/45 px-3 pb-4 pt-32 backdrop-blur-sm sm:px-4 sm:pb-6 sm:pt-36"
       onClick={onClose}
     >
       <div

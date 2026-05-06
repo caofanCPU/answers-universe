@@ -16,7 +16,8 @@ import {
 import { cn, getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
 import { ConfirmDialog, InfoDialog } from '@windrun-huaiin/third-ui/main/alert-dialog';
 import { GradientButton, XButton, XToggleButton } from '@windrun-huaiin/third-ui/main/buttons';
-import { RandomCalendarView, RandomDateRangeDialog, type RandomCalendarDayState, type RandomCalendarRange } from './random-calendar-view';
+import { RandomCalendarView, type RandomCalendarDayState } from './random-calendar-view';
+import { RandomDateRangeDialog, type RandomCalendarRange } from './random-date-range-dialog';
 import { buildReadonlyAnswerOptions } from './question-answer-options';
 import { QuestionDetail } from './question-detail';
 import type {
@@ -77,7 +78,7 @@ function QuestionIdentityTags({
   copiedField,
   onCopy,
 }: {
-  items: Array<{ questionId: string; questionUuid: string; category: string }>;
+  items: Array<{ questionId: string; questionUuid: string; category: string; asFirst: number }>;
   copiedField: string | null;
   onCopy: (key: string, value: string) => Promise<void>;
 }) {
@@ -86,11 +87,24 @@ function QuestionIdentityTags({
       {items.map((item) => (
         <div
           key={`identity-${item.questionId}`}
-          className="grid gap-2 text-[11px] md:grid-cols-[minmax(0,9rem)_minmax(0,1fr)_minmax(0,1fr)] md:items-center"
+          className="grid gap-2 text-[11px] md:grid-cols-[24fr_3fr_18fr_55fr] md:items-center"
         >
           <div className="min-w-0">
             <span className="inline-flex max-w-full rounded-full bg-slate-100 px-2.5 py-1 text-slate-600 dark:bg-white/5 dark:text-slate-300">
               <span className="truncate">{item.category}</span>
+            </span>
+          </div>
+          <div className="min-w-0">
+            <span
+              className={cn(
+                'inline-flex w-full min-w-0 justify-center rounded-full px-2 py-1 text-[10px] font-semibold',
+                item.asFirst > 0
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
+                  : 'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-slate-500'
+              )}
+              title={item.asFirst > 0 ? 'First question' : 'Normal question'}
+            >
+              {item.asFirst > 0 ? 'First' : '-'}
             </span>
           </div>
           <button
@@ -184,8 +198,8 @@ function AnalysisPanel({
           title="Refresh"
           loadingText="Refreshing..."
           align="center"
-          variant="subtle"
-          className="sm:w-auto"
+          variant="soft"
+          className="h-9 min-h-0 px-4 py-0 text-sm sm:w-auto"
           disabled={loading}
           icon={<RefreshCcwIcon className="h-3.5 w-3.5"/>}
         />
@@ -346,6 +360,8 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [activeTopPanel, setActiveTopPanel] = useState<TopPanelKey>('details');
   const [replaceConfirmOpen, setReplaceConfirmOpen] = useState(false);
+  const [clearSavedConfirmOpen, setClearSavedConfirmOpen] = useState(false);
+  const [clearSavedPlanGuardOpen, setClearSavedPlanGuardOpen] = useState(false);
   const [generateConfirmOpen, setGenerateConfirmOpen] = useState(false);
   const [guidanceDismissed, setGuidanceDismissed] = useState(false);
   const [planActionsOpen, setPlanActionsOpen] = useState(false);
@@ -464,6 +480,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
     setSavedIndex(0);
     setActiveTopPanel('details');
     setReplaceConfirmOpen(false);
+    setClearSavedConfirmOpen(false);
     setGuidanceDismissed(false);
     if (selectedHasSavedSet) {
       void loadDetail(selectedDate);
@@ -549,6 +566,15 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
       return;
     }
 
+    const snapshotVersion = previewState.data.snapshotVersion || activeSnapshotVersion;
+    if (!snapshotVersion) {
+      setPreviewState((current) => ({
+        ...current,
+        error: 'Snapshot version is missing. Refresh analysis before saving.',
+      }));
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -560,7 +586,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          snapshotVersion: activeSnapshotVersion,
+          snapshotVersion,
           groupId: previewState.data.groupId,
           showDate: selectedDate,
           replaceExisting,
@@ -599,6 +625,28 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
       return;
     }
 
+    const plansToCommit = commitReadyPlans.map((item) => {
+      const snapshotVersion = item.preview.snapshotVersion || activeSnapshotVersion;
+      return {
+        snapshotVersion,
+        groupId: item.groupId,
+        showDate: item.showDate,
+        items: toDraftItems(item.preview.items),
+      };
+    });
+
+    if (plansToCommit.some((item) => !item.snapshotVersion)) {
+      setPreviewState((current) => ({
+        ...current,
+        error: 'Snapshot version is missing. Refresh analysis before saving.',
+      }));
+      return;
+    }
+    const validPlansToCommit = plansToCommit.map((item) => ({
+      ...item,
+      snapshotVersion: item.snapshotVersion as string,
+    }));
+
     setSaving(true);
 
     try {
@@ -610,12 +658,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          plans: commitReadyPlans.map((item) => ({
-            snapshotVersion: activeSnapshotVersion,
-            groupId: item.groupId,
-            showDate: item.showDate,
-            items: toDraftItems(item.preview.items),
-          })),
+          plans: validPlansToCommit,
         }),
       });
 
@@ -634,6 +677,33 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
       setPreviewState({ data: null, loading: false, error: null });
     } catch (error) {
       setPreviewState((current) => ({
+        ...current,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleClearSavedSet() {
+    setSaving(true);
+
+    try {
+      const response = await fetch(`/api/random-questions?showDate=${selectedDate}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      await loadAnalysis();
+      await loadDetail(selectedDate);
+      setPreviewState({ data: null, loading: false, error: null });
+    } catch (error) {
+      setDetailState((current) => ({
         ...current,
         error: error instanceof Error ? error.message : 'Unknown error',
       }));
@@ -720,6 +790,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
             open={rangeDialogOpen}
             value={rangeSelection}
             anchorDate={selectedDate}
+            defaultRangeDays={5}
             onOpenChange={(open) => {
               setRangeDialogOpen(open);
               if (!open) {
@@ -855,9 +926,9 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                               title="Save set"
                               loadingText="Saving..."
                               align="center"
-                              variant="subtle"
-                          icon={<BookCheckIcon/>}
-                          className="sm:w-auto"
+                              variant="soft"
+                              icon={<BookCheckIcon/>}
+                              className="h-9 min-h-0 px-4 py-0 text-sm sm:w-auto"
                               disabled={saving || plannedDataOutdated}
                             />
                           ) : null}
@@ -873,15 +944,48 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                             }}
                           />
                         </>
+                      ) : selectedHasSavedSet ? (
+                        <>
+                          <GradientButton
+                            onClick={() => void handleGenerateRequest()}
+                            title="Generate"
+                            loadingText="Loading..."
+                            align="center"
+                            variant="soft"
+                            icon={<CircleStopIcon/>}
+                            className="h-9 min-h-0 px-4 py-0 text-sm sm:w-auto"
+                            disabled={previewState.loading || detailState.loading || plannedDataOutdated || saving}
+                          />
+                          <XButton
+                            type="single"
+                            variant="subtle"
+                            minWidth="min-w-0"
+                            className="h-9 min-h-0 px-4 py-0 text-sm text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50 dark:text-red-300 dark:border-red-400/20 dark:hover:bg-red-500/10"
+                            loadingText="Clearing..."
+                            button={{
+                              icon: false,
+                              text: 'Clear',
+                              onClick: () => {
+                                if (plannedDays.length > 0) {
+                                  setClearSavedPlanGuardOpen(true);
+                                  return;
+                                }
+
+                                setClearSavedConfirmOpen(true);
+                              },
+                              disabled: saving || detailState.loading,
+                            }}
+                          />
+                        </>
                       ) : (
                         <GradientButton
                           onClick={() => void handleGenerateRequest()}
                           title="Generate"
                           loadingText="Loading..."
                           align="center"
-                          variant="subtle"
+                          variant="soft"
                           icon={<CircleStopIcon/>}
-                          className="sm:w-auto"
+                          className="h-9 min-h-0 px-4 py-0 text-sm sm:w-auto"
                           disabled={previewState.loading || detailState.loading || plannedDataOutdated}
                         />
                       )}
@@ -893,6 +997,7 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                         (previewItems.length > 0 ? previewItems : savedItems).map((item) => ({
                           questionId: item.questionId,
                           questionUuid: item.questionUuid,
+                          asFirst: item.asFirst,
                           category: item.category,
                         }))
                       }
@@ -945,8 +1050,8 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
                     }}
                     title="Refresh"
                     align="center"
-                    variant="subtle"
-                    className="px-2.5 py-1 text-xs sm:w-auto"
+                    variant="soft"
+                    className="h-8 min-h-0 px-3 py-0 text-xs sm:w-auto"
                     icon={<RefreshCcwIcon className="h-3.5 w-3.5"/>}
                   />
                 </div>
@@ -1118,62 +1223,54 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
         )}
       </div>
 
-      {replaceConfirmOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm"
-          onClick={() => setReplaceConfirmOpen(false)}
-        >
-          <div
-            className="w-full max-w-md rounded-3xl border border-black/10 bg-white p-5 shadow-2xl dark:border-white/10 dark:bg-slate-950"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Replace saved set?</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300">
-                  {`A saved set already exists for ${selectedDate}. Saving will replace it with the current preview.`}
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  This action removes the old saved set for the selected date before writing the new one.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setReplaceConfirmOpen(false)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-black/5 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
-                aria-label="Close replace confirmation"
-                title="Close replace confirmation"
-              >
-                <XIcon className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="mt-5 flex items-center justify-end gap-2">
-              <XButton
-                type="single"
-                variant="subtle"
-                minWidth="min-w-0"
-                className="px-4 py-2"
-                button={{
-                  icon: false,
-                  text: 'Cancel',
-                  onClick: () => setReplaceConfirmOpen(false),
-                }}
-              />
-              <GradientButton
-                onClick={async () => {
-                  setReplaceConfirmOpen(false);
-                  await handleSavePreview(true);
-                }}
-                title="Replace and save"
-                loadingText="Saving..."
-                align="center"
-                className="sm:w-auto"
-                disabled={saving}
-              />
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <ConfirmDialog
+        open={replaceConfirmOpen}
+        onOpenChange={setReplaceConfirmOpen}
+        type="danger"
+        title="Replace saved set?"
+        description={
+          <>
+            <span className="block">
+              {`A saved set already exists for ${selectedDate}. Saving will replace it with the current preview.`}
+            </span>
+          </>
+        }
+        cancelText="Cancel"
+        confirmText="Replace and save"
+        onConfirm={() => {
+          void handleSavePreview(true);
+        }}
+      />
+
+      <ConfirmDialog
+        open={clearSavedConfirmOpen}
+        onOpenChange={setClearSavedConfirmOpen}
+        type="danger"
+        title="Clear saved set?"
+        description={`This will permanently delete the saved random question set for ${selectedDate}.`}
+        cancelText="Cancel"
+        confirmText="Clear"
+        onConfirm={() => {
+          void handleClearSavedSet();
+        }}
+      />
+
+      <InfoDialog
+        open={clearSavedPlanGuardOpen}
+        onOpenChange={setClearSavedPlanGuardOpen}
+        type="warn"
+        title="Plan data pending"
+        description="Temporary planned data already exists. Process the current planned days before clearing a saved set."
+        confirmText="Go to plan"
+        onConfirm={() => {
+          const firstPlannedDate = plannedDays[0]?.showDate;
+          setClearSavedPlanGuardOpen(false);
+          if (firstPlannedDate) {
+            setSelectedDate(firstPlannedDate);
+            setActiveTopPanel('details');
+          }
+        }}
+      />
 
       <InfoDialog
         open={generateConfirmOpen}

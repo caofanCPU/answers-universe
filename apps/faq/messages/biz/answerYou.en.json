@@ -4,7 +4,8 @@
       "title": "Library",
       "description": "",
       "actions": {
-        "create": "Create"
+        "create": "Create",
+        "randomSets": "Random"
       },
       "filters": {
         "category": {
@@ -21,15 +22,15 @@
         },
         "question": {
           "label": "Question",
-          "placeholder": "Prefix match for question"
+          "placeholder": "Match for question"
         },
         "correctAnswer": {
           "label": "Answer",
-          "placeholder": "Prefix match for answer"
+          "placeholder": "Match for answer"
         },
-        "createdAt": {
-          "fromLabel": "Created From",
-          "toLabel": "Created To"
+        "dateRange": {
+          "label": "Date Range",
+          "placeholder": "Select start and end date"
         },
         "advancedToggle": "More filters",
         "id": {
@@ -70,12 +71,10 @@
         },
         "dialog": {
           "title": "Configure export columns",
-          "description": "The export runs against the current filters and returns all matching rows with only the selected columns.",
           "settingsAriaLabel": "Configure export columns",
           "closeAriaLabel": "Close export settings",
           "confirm": "Confirm",
-          "cancel": "Cancel",
-          "requiredHint": "The following columns are required and will always be exported."
+          "cancel": "Cancel"
         },
         "status": {
           "failed": "Export failed: "
@@ -134,6 +133,10 @@
       "title": "Question Detail #{id}",
       "description": ""
     },
+    "randomQuestions": {
+      "title": "Random",
+      "description": "Generate daily random question sets, inspect saved dates, and regenerate a day when the pool changes."
+    },
     "questionPreview": {
       "firstBadge": "First",
       "previewDescription": "This is the full preview for the current question.",
@@ -169,7 +172,7 @@
       "title": "Edit Question #{id}",
       "description": "",
       "actions": {
-        "submit": "Update"
+        "submit": "Save"
       },
       "notice": "Edit mode is wired to detail loading and update API. Successful save will redirect to the detail page.",
       "status": {

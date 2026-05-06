@@ -1,5 +1,5 @@
 import { getAsNeededLocalizedUrl } from '@windrun-huaiin/lib/utils';
-import { getQuestionDetailPageCopy } from '@/components/question-copy';
+import { getQuestionCreatePageCopy, getQuestionDetailPageCopy, getQuestionImportPageCopy, getQuestionsListPageCopy } from '@/components/question-copy';
 import { QuestionEditorClient } from '@/components/question-editor-client';
 import { QuestionPageShell } from '@/components/question-page-shell';
 
@@ -9,7 +9,12 @@ export default async function QuestionDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
-  const copy = await getQuestionDetailPageCopy(locale, id);
+  const [copy, listCopy, createCopy, importCopy] = await Promise.all([
+    getQuestionDetailPageCopy(locale, id),
+    getQuestionsListPageCopy(locale),
+    getQuestionCreatePageCopy(locale),
+    getQuestionImportPageCopy(locale),
+  ]);
 
   return (
     <QuestionPageShell
@@ -17,14 +22,24 @@ export default async function QuestionDetailPage({
       description={copy.description}
       actions={[
         {
-          href: getAsNeededLocalizedUrl(locale, '/questions/import'),
-          label: copy.actions.primary,
-          primary: true,
+          href: getAsNeededLocalizedUrl(locale, '/questions'),
+          label: listCopy.title,
           icon: false
         },
         {
           href: getAsNeededLocalizedUrl(locale, '/questions/new'),
-          label: copy.actions.secondary!,
+          label: createCopy.title,
+          primary: true,
+          icon: false
+        },
+        {
+          href: getAsNeededLocalizedUrl(locale, '/questions/import'),
+          label: importCopy.title,
+          icon: false
+        },
+        {
+          href: getAsNeededLocalizedUrl(locale, '/questions/random'),
+          label: listCopy.actions.randomSets,
           icon: false
         },
       ]}
