@@ -958,11 +958,8 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
               )}
               editAction={{
                 enabled: Boolean(activePreviewEditHref),
-                onClick: () => {
-                  if (activePreviewEditHref) {
-                    window.location.href = activePreviewEditHref;
-                  }
-                },
+                href: activePreviewEditHref ?? undefined,
+                target: 'blank',
                 label: 'Edit',
               }}
             />
@@ -1020,11 +1017,8 @@ export function RandomQuestionBoardClient({ locale }: RandomQuestionBoardClientP
               )}
               editAction={{
                 enabled: Boolean(activeSavedEditHref),
-                onClick: () => {
-                  if (activeSavedEditHref) {
-                    window.location.href = activeSavedEditHref;
-                  }
-                },
+                href: activeSavedEditHref ?? undefined,
+                target: 'blank',
                 label: 'Edit',
               }}
             />

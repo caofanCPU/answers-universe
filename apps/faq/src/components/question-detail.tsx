@@ -23,7 +23,9 @@ type QuestionDetailProps = {
   };
   editAction?: {
     enabled: boolean;
-    onClick: () => void;
+    onClick?: () => void;
+    href?: string;
+    target?: 'self' | 'blank';
     label: string;
   };
 };
@@ -53,6 +55,28 @@ export function QuestionDetail({
       themeIconColor
     );
 
+  function handleEditActionClick() {
+    if (!editAction?.enabled) {
+      return;
+    }
+
+    if (editAction.onClick) {
+      editAction.onClick();
+      return;
+    }
+
+    if (!editAction.href) {
+      return;
+    }
+
+    if (editAction.target === 'blank') {
+      window.open(editAction.href, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    window.location.href = editAction.href;
+  }
+
   return (
     <div className="w-full min-w-0 space-y-5 rounded-3xl border border-black/10 p-6 dark:border-white/10">
       <div className="min-w-0 space-y-3">
@@ -70,7 +94,7 @@ export function QuestionDetail({
             ) : null}
             {editAction?.enabled ? (
               <GradientButton
-                onClick={editAction.onClick}
+                onClick={handleEditActionClick}
                 title={editAction.label}
                 align="center"
                 variant="soft"
@@ -104,7 +128,7 @@ export function QuestionDetail({
                 ) : null}
                 {editAction?.enabled ? (
                   <GradientButton
-                    onClick={editAction.onClick}
+                    onClick={handleEditActionClick}
                     title={editAction.label}
                     align="center"
                     variant="soft"
