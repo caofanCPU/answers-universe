@@ -294,6 +294,7 @@ function buildQuestionWhereInput(params: QuestionListParams): Prisma.UsbWhereInp
   const question = params.question;
   const correctAnswer = params.correctAnswer;
   const asFirst = params.asFirst;
+  const unused = params.unused;
   const category = params.category;
   const subCategory = params.subCategory;
   const difficulty = params.difficulty;
@@ -355,6 +356,12 @@ function buildQuestionWhereInput(params: QuestionListParams): Prisma.UsbWhereInp
   if (typeof asFirst === 'boolean') {
     andConditions.push({
       asFirst: asFirst ? 1 : 0,
+    });
+  }
+
+  if (unused) {
+    andConditions.push({
+      randomUsb: null,
     });
   }
 
@@ -512,6 +519,7 @@ export async function getQuestionList(params: Partial<QuestionListParams>): Prom
     question: params.question,
     correctAnswer: params.correctAnswer,
     asFirst: params.asFirst,
+    unused: params.unused,
     category: params.category,
     subCategory: params.subCategory,
     difficulty: params.difficulty,
@@ -557,6 +565,7 @@ export async function getQuestionExportList(params: Partial<QuestionListParams>)
     question: params.question,
     correctAnswer: params.correctAnswer,
     asFirst: params.asFirst,
+    unused: params.unused,
     category: params.category,
     subCategory: params.subCategory,
     difficulty: params.difficulty,

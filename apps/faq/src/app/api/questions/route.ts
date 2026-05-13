@@ -56,6 +56,7 @@ export async function GET(req: NextRequest) {
       question: req.nextUrl.searchParams.get('question') ?? undefined,
       correctAnswer: req.nextUrl.searchParams.get('correctAnswer') ?? undefined,
       asFirst: req.nextUrl.searchParams.get('asFirst') ?? undefined,
+      unused: req.nextUrl.searchParams.get('unused') ?? undefined,
       category: req.nextUrl.searchParams.get('category') ?? undefined,
       subCategory: req.nextUrl.searchParams.get('subCategory') ?? undefined,
       difficulty: req.nextUrl.searchParams.get('difficulty') ?? undefined,

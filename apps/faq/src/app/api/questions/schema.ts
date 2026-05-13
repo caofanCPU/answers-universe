@@ -82,6 +82,7 @@ const questionListQuerySchemaBase = z.object({
   question: optionalTrimmedString,
   correctAnswer: optionalTrimmedString,
   asFirst: optionalBooleanLike,
+  unused: optionalBooleanLike,
   category: z.enum(QUESTION_CATEGORIES).optional(),
   subCategory: z.enum(QUESTION_SUB_CATEGORIES).optional(),
   difficulty: z.enum(QUESTION_DIFFICULTIES).optional(),

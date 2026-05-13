@@ -71,6 +71,7 @@ model Usb {
   updateUserId    String      @map("update_user_id") @db.Uuid
   createdAt       DateTime?   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime?   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  randomUsb       RandomUsb?
 
   @@index([questionUuid], map: "idx_usb_question_uuid")
   @@index([category], map: "idx_usb_category")
@@ -89,6 +90,7 @@ model RandomUsb {
   sortOrder    Int       @map("sort_order")
   createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  question      Usb       @relation(fields: [questionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([showDate, questionId], map: "uq_random_usb_show_date_question_id")
   @@index([showDate], map: "idx_random_usb_show_date")

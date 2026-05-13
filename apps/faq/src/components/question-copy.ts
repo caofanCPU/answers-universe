@@ -129,6 +129,7 @@ export type QuestionsListPageCopy = {
       uuidLabel: string;
       uuidPlaceholder: string;
       firstLabel: string;
+      unusedLabel: string;
     };
     loading: string;
     loadFailed: string;
@@ -263,6 +264,7 @@ export async function getQuestionsListPageCopy(locale: string): Promise<Question
         uuidLabel: listT('filters.uuid.label'),
         uuidPlaceholder: listT('filters.uuid.placeholder'),
         firstLabel: listT('filters.first.label'),
+        unusedLabel: listT('filters.unused.label'),
       },
       loading: listT('status.loading'),
       loadFailed: listT('status.loadFailed'),

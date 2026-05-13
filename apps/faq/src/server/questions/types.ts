@@ -49,6 +49,7 @@ export type QuestionListParams = {
   question?: string;
   correctAnswer?: string;
   asFirst?: boolean;
+  unused?: boolean;
   category?: string;
   subCategory?: string;
   difficulty?: string;

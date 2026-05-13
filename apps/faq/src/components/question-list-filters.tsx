@@ -23,6 +23,7 @@ type QuestionListFiltersProps = {
   uuid: string;
   uuidInvalid: boolean;
   asFirst: boolean;
+  unused: boolean;
   category: string;
   subCategory: string;
   difficulty: string;
@@ -45,6 +46,7 @@ type QuestionListFiltersProps = {
     uuidLabel: string;
     uuidPlaceholder: string;
     firstLabel: string;
+    unusedLabel: string;
   };
   onQuestionChange: (value: string) => void;
   onCorrectAnswerChange: (value: string) => void;
@@ -53,6 +55,7 @@ type QuestionListFiltersProps = {
   onIdChange: (value: string) => void;
   onUuidChange: (value: string) => void;
   onAsFirstChange: (value: boolean) => void;
+  onUnusedChange: (value: boolean) => void;
   onCategoryChange: (value: string) => void;
   onSubCategoryChange: (value: string) => void;
   onDifficultyChange: (value: string) => void;
@@ -128,6 +131,7 @@ export function QuestionListFilters(props: QuestionListFiltersProps) {
     uuid,
     uuidInvalid,
     asFirst,
+    unused,
     category,
     subCategory,
     difficulty,
@@ -139,6 +143,7 @@ export function QuestionListFilters(props: QuestionListFiltersProps) {
     onIdChange,
     onUuidChange,
     onAsFirstChange,
+    onUnusedChange,
     onCategoryChange,
     onSubCategoryChange,
     onDifficultyChange,
@@ -188,15 +193,26 @@ export function QuestionListFilters(props: QuestionListFiltersProps) {
           <div className="space-y-2 min-w-0">
             <div className="text-xs font-medium text-transparent select-none">placeholder</div>
             <div className="flex min-h-9 items-center justify-between gap-3 px-1 text-xs text-slate-700 dark:text-slate-200">
-              <label className="flex h-9 items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={asFirst}
-                  onChange={(event) => onAsFirstChange(event.target.checked)}
-                  className="h-4 w-4 rounded border-black/10"
-                />
-                <span className="truncate">{copy.firstLabel}</span>
-              </label>
+              <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
+                <label className="flex h-9 min-w-0 items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={asFirst}
+                    onChange={(event) => onAsFirstChange(event.target.checked)}
+                    className="h-4 w-4 shrink-0 rounded border-black/10"
+                  />
+                  <span className="truncate">{copy.firstLabel}</span>
+                </label>
+                <label className="flex h-9 min-w-0 items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={unused}
+                    onChange={(event) => onUnusedChange(event.target.checked)}
+                    className="h-4 w-4 shrink-0 rounded border-black/10"
+                  />
+                  <span className="truncate">{copy.unusedLabel}</span>
+                </label>
+              </div>
               <button
                 type="button"
                 onClick={() => {

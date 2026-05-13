@@ -31,6 +31,7 @@ type QuestionListClientProps = {
       uuidLabel: string;
       uuidPlaceholder: string;
       firstLabel: string;
+      unusedLabel: string;
     };
     loading: string;
     loadFailed: string;
@@ -84,6 +85,7 @@ function buildQuery(params: {
   id: string;
   uuid: string;
   asFirst: boolean;
+  unused: boolean;
   category: string;
   subCategory: string;
   difficulty: string;
@@ -96,6 +98,7 @@ function buildQuery(params: {
   if (params.id.trim()) searchParams.set('id', params.id.trim());
   if (params.uuid.trim()) searchParams.set('uuid', params.uuid.trim());
   if (params.asFirst) searchParams.set('asFirst', 'true');
+  if (params.unused) searchParams.set('unused', 'true');
   if (params.category.trim()) searchParams.set('category', params.category.trim());
   if (params.subCategory.trim()) searchParams.set('subCategory', params.subCategory.trim());
   if (params.difficulty.trim()) searchParams.set('difficulty', params.difficulty.trim());
@@ -111,6 +114,7 @@ function buildListQuery(params: {
   id: string;
   uuid: string;
   asFirst: boolean;
+  unused: boolean;
   category: string;
   subCategory: string;
   difficulty: string;
@@ -136,6 +140,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
   const [id, setId] = useState('');
   const [uuid, setUuid] = useState('');
   const [asFirst, setAsFirst] = useState(false);
+  const [unused, setUnused] = useState(false);
   const [category, setCategory] = useState('');
   const [subCategory, setSubCategory] = useState('');
   const [difficulty, setDifficulty] = useState('');
@@ -168,11 +173,12 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
       id,
       uuid,
       asFirst,
+      unused,
       category,
       subCategory,
       difficulty,
     }),
-    [page, question, correctAnswer, createdAtFrom, createdAtTo, id, uuid, asFirst, category, subCategory, difficulty]
+    [page, question, correctAnswer, createdAtFrom, createdAtTo, id, uuid, asFirst, unused, category, subCategory, difficulty]
   );
   const normalizedIdInput = id.trim();
   const normalizedIdValue =
@@ -226,6 +232,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
     setId('');
     setUuid('');
     setAsFirst(false);
+    setUnused(false);
     setCategory('');
     setSubCategory('');
     setDifficulty('');
@@ -249,6 +256,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
         id,
         uuid,
         asFirst,
+        unused,
         category,
         subCategory,
         difficulty,
@@ -427,6 +435,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
           uuid={uuid}
           uuidInvalid={hasInvalidUuid}
           asFirst={asFirst}
+          unused={unused}
           category={category}
           subCategory={subCategory}
           difficulty={difficulty}
@@ -438,6 +447,7 @@ export function QuestionListClient({ locale, copy }: QuestionListClientProps) {
           onIdChange={(value) => updateFilter(() => setId(value))}
           onUuidChange={(value) => updateFilter(() => setUuid(value))}
           onAsFirstChange={(value) => updateFilter(() => setAsFirst(value))}
+          onUnusedChange={(value) => updateFilter(() => setUnused(value))}
           onCategoryChange={(value) => updateFilter(() => setCategory(value))}
           onSubCategoryChange={(value) => updateFilter(() => setSubCategory(value))}
           onDifficultyChange={(value) => updateFilter(() => setDifficulty(value))}
