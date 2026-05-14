@@ -3,12 +3,12 @@
   "version": "10.0.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.16.1",
+  "packageManager": "pnpm@11.1.2",
   "devDependencies": {
     "@changesets/cli": "catalog:",
-    "typescript": "catalog:",
     "@windrun-huaiin/dev-scripts": "catalog:",
-    "turbo": "catalog:"
+    "turbo": "catalog:",
+    "typescript": "catalog:"
   },
   "scripts": {
     "build": "turbo build",
@@ -30,18 +30,5 @@
     "faq:build:prod": "turbo build:prod --filter=@windrun-huaiin/faq",
     "rule:build": "turbo build --filter=@windrun-huaiin/faq-contracts",
     "sdk:build": "turbo build --filter=@windrun-huaiin/faq-sdk"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@clerk/shared",
-      "@parcel/watcher",
-      "@prisma/client",
-      "@prisma/engines",
-      "@swc/core",
-      "esbuild",
-      "prisma",
-      "sharp",
-      "unrs-resolver"
-    ]
   }
 }

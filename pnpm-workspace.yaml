@@ -1,6 +1,18 @@
 packages:
   - apps/*
   - packages/*
+
+allowBuilds:
+  '@clerk/shared': true
+  '@parcel/watcher': true
+  '@prisma/engines': true
+  '@swc/core': true
+  esbuild: true
+  prisma: true
+  sharp: true
+  unrs-resolver: true
+
+
 catalog:
   "@changesets/cli": ^2.29.8
   "@clerk/nextjs": ^7.3.3
@@ -42,7 +54,7 @@ catalog:
   rollup: 4.46.2
   tailwind-merge: ^3.5.0
   tailwindcss: ^4.2.1
-  turbo: ^2.9.8
+  turbo: ^2.9.12
   typescript: ^5.8.3
   uuid: ^13.0.0
   zod: ^4.3.6
