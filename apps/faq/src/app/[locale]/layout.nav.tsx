@@ -79,7 +79,7 @@ export async function levelNavLinks(locale: string): Promise<SiteNavItemConfig[]
   const libraryLinks: SiteMenuLeafConfig[] = [
     {
       text: 'Question Library',
-      description: '查看题库',
+      description: 'Query filters with DB',
       path: '/questions',
       prefetch: false,
       icon: <LibraryIcon />,
@@ -87,7 +87,7 @@ export async function levelNavLinks(locale: string): Promise<SiteNavItemConfig[]
     },
     {
       text: 'Random Mode',
-      description: '随机生题模式',
+      description: 'Query and plan questions with random',
       path: '/questions/random',
       prefetch: false,
       icon: <BrainCircuitIcon />,
@@ -95,7 +95,7 @@ export async function levelNavLinks(locale: string): Promise<SiteNavItemConfig[]
     },
     {
       text: 'Manage Client',
-      description: '题库客户端',
+      description: 'Questions Auth clients',
       path: '/questions/clients',
       prefetch: false,
       icon: <PencilIcon />,
@@ -103,7 +103,7 @@ export async function levelNavLinks(locale: string): Promise<SiteNavItemConfig[]
     },
     {
       text: 'Import Question',
-      description: '批量导入',
+      description: 'Batching create questions',
       path: '/questions/import',
       prefetch: false,
       icon: <JsonIcon />,
