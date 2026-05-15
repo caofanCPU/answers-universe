@@ -1,18 +1,15 @@
 packages:
   - apps/*
   - packages/*
-
 allowBuilds:
-  '@clerk/shared': true
-  '@parcel/watcher': true
-  '@prisma/engines': true
-  '@swc/core': true
+  "@clerk/shared": true
+  "@parcel/watcher": true
+  "@prisma/engines": true
+  "@swc/core": true
   esbuild: true
   prisma: true
   sharp: true
   unrs-resolver: true
-
-
 catalog:
   "@changesets/cli": ^2.29.8
   "@clerk/nextjs": ^7.3.3
@@ -32,9 +29,9 @@ catalog:
   "@windrun-huaiin/contracts": 29.0.0
   "@windrun-huaiin/backend-core": 31.0.0
   "@windrun-huaiin/base-ui": 31.0.0
-  "@windrun-huaiin/lib": 31.0.0
+  "@windrun-huaiin/lib": 31.0.2
   "@windrun-huaiin/fumadocs-local-md": 31.0.0
-  "@windrun-huaiin/third-ui": 31.0.1
+  "@windrun-huaiin/third-ui": 31.3.1
   "@windrun-huaiin/dev-scripts": ^31.0.0
   baseline-browser-mapping: ^2.10.0
   clsx: ^2.1.1

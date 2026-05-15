@@ -42,7 +42,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@typescript-eslint/parser": "catalog:",
-    "@windrun-huaiin/dev-scripts": "catalog:",
+    "@windrun-huaiin/dev-scripts": "31.0.1",
     "baseline-browser-mapping": "catalog:",
     "dotenv": "catalog:",
     "eslint": "catalog:",

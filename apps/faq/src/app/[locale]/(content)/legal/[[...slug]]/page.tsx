@@ -5,9 +5,8 @@ import { createFumaPage } from '@windrun-huaiin/third-ui/fuma/server/page-genera
 const sourceKey = 'legal';
 const { Page, generateStaticParams, generateMetadata } = createFumaPage({
   sourceKey: sourceKey,
-  mdxContentSource: () => siteDocs.getContentSource('legal'),
+  mdxContentSource: () => siteDocs.getContentSource(sourceKey),
   getMDXComponents: siteDocs.getMDXComponents,
-  mdxSourceDir: appConfig.mdxSourceDir[sourceKey],
   githubBaseUrl: appConfig.githubBaseUrl,
   supportedLocales: appConfig.i18n.locales as string[],
   showBreadcrumb: false,
