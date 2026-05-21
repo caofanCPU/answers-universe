@@ -31,7 +31,7 @@ catalog:
   "@windrun-huaiin/base-ui": 31.0.0
   "@windrun-huaiin/lib": 31.0.3
   "@windrun-huaiin/fumadocs-local-md": 31.0.0
-  "@windrun-huaiin/third-ui": 31.3.1
+  "@windrun-huaiin/third-ui": 31.3.3
   "@windrun-huaiin/dev-scripts": ^31.0.0
   baseline-browser-mapping: ^2.10.0
   clsx: ^2.1.1
@@ -51,7 +51,7 @@ catalog:
   rollup: 4.46.2
   tailwind-merge: ^3.5.0
   tailwindcss: ^4.2.1
-  turbo: ^2.9.12
+  turbo: ^2.9.14
   typescript: ^5.8.3
   uuid: ^13.0.0
   zod: ^4.3.6
